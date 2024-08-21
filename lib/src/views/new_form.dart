@@ -6,14 +6,16 @@ import 'package:split_expense/src/settings/settings_controller.dart';
 import '../services/backend.dart';
 
 class NewForm extends StatelessWidget {
-  NewForm({
-    super.key,
-    required this.saveButtonText,
-    required this.textFieldLabel,
-    this.groupId,
-    this.settingsController,
-    this.successCallBackForGroupJoin,
-  });
+  NewForm(
+      {super.key,
+      required this.saveButtonText,
+      required this.textFieldLabel,
+      this.groupId,
+      this.settingsController,
+      this.successCallBackForGroupJoin,
+      this.inviteId}) {
+    myController = TextEditingController(text: inviteId);
+  }
 
   final String saveButtonText;
   final String textFieldLabel;
@@ -21,8 +23,9 @@ class NewForm extends StatelessWidget {
   final int? groupId;
   final SettingsController? settingsController;
   final Function(Map<String, dynamic>)? successCallBackForGroupJoin;
+  final String? inviteId;
 
-  final myController = TextEditingController();
+  late final TextEditingController myController;
 
   Future<void> addPersonInGroup(context) async {
     //  Add a Person

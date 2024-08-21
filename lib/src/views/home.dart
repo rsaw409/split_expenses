@@ -43,10 +43,12 @@ class _HomeViewState extends State<HomeView> {
   inviteToJoinGroup() async {
     final groupName = selectedGroup['name'];
     final inviteId = selectedGroup['inviteId'];
-    const url = 'https://portfolio.rsaw409.me/split/download';
+    const url =
+        'https://play.google.com/store/apps/details?id=developer.rohitsaw.split';
+    final userJoinLink = 'https://portfolio.rsaw409.me/joinGroup/$inviteId';
 
     final msg =
-        'Join our group "$groupName".\n1. Download Split: $url\n2. Enter the following code: $inviteId';
+        'Join our group "$groupName".\n\n1. Download Split: $url\n2. Open this link on your smartphone: $userJoinLink\n\nEnter the following code: $inviteId';
 
     showDialog<String>(
       context: context,

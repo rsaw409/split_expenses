@@ -147,34 +147,35 @@ class MyDrawer extends StatelessWidget {
                       height: 50,
                     ),
                     children: [
-                      Text('Key Features:'),
-                      Divider(),
-                      Text('Join or Create Group'),
-                      Text('Record and split expenses in groups.'),
-                      Text('Record payment made within  groups.'),
-                      Text('Overview Dashboard to settle up easliy.'),
-                      Divider(),
+                      const Text('Key Features:'),
+                      const Divider(),
+                      const Text('Join or Create Group'),
+                      const Text('Record and split expenses in groups.'),
+                      const Text('Record payment made within  groups.'),
+                      const Text('Overview Dashboard to settle up easliy.'),
+                      const Divider(),
                       RichText(
                         text: TextSpan(
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: 'Made with  ',
+                          children: const <TextSpan>[
+                            TextSpan(
+                              text: 'Made with  ',
+                            ),
+                            TextSpan(
+                              text: '\u2764',
+                              style: TextStyle(
+                                fontFamily: 'EmojiOne',
                               ),
-                              TextSpan(
-                                text: '\u2764',
-                                style: TextStyle(
-                                  fontFamily: 'EmojiOne',
-                                ),
-                              ),
-                              TextSpan(
-                                text: '  by rsaw409.',
-                              ),
-                            ],
-                            style: TextStyle(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.color)),
+                            ),
+                            TextSpan(
+                              text: '  by rsaw409.',
+                            ),
+                          ],
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color),
+                        ),
                       )
                     ]);
               }),
