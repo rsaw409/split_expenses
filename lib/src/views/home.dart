@@ -124,21 +124,21 @@ class _HomeViewState extends State<HomeView> {
   leaveGroup() async {
     final groupName = selectedGroup['name'];
 
-    await widget.settingsController.removeGroup(groupId);
+    widget.settingsController.removeGroup(groupId).then((_) {
+      groups = widget.settingsController.groups;
+      selectedGroup = (groups.isNotEmpty) ? groups.first : {};
+      groupId = selectedGroup['id'];
 
-    groups = widget.settingsController.groups;
-    selectedGroup = (groups.isNotEmpty) ? groups.first : {};
-    groupId = selectedGroup['id'];
+      var snackBar = SnackBar(
+        content: Text('Successfully leave group: $groupName'),
+      );
 
-    var snackBar = SnackBar(
-      content: Text('Successfully leave group: $groupName'),
-    );
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(snackBar);
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(snackBar);
+    });
   }
 
   void _addNewPersonInGroup() {
