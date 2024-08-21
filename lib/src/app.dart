@@ -52,22 +52,19 @@ class MyApp extends StatelessWidget {
               final pathSegments = uri.pathSegments;
 
               if (pathSegments.isNotEmpty) {
-                switch (pathSegments[0]) {
-                  case 'joinGroup':
-                    final groupId =
-                        pathSegments.length > 1 ? pathSegments[1] : null;
-                    routes.add(MaterialPageRoute(
+                if (pathSegments[0] == 'joinGroup') {
+                  final groupId =
+                      pathSegments.length > 1 ? pathSegments[1] : null;
+                  routes.add(
+                    MaterialPageRoute(
                       builder: (_) => NewForm(
                         saveButtonText: 'Join Group',
                         textFieldLabel: 'Invite Id',
                         settingsController: settingsController,
                         inviteId: groupId,
                       ),
-                    ));
-                    break;
-                  // Add more cases for other deep links if needed.
-                  default:
-                    break;
+                    ),
+                  );
                 }
               }
             }
@@ -79,23 +76,22 @@ class MyApp extends StatelessWidget {
             final pathSegments = uri.pathSegments;
 
             if (pathSegments.isNotEmpty) {
-              switch (pathSegments[0]) {
-                case 'joinGroup':
-                  final groupId =
-                      pathSegments.length > 1 ? pathSegments[1] : null;
-                  return MaterialPageRoute(
-                    builder: (_) => NewForm(
-                      saveButtonText: 'Join Group',
-                      textFieldLabel: 'Invite Id',
-                      settingsController: settingsController,
-                      inviteId: groupId,
-                    ),
-                  );
+              if (pathSegments[0] == 'joinGroup') {
+                final groupId =
+                    pathSegments.length > 1 ? pathSegments[1] : null;
+                return MaterialPageRoute(
+                  builder: (_) => NewForm(
+                    saveButtonText: 'Join Group',
+                    textFieldLabel: 'Invite Id',
+                    settingsController: settingsController,
+                    inviteId: groupId,
+                  ),
+                );
               }
             }
             return MaterialPageRoute(
-                builder: (_) =>
-                    HomeView(settingsController: settingsController));
+              builder: (_) => HomeView(settingsController: settingsController),
+            );
           },
         );
       },
