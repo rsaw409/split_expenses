@@ -65,13 +65,16 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: "zulu"
-          java-version: "12.x"
+          java-version: "21"
           cache: gradle
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.22.3"
           channel: "stable"
           cache: true
+
+      - name: Set Gradle to use Java 17
+        run: echo "org.gradle.java.home=/opt/hostedtoolcache/Java_Adopt_jdk/17/x64" >> gradle.properties
 
       - name: Get dependencies
         run: flutter pub get
