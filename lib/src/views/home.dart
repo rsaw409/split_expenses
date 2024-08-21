@@ -227,8 +227,10 @@ class _HomeViewState extends State<HomeView> {
           type: ExpandableFabType.up,
           childrenAnimation: ExpandableFabAnimation.none,
           distance: 70,
-          overlayStyle:
-              ExpandableFabOverlayStyle(color: Colors.white.withOpacity(0.5)),
+          overlayStyle: ExpandableFabOverlayStyle(
+              color: widget.settingsController.themeMode == ThemeMode.light
+                  ? Colors.white.withOpacity(0.5)
+                  : Colors.black.withOpacity(0.5)),
           children: [
             Row(
               children: [

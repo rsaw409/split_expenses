@@ -128,15 +128,56 @@ class MyDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('About'),
-            onTap: () async {
-              final Uri url = Uri.parse('https://portfolio.rsaw409.me/about');
-              if (!await launchUrl(url)) {
-                throw Exception('Could not launch $url');
-              }
-            },
-          ),
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About'),
+              // onTap: () async {
+              //   final Uri url = Uri.parse('https://portfolio.rsaw409.me/about');
+              //   if (!await launchUrl(url)) {
+              //     throw Exception('Could not launch $url');
+              //   }
+              // },
+              onTap: () {
+                showAboutDialog(
+                    context: context,
+                    applicationVersion: '1.0.1+4',
+                    applicationName: "Split Expenses",
+                    applicationIcon: Image.asset(
+                      'assets/images/split.webp',
+                      width: 50,
+                      height: 50,
+                    ),
+                    children: [
+                      Text('Key Features:'),
+                      Divider(),
+                      Text('Join or Create Group'),
+                      Text('Record and split expenses in groups.'),
+                      Text('Record payment made within  groups.'),
+                      Text('Overview Dashboard to settle up easliy.'),
+                      Divider(),
+                      RichText(
+                        text: TextSpan(
+                            children: <TextSpan>[
+                              TextSpan(
+                                text: 'Made with  ',
+                              ),
+                              TextSpan(
+                                text: '\u2764',
+                                style: TextStyle(
+                                  fontFamily: 'EmojiOne',
+                                ),
+                              ),
+                              TextSpan(
+                                text: '  by rsaw409.',
+                              ),
+                            ],
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color)),
+                      )
+                    ]);
+              }),
         ],
       ),
     );
