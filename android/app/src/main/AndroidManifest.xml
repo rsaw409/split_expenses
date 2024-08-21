@@ -32,8 +32,10 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="portfolio.rsaw409.me" />
-                <data android:scheme="https" android:host="portfolio.rsaw409.me" />
+                <data android:scheme="http" android:host="portfolio.rsaw409.me"
+                    android:pathPrefix="/joinGroup/" />
+                <data android:scheme="https" android:host="portfolio.rsaw409.me"
+                    android:pathPrefix="/joinGroup/" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
