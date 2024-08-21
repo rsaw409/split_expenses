@@ -23,8 +23,8 @@ jobs:
       - name: Use GitVersion
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
-      - name: Create version.txt with nuGetVersion
-        run: echo ${{ steps.gitversion.outputs.nuGetVersion  }} > version.txt
+      - name: Set Next Version
+        run: echo ${{ steps.gitversion.outputs.semVer }} > version.txt
       - name: Upload version.txt
         uses: actions/upload-artifact@v2
         with:
@@ -37,27 +37,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Get version.txt
         uses: actions/download-artifact@v2
         with:
           name: gitversion
+
       - name: Create new file without newline char from version.txt
         run: tr -d '\n' < version.txt > version1.txt
+
       - name: Read version
         id: version
         uses: juliangruber/read-file-action@v1
         with:
           path: version1.txt
 
-      - name: Extract and increment version code
-        run: |
-          # Extract the current version code from pubspec.yaml
-          version_code=$(grep 'version: ' pubspec.yaml | awk -F'+' '{print $2}')
-          new_version_code=$((version_code + 1))
-
-          # Update pubspec.yaml with the new version code
-          sed -i "s/version: .*[+].*/version: ${{ steps.version.outputs.content }}+$new_version_code/g" pubspec.yaml
-        shell: bash
+      - name: Update version in YAML
+        run: sed -i "s/^version:.*/version: ${{ steps.version.outputs.content }}+${{ github.run_number }}/g" pubspec.yaml
 
       - name: Download Android keystore
         id: android_keystore
@@ -65,17 +61,20 @@ jobs:
         with:
           fileName: upload-keystore.jks
           encodedString: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
       - name: Create key.properties
         run: |
           echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
           echo "storePassword=${{ secrets.STOREPASSWORD }}" >> android/key.properties
           echo "keyPassword=${{ secrets.KEYPASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEYALIAS }}" >> android/key.properties
+
       - uses: actions/setup-java@v3
         with:
           distribution: "zulu"
           java-version: "17"
           cache: gradle
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.22.3"
@@ -100,10 +99,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+
       - name: Get Android Build from artifacts
         uses: actions/download-artifact@v2
         with:
           name: android-release
+
       - name: Release Build to beta track
         uses: r0adkll/upload-google-play@v1
         with:
