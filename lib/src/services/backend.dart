@@ -66,10 +66,6 @@ Future<List<UserBalance>> fetchUserBalances(groupId) async {
 
 Future<String> addUserInGroup(groupId, userName) async {
   var url = '$server/createUser';
-
-  print("In Api call");
-  print("payload $groupId $userName");
-
   final response = await http.post(
     Uri.parse(url),
     headers: <String, String>{
@@ -82,10 +78,8 @@ Future<String> addUserInGroup(groupId, userName) async {
   );
 
   if (response.statusCode == 200) {
-    print("success");
     return 'Success';
   } else {
-    print("success");
     return 'Failed';
   }
 }
@@ -106,15 +100,12 @@ Future<List<User>> getUsersInGroup(groupId) async {
   if (response.statusCode == 200) {
     var tmp = jsonDecode(response.body);
 
-    print("tmp, $tmp");
-
     List<User> users = [];
     for (int i = 0; i < tmp.length; i++) {
       users.add(User.fromJson(tmp[i]));
     }
     return users;
   } else {
-    print("somthing went wrong, $groupId");
     throw Exception('Failed to create group details in Server');
   }
 }

@@ -208,7 +208,6 @@ class _NewExpenseState extends State<NewExpense> {
                       focusColor: Colors.transparent,
                       // dropdownColor: Colors.white,
                       items: userOptions.map((user) {
-                        print("user $user");
                         return DropdownMenuItem(
                           value: "${user['id']}",
                           child: Container(

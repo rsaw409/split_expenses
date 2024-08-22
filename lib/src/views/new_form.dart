@@ -85,7 +85,6 @@ class NewForm extends StatelessWidget {
         throw 'Field cannot be empty';
       }
 
-      print("field ${myController.text.trim()} $groupId");
       if (groupId != null) {
         await addPersonInGroup(context);
       } else if (saveButtonText == 'Join Group') {

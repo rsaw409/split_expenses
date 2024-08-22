@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:split_expense/src/components/customchip.dart';
 
-import '../models/user.dart';
-
 void showAmountDistributionModal(
     BuildContext context,
     double totalAmount,
