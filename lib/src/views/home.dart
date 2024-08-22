@@ -6,13 +6,19 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:split_expense/src/views/new_expense.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../settings/groups_controller.dart';
 import 'new_form.dart';
 import 'new_payment.dart';
 
 class HomeView extends StatefulWidget {
   final SettingsController settingsController;
+  final GroupsController groupsController;
 
-  const HomeView({super.key, required this.settingsController});
+  const HomeView({
+    super.key,
+    required this.settingsController,
+    required this.groupsController,
+  });
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -21,28 +27,18 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   final GlobalKey<ExpandableFabState> _fabKey = GlobalKey<ExpandableFabState>();
 
-  late List<Map<String, dynamic>> groups = [];
-  late int? groupId;
-  late Map<String, dynamic> selectedGroup = {};
-
   @override
   void initState() {
     super.initState();
-    groups = widget.settingsController.groups;
-    selectedGroup = (groups.isNotEmpty) ? groups.first : {};
-    groupId = selectedGroup['id'];
   }
 
   selectGroup(selectedGroupVal) {
-    setState(() {
-      selectedGroup = selectedGroupVal;
-      groupId = selectedGroupVal['id'];
-    });
+    widget.groupsController.selectedGroup = selectedGroupVal;
   }
 
   inviteToJoinGroup() async {
-    final groupName = selectedGroup['name'];
-    final inviteId = selectedGroup['inviteId'];
+    final groupName = widget.groupsController.selectedGroup['name'];
+    final inviteId = widget.groupsController.selectedGroup['inviteId'];
     const url =
         'https://play.google.com/store/apps/details?id=developer.rohitsaw.split';
     final userJoinLink = 'https://portfolio.rsaw409.me/joinGroup/$inviteId';
@@ -122,15 +118,9 @@ class _HomeViewState extends State<HomeView> {
   }
 
   leaveGroup() async {
-    final groupName = selectedGroup['name'];
+    final groupName = widget.groupsController.selectedGroup['name'];
 
-    widget.settingsController.removeGroup(groupId);
-
-    setState(() {
-      groups = widget.settingsController.groups;
-      selectedGroup = (groups.isNotEmpty) ? groups.first : {};
-      groupId = selectedGroup['id'];
-    });
+    widget.groupsController.removeCurrentGroup();
 
     var snackBar = SnackBar(
       content: Text('Successfully leave group: $groupName'),
@@ -144,11 +134,14 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _addNewPersonInGroup() {
+    if (widget.groupsController.selectedGroup['id'] == null) {
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (ctx) => NewForm(
-          groupId: groupId,
+          groupId: widget.groupsController.selectedGroup['id'],
           saveButtonText: 'Save person',
           textFieldLabel: 'Person Name',
         ),
@@ -157,19 +150,27 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _addNewExpenseInGroup() {
+    if (widget.groupsController.selectedGroup['id'] == null) {
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) => NewExpense(groupId: groupId),
+        builder: (ctx) =>
+            NewExpense(groupId: widget.groupsController.selectedGroup['id']),
       ),
     );
   }
 
   void _addNewPaymentInGroup() {
+    if (widget.groupsController.selectedGroup['id'] == null) {
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) => NewPayment(groupId: groupId),
+        builder: (ctx) =>
+            NewPayment(groupId: widget.groupsController.selectedGroup['id']),
       ),
     );
   }
@@ -181,13 +182,14 @@ class _HomeViewState extends State<HomeView> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(selectedGroup['name'] ?? 'No Group Found'),
+          title: Text(widget.groupsController.selectedGroup['name'] ??
+              'No Group Found'),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: PopupMenuButton<int>(
                 onSelected: (item) async {
-                  if (selectedGroup['name'] == null) {
+                  if (widget.groupsController.selectedGroup['name'] == null) {
                     return;
                   }
                   if (item == 0) {
@@ -216,10 +218,12 @@ class _HomeViewState extends State<HomeView> {
           ),
         ),
         drawer: MyDrawer(
-            groups: groups,
-            settingsController: widget.settingsController,
-            callback: selectGroup),
-        body: TabBarScreen(groupId: groupId),
+          settingsController: widget.settingsController,
+          groupsController: widget.groupsController,
+          callback: selectGroup,
+        ),
+        body:
+            TabBarScreen(groupId: widget.groupsController.selectedGroup['id']),
         floatingActionButtonLocation: ExpandableFab.location,
         floatingActionButton: ExpandableFab(
           key: _fabKey,

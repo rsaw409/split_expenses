@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/group.dart';
 import 'settings_service.dart';
 
 class SettingsController with ChangeNotifier {
@@ -11,12 +10,8 @@ class SettingsController with ChangeNotifier {
   late ThemeMode _themeMode;
   ThemeMode get themeMode => _themeMode;
 
-  List<Map<String, dynamic>> _groups = [];
-  List<Map<String, dynamic>> get groups => _groups;
-
   Future<void> loadSettings() async {
     _themeMode = await _settingsService.themeMode();
-    _groups = await _settingsService.loadGroups();
     // Important! Inform listeners a change has occurred.
     notifyListeners();
   }
@@ -37,29 +32,5 @@ class SettingsController with ChangeNotifier {
     // Persist the changes to a local database or the internet using the
     // SettingService.
     await _settingsService.updateThemeMode(newThemeMode);
-  }
-
-  // Update and persist the groups in sharedpreference
-  Future<void> saveGroups(Group group) async {
-    bool? isNotPresent =
-        _groups.where((oldElement) => oldElement['id'] == group.id).isEmpty;
-
-    if (isNotPresent == true) {
-      _groups.add(group.toMap());
-    }
-
-    // Important! Inform listeners a change has occurred.
-    notifyListeners();
-
-    return _settingsService.saveGroups(_groups);
-  }
-
-  Future<void> removeGroup(groupid) async {
-    _groups.removeWhere((oldElement) => oldElement['id'] == groupid);
-
-    // Important! Inform listeners a change has occurred.
-    notifyListeners();
-
-    return _settingsService.saveGroups(_groups);
   }
 }

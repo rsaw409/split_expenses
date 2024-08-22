@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:split_expense/src/settings/settings_controller.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';
 import '../services/group_service.dart';
+import '../settings/groups_controller.dart';
 
 class NewForm extends StatelessWidget {
   NewForm(
@@ -13,8 +13,7 @@ class NewForm extends StatelessWidget {
       required this.saveButtonText,
       required this.textFieldLabel,
       this.groupId,
-      this.settingsController,
-      this.successCallBackForGroupJoin,
+      this.groupsController,
       this.inviteId}) {
     myController = TextEditingController(text: inviteId);
   }
@@ -23,8 +22,7 @@ class NewForm extends StatelessWidget {
   final String textFieldLabel;
 
   final int? groupId;
-  final SettingsController? settingsController;
-  final Function(Map<String, dynamic>)? successCallBackForGroupJoin;
+  final GroupsController? groupsController;
   final String? inviteId;
 
   late final TextEditingController myController;
@@ -50,12 +48,9 @@ class NewForm extends StatelessWidget {
   Future<void> joinGroup(context) async {
     //  Join a group
     Group group = await joinGroupFromInviteId(myController.text);
-    settingsController?.saveGroups(group);
+    groupsController?.saveGroups(group);
 
     Navigator.pop(context);
-    if (successCallBackForGroupJoin != null) {
-      successCallBackForGroupJoin!(group.toMap());
-    }
 
     var snackBar = SnackBar(
       content: Text('Successfully joined ${group.name}.'),
@@ -68,10 +63,9 @@ class NewForm extends StatelessWidget {
   Future<void> createAndJoinGroup(context) async {
     //  Create a group
     Group group = await createGroup(myController.text);
-    settingsController?.saveGroups(group);
+    groupsController?.saveGroups(group);
 
     Navigator.pop(context);
-    successCallBackForGroupJoin!(group.toMap());
 
     var snackBar = SnackBar(
       content: Text('Successfully create group: ${group.name}.'),

@@ -3,18 +3,21 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../settings/groups_controller.dart';
 import '../settings/settings_controller.dart';
 import 'new_form.dart';
 
 class MyDrawer extends StatelessWidget {
-  const MyDrawer(
-      {super.key,
-      required this.groups,
-      required this.settingsController,
-      required this.callback});
+  const MyDrawer({
+    super.key,
+    required this.groupsController,
+    required this.settingsController,
+    required this.callback,
+  });
 
+  final GroupsController groupsController;
   final SettingsController settingsController;
-  final List<Map<String, dynamic>>? groups;
+
   final Function(Map<String, dynamic>) callback;
 
   @override
@@ -35,14 +38,14 @@ class MyDrawer extends StatelessWidget {
               ),
             ),
           ),
-          ...?groups?.map((group) => ListTile(
+          ...groupsController.groups.map((group) => ListTile(
                 title: Text(group['name']),
                 onTap: () {
                   callback(group);
                   Navigator.pop(context);
                 },
               )),
-          if (groups != null && groups!.isNotEmpty) const Divider(),
+          if (groupsController.groups.isNotEmpty) const Divider(),
           ListTile(
             leading: const Icon(Icons.group),
             title: const Text('Join group'),
@@ -55,10 +58,9 @@ class MyDrawer extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (ctx) => NewForm(
-                        settingsController: settingsController,
+                        groupsController: groupsController,
                         saveButtonText: 'Join Group',
                         textFieldLabel: 'Invite Id',
-                        successCallBackForGroupJoin: callback,
                       ),
                     ),
                   );
@@ -78,10 +80,9 @@ class MyDrawer extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (ctx) => NewForm(
-                        settingsController: settingsController,
+                        groupsController: groupsController,
                         saveButtonText: 'Create Group',
                         textFieldLabel: 'Group Name',
-                        successCallBackForGroupJoin: callback,
                       ),
                     ),
                   );

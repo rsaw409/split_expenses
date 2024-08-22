@@ -3,6 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:split_expense/src/views/home.dart';
 
+import 'settings/groups_controller.dart';
 import 'settings/settings_controller.dart';
 import 'views/new_form.dart';
 
@@ -11,9 +12,11 @@ class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
     required this.settingsController,
+    required this.groupsController,
   });
 
   final SettingsController settingsController;
+  final GroupsController groupsController;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +44,15 @@ class MyApp extends StatelessWidget {
           onGenerateInitialRoutes: (String initialRouteName) {
             List<Route<dynamic>> routes = [
               MaterialPageRoute(
-                builder: (context) =>
-                    HomeView(settingsController: settingsController),
+                builder: (context) => ListenableBuilder(
+                  listenable: groupsController,
+                  builder: (BuildContext context, Widget? child) {
+                    return HomeView(
+                      settingsController: settingsController,
+                      groupsController: groupsController,
+                    );
+                  },
+                ),
               )
             ];
 
@@ -57,11 +67,11 @@ class MyApp extends StatelessWidget {
                   routes.add(
                     MaterialPageRoute(
                       builder: (_) => NewForm(
-                          saveButtonText: 'Join Group',
-                          textFieldLabel: 'Invite Id',
-                          settingsController: settingsController,
-                          inviteId: groupId,
-                          successCallBackForGroupJoin: (group) {}),
+                        saveButtonText: 'Join Group',
+                        textFieldLabel: 'Invite Id',
+                        groupsController: groupsController,
+                        inviteId: groupId,
+                      ),
                     ),
                   );
                 }
@@ -80,16 +90,24 @@ class MyApp extends StatelessWidget {
                     pathSegments.length > 1 ? pathSegments[1] : null;
                 return MaterialPageRoute(
                   builder: (_) => NewForm(
-                      saveButtonText: 'Join Group',
-                      textFieldLabel: 'Invite Id',
-                      settingsController: settingsController,
-                      inviteId: groupId,
-                      successCallBackForGroupJoin: (group) {}),
+                    saveButtonText: 'Join Group',
+                    textFieldLabel: 'Invite Id',
+                    groupsController: groupsController,
+                    inviteId: groupId,
+                  ),
                 );
               }
             }
             return MaterialPageRoute(
-              builder: (_) => HomeView(settingsController: settingsController),
+              builder: (context) => ListenableBuilder(
+                listenable: groupsController,
+                builder: (BuildContext context, Widget? child) {
+                  return HomeView(
+                    settingsController: settingsController,
+                    groupsController: groupsController,
+                  );
+                },
+              ),
             );
           },
         );

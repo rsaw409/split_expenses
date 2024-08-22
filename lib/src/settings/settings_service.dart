@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 /// A service that stores and retrieves user settings.
 ///
@@ -22,21 +21,5 @@ class SettingsService {
   Future<void> updateThemeMode(ThemeMode theme) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('theme', theme == ThemeMode.dark ? 'dark' : 'light');
-  }
-
-  Future<List<Map<String, dynamic>>> loadGroups() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // prefs.remove('groups');
-    String? groups = prefs.getString('groups');
-    List<Map<String, dynamic>> groupList =
-        jsonDecode(groups ?? '[]').cast<Map<String, dynamic>>();
-    return groupList;
-  }
-
-  Future<void> saveGroups(List<Map<String, dynamic>> groups) async {
-    final groupsInString = jsonEncode(groups);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('groups', groupsInString);
   }
 }

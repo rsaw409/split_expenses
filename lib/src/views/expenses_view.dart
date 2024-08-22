@@ -21,7 +21,9 @@ class ExpensesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: fetchExpenses(groupId, userId, byId, isPayments),
+      future: groupId == null
+          ? Future.error(Exception('Please create or join a group'))
+          : fetchExpenses(groupId, userId, byId, isPayments),
       builder: (context, snapshot) {
         // WHEN THE CALL IS DONE BUT HAPPENS TO HAVE AN ERROR
         if (snapshot.hasError) {
