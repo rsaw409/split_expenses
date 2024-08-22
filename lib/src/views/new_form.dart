@@ -53,7 +53,9 @@ class NewForm extends StatelessWidget {
     settingsController?.saveGroups(group);
 
     Navigator.pop(context);
-    successCallBackForGroupJoin!(group.toMap());
+    if (successCallBackForGroupJoin != null) {
+      successCallBackForGroupJoin!(group.toMap());
+    }
 
     var snackBar = SnackBar(
       content: Text('Successfully joined ${group.name}.'),

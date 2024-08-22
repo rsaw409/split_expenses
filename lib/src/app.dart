@@ -57,11 +57,11 @@ class MyApp extends StatelessWidget {
                   routes.add(
                     MaterialPageRoute(
                       builder: (_) => NewForm(
-                        saveButtonText: 'Join Group',
-                        textFieldLabel: 'Invite Id',
-                        settingsController: settingsController,
-                        inviteId: groupId,
-                      ),
+                          saveButtonText: 'Join Group',
+                          textFieldLabel: 'Invite Id',
+                          settingsController: settingsController,
+                          inviteId: groupId,
+                          successCallBackForGroupJoin: (group) {}),
                     ),
                   );
                 }
@@ -80,11 +80,11 @@ class MyApp extends StatelessWidget {
                     pathSegments.length > 1 ? pathSegments[1] : null;
                 return MaterialPageRoute(
                   builder: (_) => NewForm(
-                    saveButtonText: 'Join Group',
-                    textFieldLabel: 'Invite Id',
-                    settingsController: settingsController,
-                    inviteId: groupId,
-                  ),
+                      saveButtonText: 'Join Group',
+                      textFieldLabel: 'Invite Id',
+                      settingsController: settingsController,
+                      inviteId: groupId,
+                      successCallBackForGroupJoin: (group) {}),
                 );
               }
             }
