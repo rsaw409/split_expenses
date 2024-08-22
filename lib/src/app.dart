@@ -5,11 +5,10 @@ import 'package:split_expense/src/views/home.dart';
 
 import 'settings/groups_controller.dart';
 import 'settings/settings_controller.dart';
-import 'views/new_form.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
-  const MyApp({
+  MyApp({
     super.key,
     required this.settingsController,
     required this.groupsController,
@@ -17,6 +16,8 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
   final GroupsController groupsController;
+
+  final GlobalKey<HomeViewState> homeViewKey = GlobalKey<HomeViewState>();
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
             '/': (context) => ListenableBuilder(
                   listenable: groupsController,
                   builder: (BuildContext context, Widget? child) => HomeView(
+                    key: homeViewKey,
                     settingsController: settingsController,
                     groupsController: groupsController,
                   ),
@@ -55,33 +57,11 @@ class MyApp extends StatelessWidget {
             final pathSegments = uri.pathSegments;
 
             if (pathSegments.isNotEmpty && pathSegments[0] == 'joinGroup') {
-              final groupId = pathSegments.length > 1 ? pathSegments[1] : null;
+              final inviteId = pathSegments.length > 1 ? pathSegments[1] : null;
 
-              return MaterialPageRoute(
-                builder: (context) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => NewForm(
-                          saveButtonText: 'Join Group',
-                          textFieldLabel: 'Invite Id',
-                          groupsController: groupsController,
-                          inviteId: groupId,
-                        ),
-                      ),
-                    );
-                  });
-
-                  return ListenableBuilder(
-                    listenable: groupsController,
-                    builder: (BuildContext context, Widget? child) => HomeView(
-                      settingsController: settingsController,
-                      groupsController: groupsController,
-                    ),
-                  );
-                },
-              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                homeViewKey.currentState?.handleInvite(inviteId);
+              });
             }
             return null;
           },

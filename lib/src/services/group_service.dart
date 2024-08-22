@@ -21,6 +21,7 @@ Future<Group> joinGroupFromInviteId(inviteId) async {
     final group = Group.fromJson(jsonDecode(response.body));
     return group;
   } else {
+    // return const Group(id: 1, name: "test", inviteId: "randomtest");
     throw Exception('Failed to get group details from Server');
   }
 }

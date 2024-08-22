@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:split_expense/src/services/group_service.dart';
 import 'package:split_expense/src/settings/settings_controller.dart';
 import 'package:split_expense/src/views/drawer.dart';
 import 'package:split_expense/src/views/group_view.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:split_expense/src/views/new_expense.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/group.dart';
 import '../settings/groups_controller.dart';
 import 'new_form.dart';
 import 'new_payment.dart';
@@ -21,15 +23,37 @@ class HomeView extends StatefulWidget {
   });
 
   @override
-  State<HomeView> createState() => _HomeViewState();
+  State<HomeView> createState() => HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class HomeViewState extends State<HomeView> {
   final GlobalKey<ExpandableFabState> _fabKey = GlobalKey<ExpandableFabState>();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  void handleInvite(String? inviteId) {
+    setState(() {});
+    if (inviteId != null) {
+      joinGroupFromInviteId(inviteId).then((Group group) {
+        widget.groupsController.saveGroups(group);
+        var snackBar = SnackBar(
+          content: Text('Successfully joined ${group.name}.'),
+        );
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(snackBar);
+      }).catchError((error) {
+        var snackBar = const SnackBar(
+          content: Text('Failed to join group'),
+        );
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(snackBar);
+      });
+    }
   }
 
   inviteToJoinGroup() async {
