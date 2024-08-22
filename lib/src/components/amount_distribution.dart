@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:split_expense/src/components/customchip.dart';
 
+import '../models/user.dart';
+
 void showAmountDistributionModal(
     BuildContext context,
     double totalAmount,
-    List<Map<String, dynamic>> allUsers,
+    List<User> userOptions,
     List<Map<String, dynamic>> selectedUsers,
     Function onSubmit) {
+  List<Map<String, dynamic>> allUsers =
+      userOptions.map((e) => e.toMap()).toList();
+
   showModalBottomSheet(
     isDismissible: false,
     context: context,
