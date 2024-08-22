@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:split_expense/src/models/user.dart';
 
 import '../services/backend.dart';
 
@@ -13,7 +14,7 @@ class NewPayment extends StatefulWidget {
 }
 
 class _NewPaymentState extends State<NewPayment> {
-  List<Map<String, dynamic>> userOptions = [];
+  List<User> userOptions = [];
   int? from;
   int? to;
   double? amount;
@@ -76,18 +77,17 @@ class _NewPaymentState extends State<NewPayment> {
   }
 
   loadUser() async {
-    List<Map<String, dynamic>>? tmp = await getUsersInGroup(widget.groupId);
+    List<User> tmp = await getUsersInGroup(widget.groupId);
     setState(() {
       userOptions = tmp;
     });
   }
 
-  List<Map<String, dynamic>> getUserOptions(
-      {fromOption = false, toOptions = false}) {
+  List<User> getUserOptions({fromOption = false, toOptions = false}) {
     var copy = [...userOptions];
 
-    if (fromOption) copy.removeWhere((each) => each['id'] == to);
-    if (toOptions) copy.removeWhere((each) => each['id'] == from);
+    if (fromOption) copy.removeWhere((each) => each.id == to);
+    if (toOptions) copy.removeWhere((each) => each.id == from);
 
     return copy;
   }
@@ -159,10 +159,10 @@ class _NewPaymentState extends State<NewPayment> {
                     // dropdownColor: Colors.white,
                     items: getUserOptions(fromOption: true).map((user) {
                       return DropdownMenuItem(
-                        value: "${user['id']}",
+                        value: "${user.id}",
                         child: Container(
                           color: Colors.transparent,
-                          child: Text(user['name']),
+                          child: Text(user.name),
                         ),
                       );
                     }).toList(),
@@ -190,10 +190,10 @@ class _NewPaymentState extends State<NewPayment> {
                     focusColor: Colors.transparent,
                     items: getUserOptions(toOptions: true).map((user) {
                       return DropdownMenuItem(
-                        value: "${user['id']}",
+                        value: "${user.id}",
                         child: Container(
                           color: Colors.transparent,
-                          child: Text(user['name']),
+                          child: Text(user.name),
                         ),
                       );
                     }).toList(),

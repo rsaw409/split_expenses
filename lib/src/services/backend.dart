@@ -1,7 +1,10 @@
 import 'package:http/http.dart' as http;
-import 'package:split_expense/src/models/user_balance.dart';
 import 'dart:convert';
+
+import '../models/user.dart';
+import '../models/user_balance.dart';
 import '../models/expense/expense.dart';
+import '../models/group.dart';
 
 var server = 'https://backend.portfolio.rsaw409.me';
 // var server = 'http://localhost:3000';
@@ -63,7 +66,7 @@ Future<List<UserBalance>> fetchUserBalances(groupId) async {
   }
 }
 
-Future<Map<String, dynamic>> addUserInGroup(groupId, userName) async {
+Future<String> addUserInGroup(groupId, userName) async {
   var url = '$server/createUser';
 
   final response = await http.post(
@@ -78,13 +81,13 @@ Future<Map<String, dynamic>> addUserInGroup(groupId, userName) async {
   );
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+    return 'Success';
   } else {
     throw Exception('Failed to add User in Server');
   }
 }
 
-Future<Map<String, dynamic>> joinGroupFromInviteId(inviteId) async {
+Future<Group> joinGroupFromInviteId(inviteId) async {
   var url = '$server/joinGroup';
 
   final response = await http.post(
@@ -98,13 +101,13 @@ Future<Map<String, dynamic>> joinGroupFromInviteId(inviteId) async {
   );
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+    return Group.fromJson(jsonDecode(response.body));
   } else {
     throw Exception('Failed to get group details from Server');
   }
 }
 
-Future<Map<String, dynamic>> createGroup(groupName) async {
+Future<Group> createGroup(groupName) async {
   var url = '$server/createGroup';
 
   final response = await http.post(
@@ -118,13 +121,13 @@ Future<Map<String, dynamic>> createGroup(groupName) async {
   );
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+    return Group.fromJson(jsonDecode(response.body));
   } else {
     throw Exception('Failed to create group details in Server');
   }
 }
 
-Future<List<Map<String, dynamic>>> getUsersInGroup(groupId) async {
+Future<List<User>> getUsersInGroup(groupId) async {
   var url = '$server/getAllUsersInGroup';
 
   final response = await http.post(
@@ -140,9 +143,9 @@ Future<List<Map<String, dynamic>>> getUsersInGroup(groupId) async {
   if (response.statusCode == 200) {
     var tmp = jsonDecode(response.body);
 
-    List<Map<String, dynamic>> users = [];
+    List<User> users = [];
     for (int i = 0; i < tmp.length; i++) {
-      users.add(tmp[i]);
+      users.add(User.fromJson(tmp[i]));
     }
     return users;
   } else {

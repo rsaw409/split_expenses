@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:split_expense/src/settings/settings_controller.dart';
 
+import '../models/group.dart';
 import '../services/backend.dart';
 
 class NewForm extends StatelessWidget {
@@ -40,14 +41,14 @@ class NewForm extends StatelessWidget {
 
   Future<void> joinGroup(context) async {
     //  Join a group
-    Map<String, dynamic> group = await joinGroupFromInviteId(myController.text);
-    settingsController?.saveGroups(group);
+    Group group = await joinGroupFromInviteId(myController.text);
+    settingsController?.saveGroups(group.toMap());
 
     Navigator.pop(context);
-    successCallBackForGroupJoin!(group);
+    successCallBackForGroupJoin!(group.toMap());
 
     var snackBar = SnackBar(
-      content: Text('Successfully joined ${group['name']}.'),
+      content: Text('Successfully joined ${group.name}.'),
     );
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
@@ -56,14 +57,14 @@ class NewForm extends StatelessWidget {
 
   Future<void> createAndJoinGroup(context) async {
     //  Create a group
-    Map<String, dynamic> group = await createGroup(myController.text);
-    settingsController?.saveGroups(group);
+    Group group = await createGroup(myController.text);
+    settingsController?.saveGroups(group.toMap());
 
     Navigator.pop(context);
-    successCallBackForGroupJoin!(group);
+    successCallBackForGroupJoin!(group.toMap());
 
     var snackBar = SnackBar(
-      content: Text('Successfully create group: ${group['name']}.'),
+      content: Text('Successfully create group: ${group.name}.'),
     );
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()

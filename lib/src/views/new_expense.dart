@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../components/amount_distribution.dart';
+import '../models/user.dart';
 import '../services/backend.dart';
 
 class NewExpense extends StatefulWidget {
@@ -14,7 +15,7 @@ class NewExpense extends StatefulWidget {
 }
 
 class _NewExpenseState extends State<NewExpense> {
-  List<Map<String, dynamic>> userOptions = [];
+  List<User> userOptions = [];
 
   int? by;
   String? title;
@@ -31,7 +32,7 @@ class _NewExpenseState extends State<NewExpense> {
   }
 
   loadUser() async {
-    List<Map<String, dynamic>>? tmp = await getUsersInGroup(widget.groupId);
+    List<User>? tmp = await getUsersInGroup(widget.groupId);
     setState(() {
       userOptions = tmp;
     });
@@ -208,10 +209,10 @@ class _NewExpenseState extends State<NewExpense> {
                       // dropdownColor: Colors.white,
                       items: userOptions.map((user) {
                         return DropdownMenuItem(
-                          value: "${user['id']}",
+                          value: "${user.id}",
                           child: Container(
                             color: Colors.transparent,
-                            child: Text(user['name']),
+                            child: Text(user.name),
                           ),
                         );
                       }).toList(),

@@ -37,7 +37,6 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(),
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
-          // home: HomeView(settingsController: settingsController),
           initialRoute: '/',
           onGenerateInitialRoutes: (String initialRouteName) {
             List<Route<dynamic>> routes = [
