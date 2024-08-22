@@ -15,7 +15,7 @@ class Group extends Equatable {
       inviteId: data['inviteId'] as String);
 
   Map<String, dynamic> toMap() =>
-      {'name': name, 'user_id': id, 'inviteId': inviteId};
+      {'name': name, 'id': id, 'inviteId': inviteId};
 
   factory Group.fromJson(Map<String, dynamic> data) {
     return Group.fromMap(data);

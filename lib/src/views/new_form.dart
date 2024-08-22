@@ -5,6 +5,7 @@ import 'package:split_expense/src/settings/settings_controller.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';
+import '../services/group_service.dart';
 
 class NewForm extends StatelessWidget {
   NewForm(
@@ -30,10 +31,17 @@ class NewForm extends StatelessWidget {
 
   Future<void> addPersonInGroup(context) async {
     //  Add a Person
-    await addUserInGroup(groupId, myController.text);
-    var snackBar = SnackBar(
-      content: Text('${myController.text} added in group.'),
-    );
+    final res = await addUserInGroup(groupId, myController.text);
+    SnackBar snackBar;
+    if (res == 'Success') {
+      snackBar = SnackBar(
+        content: Text('${myController.text} added in group.'),
+      );
+    } else {
+      snackBar = const SnackBar(
+        content: Text('something went wrong while adding person in group.'),
+      );
+    }
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
       ..showSnackBar(snackBar);
@@ -42,7 +50,7 @@ class NewForm extends StatelessWidget {
   Future<void> joinGroup(context) async {
     //  Join a group
     Group group = await joinGroupFromInviteId(myController.text);
-    settingsController?.saveGroups(group.toMap());
+    settingsController?.saveGroups(group);
 
     Navigator.pop(context);
     successCallBackForGroupJoin!(group.toMap());
@@ -58,7 +66,7 @@ class NewForm extends StatelessWidget {
   Future<void> createAndJoinGroup(context) async {
     //  Create a group
     Group group = await createGroup(myController.text);
-    settingsController?.saveGroups(group.toMap());
+    settingsController?.saveGroups(group);
 
     Navigator.pop(context);
     successCallBackForGroupJoin!(group.toMap());
@@ -77,6 +85,7 @@ class NewForm extends StatelessWidget {
         throw 'Field cannot be empty';
       }
 
+      print("field ${myController.text.trim()} $groupId");
       if (groupId != null) {
         await addPersonInGroup(context);
       } else if (saveButtonText == 'Join Group') {

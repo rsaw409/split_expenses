@@ -15,7 +15,7 @@ class NewExpense extends StatefulWidget {
 }
 
 class _NewExpenseState extends State<NewExpense> {
-  List<User> userOptions = [];
+  List<Map<String, dynamic>> userOptions = [];
 
   int? by;
   String? title;
@@ -32,9 +32,9 @@ class _NewExpenseState extends State<NewExpense> {
   }
 
   loadUser() async {
-    List<User>? tmp = await getUsersInGroup(widget.groupId);
+    List<User> tmp = await getUsersInGroup(widget.groupId);
     setState(() {
-      userOptions = tmp;
+      userOptions = tmp.map((e) => e.toMap()).toList();
     });
   }
 
@@ -208,11 +208,12 @@ class _NewExpenseState extends State<NewExpense> {
                       focusColor: Colors.transparent,
                       // dropdownColor: Colors.white,
                       items: userOptions.map((user) {
+                        print("user $user");
                         return DropdownMenuItem(
-                          value: "${user.id}",
+                          value: "${user['id']}",
                           child: Container(
                             color: Colors.transparent,
-                            child: Text(user.name),
+                            child: Text(user['name']),
                           ),
                         );
                       }).toList(),

@@ -8,7 +8,7 @@ import '../models/user.dart';
 void showAmountDistributionModal(
     BuildContext context,
     double totalAmount,
-    List<User> allUsers,
+    List<Map<String, dynamic>> allUsers,
     List<Map<String, dynamic>> selectedUsers,
     Function onSubmit) {
   showModalBottomSheet(
@@ -27,7 +27,7 @@ void showAmountDistributionModal(
 
 class AmountDistributionModal extends StatefulWidget {
   final double totalAmount;
-  final List<User> users;
+  final List<Map<String, dynamic>> users;
   final List<Map<String, dynamic>> selectedUsers;
   final Function onSubmitSelectedUser;
 
@@ -222,7 +222,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                   }),
                   choiceItems: C2Choice.listFrom<Map<String, dynamic>,
                       Map<String, dynamic>>(
-                    source: widget.users.map((e) => e.toMap()).toList(),
+                    source: widget.users.map((e) => e).toList(),
                     value: (i, v) => v,
                     label: (i, v) => v['name'],
                   ),

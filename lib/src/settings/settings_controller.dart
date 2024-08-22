@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/group.dart';
 import 'settings_service.dart';
 
 class SettingsController with ChangeNotifier {
@@ -39,12 +40,12 @@ class SettingsController with ChangeNotifier {
   }
 
   // Update and persist the groups in sharedpreference
-  Future<void> saveGroups(Map<String, dynamic> group) async {
+  Future<void> saveGroups(Group group) async {
     bool? isNotPresent =
-        _groups.where((oldElement) => oldElement['id'] == group['id']).isEmpty;
+        _groups.where((oldElement) => oldElement['id'] == group.id).isEmpty;
 
     if (isNotPresent == true) {
-      _groups.add(group);
+      _groups.add(group.toMap());
     }
 
     // Important! Inform listeners a change has occurred.

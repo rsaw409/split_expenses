@@ -13,7 +13,7 @@ class User extends Equatable {
         id: data['id'] as int,
       );
 
-  Map<String, dynamic> toMap() => {'name': name, 'user_id': id};
+  Map<String, dynamic> toMap() => {'name': name, 'id': id};
 
   factory User.fromJson(Map<String, dynamic> data) {
     return User.fromMap(data);
