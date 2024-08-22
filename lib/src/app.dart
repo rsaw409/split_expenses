@@ -41,74 +41,49 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
           initialRoute: '/',
-          onGenerateInitialRoutes: (String initialRouteName) {
-            List<Route<dynamic>> routes = [
-              MaterialPageRoute(
-                builder: (context) => ListenableBuilder(
+          routes: {
+            '/': (context) => ListenableBuilder(
                   listenable: groupsController,
-                  builder: (BuildContext context, Widget? child) {
-                    return HomeView(
-                      settingsController: settingsController,
-                      groupsController: groupsController,
-                    );
-                  },
+                  builder: (BuildContext context, Widget? child) => HomeView(
+                    settingsController: settingsController,
+                    groupsController: groupsController,
+                  ),
                 ),
-              )
-            ];
-
-            if (initialRouteName != '/') {
-              final uri = Uri.parse(initialRouteName);
-              final pathSegments = uri.pathSegments;
-
-              if (pathSegments.isNotEmpty) {
-                if (pathSegments[0] == 'joinGroup') {
-                  final groupId =
-                      pathSegments.length > 1 ? pathSegments[1] : null;
-                  routes.add(
-                    MaterialPageRoute(
-                      builder: (_) => NewForm(
-                        saveButtonText: 'Join Group',
-                        textFieldLabel: 'Invite Id',
-                        groupsController: groupsController,
-                        inviteId: groupId,
-                      ),
-                    ),
-                  );
-                }
-              }
-            }
-
-            return routes;
           },
           onGenerateRoute: (settings) {
             final uri = Uri.parse(settings.name!);
             final pathSegments = uri.pathSegments;
 
-            if (pathSegments.isNotEmpty) {
-              if (pathSegments[0] == 'joinGroup') {
-                final groupId =
-                    pathSegments.length > 1 ? pathSegments[1] : null;
-                return MaterialPageRoute(
-                  builder: (_) => NewForm(
-                    saveButtonText: 'Join Group',
-                    textFieldLabel: 'Invite Id',
-                    groupsController: groupsController,
-                    inviteId: groupId,
-                  ),
-                );
-              }
-            }
-            return MaterialPageRoute(
-              builder: (context) => ListenableBuilder(
-                listenable: groupsController,
-                builder: (BuildContext context, Widget? child) {
-                  return HomeView(
-                    settingsController: settingsController,
-                    groupsController: groupsController,
+            if (pathSegments.isNotEmpty && pathSegments[0] == 'joinGroup') {
+              final groupId = pathSegments.length > 1 ? pathSegments[1] : null;
+
+              return MaterialPageRoute(
+                builder: (context) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => NewForm(
+                          saveButtonText: 'Join Group',
+                          textFieldLabel: 'Invite Id',
+                          groupsController: groupsController,
+                          inviteId: groupId,
+                        ),
+                      ),
+                    );
+                  });
+
+                  return ListenableBuilder(
+                    listenable: groupsController,
+                    builder: (BuildContext context, Widget? child) => HomeView(
+                      settingsController: settingsController,
+                      groupsController: groupsController,
+                    ),
                   );
                 },
-              ),
-            );
+              );
+            }
+            return null;
           },
         );
       },

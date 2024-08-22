@@ -7,16 +7,14 @@ import '../services/backend.dart';
 import '../services/group_service.dart';
 import '../settings/groups_controller.dart';
 
-class NewForm extends StatelessWidget {
-  NewForm(
+class NewForm extends StatefulWidget {
+  const NewForm(
       {super.key,
       required this.saveButtonText,
       required this.textFieldLabel,
       this.groupId,
       this.groupsController,
-      this.inviteId}) {
-    myController = TextEditingController(text: inviteId);
-  }
+      this.inviteId});
 
   final String saveButtonText;
   final String textFieldLabel;
@@ -25,11 +23,27 @@ class NewForm extends StatelessWidget {
   final GroupsController? groupsController;
   final String? inviteId;
 
+  @override
+  State<NewForm> createState() => _NewFormState();
+}
+
+class _NewFormState extends State<NewForm> {
   late final TextEditingController myController;
 
+  @override
+  void initState() {
+    super.initState();
+    myController = TextEditingController(text: widget.inviteId);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    myController.dispose();
+  }
+
   Future<void> addPersonInGroup(context) async {
-    //  Add a Person
-    final res = await addUserInGroup(groupId, myController.text);
+    final res = await addUserInGroup(widget.groupId, myController.text);
     SnackBar snackBar;
     if (res == 'Success') {
       snackBar = SnackBar(
@@ -48,7 +62,7 @@ class NewForm extends StatelessWidget {
   Future<void> joinGroup(context) async {
     //  Join a group
     Group group = await joinGroupFromInviteId(myController.text);
-    groupsController?.saveGroups(group);
+    widget.groupsController?.saveGroups(group);
 
     Navigator.pop(context);
 
@@ -63,7 +77,7 @@ class NewForm extends StatelessWidget {
   Future<void> createAndJoinGroup(context) async {
     //  Create a group
     Group group = await createGroup(myController.text);
-    groupsController?.saveGroups(group);
+    widget.groupsController?.saveGroups(group);
 
     Navigator.pop(context);
 
@@ -81,11 +95,11 @@ class NewForm extends StatelessWidget {
         throw 'Field cannot be empty';
       }
 
-      if (groupId != null) {
+      if (widget.groupId != null) {
         await addPersonInGroup(context);
-      } else if (saveButtonText == 'Join Group') {
+      } else if (widget.saveButtonText == 'Join Group') {
         await joinGroup(context);
-      } else if (saveButtonText == 'Create Group') {
+      } else if (widget.saveButtonText == 'Create Group') {
         await createAndJoinGroup(context);
       }
       return Future.value(true);
@@ -115,31 +129,24 @@ class NewForm extends StatelessWidget {
               },
               child: Padding(
                 padding: const EdgeInsets.only(right: 10),
-                child: Text(saveButtonText),
+                child: Text(widget.saveButtonText),
               ))
         ],
       ),
       body: Material(
         elevation: 5,
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 50,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20),
+          child: TextField(
+            controller: myController,
+            autofocus: true,
+            decoration: InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              labelText: widget.textFieldLabel,
+              contentPadding: const EdgeInsets.all(10),
             ),
-            Text(textFieldLabel),
-            const SizedBox(
-              width: 100,
-            ),
-            Expanded(
-              child: TextField(
-                controller: myController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

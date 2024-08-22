@@ -12,13 +12,10 @@ class MyDrawer extends StatelessWidget {
     super.key,
     required this.groupsController,
     required this.settingsController,
-    required this.callback,
   });
 
   final GroupsController groupsController;
   final SettingsController settingsController;
-
-  final Function(Map<String, dynamic>) callback;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +38,7 @@ class MyDrawer extends StatelessWidget {
           ...groupsController.groups.map((group) => ListTile(
                 title: Text(group['name']),
                 onTap: () {
-                  callback(group);
+                  groupsController.selectedGroup = group;
                   Navigator.pop(context);
                 },
               )),

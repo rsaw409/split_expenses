@@ -50,9 +50,10 @@ class GroupsController extends ChangeNotifier {
 
     notifyListeners();
 
-    final groupsInString = jsonEncode(_groups);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('groups', groupsInString);
+
+    await prefs.setString('groups', jsonEncode(_groups));
+    await prefs.setString('selectedGroup', jsonEncode(_selectedGroup));
   }
 
   Future<void> removeCurrentGroup() async {
@@ -63,8 +64,9 @@ class GroupsController extends ChangeNotifier {
 
     notifyListeners();
 
-    final groupsInString = jsonEncode(_groups);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('groups', groupsInString);
+
+    await prefs.setString('groups', jsonEncode(_groups));
+    await prefs.setString('selectedGroup', jsonEncode(_selectedGroup));
   }
 }

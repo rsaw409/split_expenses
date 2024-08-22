@@ -32,10 +32,6 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
   }
 
-  selectGroup(selectedGroupVal) {
-    widget.groupsController.selectedGroup = selectedGroupVal;
-  }
-
   inviteToJoinGroup() async {
     final groupName = widget.groupsController.selectedGroup['name'];
     final inviteId = widget.groupsController.selectedGroup['inviteId'];
@@ -220,7 +216,6 @@ class _HomeViewState extends State<HomeView> {
         drawer: MyDrawer(
           settingsController: widget.settingsController,
           groupsController: widget.groupsController,
-          callback: selectGroup,
         ),
         body:
             TabBarScreen(groupId: widget.groupsController.selectedGroup['id']),
