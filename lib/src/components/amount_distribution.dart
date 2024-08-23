@@ -15,15 +15,16 @@ void showAmountDistributionModal(
       userOptions.map((e) => e.toMap()).toList();
 
   showModalBottomSheet(
-    isDismissible: false,
+    isDismissible: true,
     context: context,
     isScrollControlled: true,
     builder: (BuildContext context) {
       return AmountDistributionModal(
-          totalAmount: totalAmount,
-          users: allUsers,
-          selectedUsers: selectedUsers,
-          onSubmitSelectedUser: onSubmit);
+        totalAmount: totalAmount,
+        users: allUsers,
+        selectedUsers: selectedUsers,
+        onSubmitSelectedUser: onSubmit,
+      );
     },
   );
 }
@@ -34,12 +35,13 @@ class AmountDistributionModal extends StatefulWidget {
   final List<Map<String, dynamic>> selectedUsers;
   final Function onSubmitSelectedUser;
 
-  const AmountDistributionModal(
-      {super.key,
-      required this.totalAmount,
-      required this.users,
-      required this.selectedUsers,
-      required this.onSubmitSelectedUser});
+  const AmountDistributionModal({
+    super.key,
+    required this.totalAmount,
+    required this.users,
+    required this.selectedUsers,
+    required this.onSubmitSelectedUser,
+  });
 
   @override
   State<AmountDistributionModal> createState() =>
@@ -105,26 +107,29 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+    return Form(
+      key: _formKey,
+      child: SafeArea(
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            top: 16,
+            left: 16,
+            right: 16,
+          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const Text(
+                'Distribute Amount',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Expanded(
                 child: ListView(
+                  shrinkWrap: true,
                   children: [
-                    const Center(
-                      child: Text(
-                        'Distribute Amount',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     Column(
                       children: selectedUsers.map((user) {
@@ -197,7 +202,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                         each['amount'] =
                             double.tryParse(each['controller'].text);
 
-                        each['controller']?.dispose();
+                        // each['controller']?.dispose();
                         each.remove('controller');
                       }
                       widget.onSubmitSelectedUser(selectedUsers);
