@@ -196,6 +196,8 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                       for (var each in selectedUsers) {
                         each['amount'] =
                             double.tryParse(each['controller'].text);
+
+                        each['controller']?.dispose();
                         each.remove('controller');
                       }
                       widget.onSubmitSelectedUser(selectedUsers);

@@ -6,7 +6,6 @@ import 'package:split_expense/src/views/home.dart';
 import 'settings/groups_controller.dart';
 import 'settings/settings_controller.dart';
 
-/// The Widget that configures your application.
 class MyApp extends StatelessWidget {
   MyApp({
     super.key,
@@ -17,7 +16,8 @@ class MyApp extends StatelessWidget {
   final SettingsController settingsController;
   final GroupsController groupsController;
 
-  final GlobalKey<HomeViewState> homeViewKey = GlobalKey<HomeViewState>();
+  final GlobalKey<HomeViewState> homeStateGlobalKey =
+      GlobalKey<HomeViewState>();
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +43,10 @@ class MyApp extends StatelessWidget {
           themeMode: settingsController.themeMode,
           initialRoute: '/',
           routes: {
-            '/': (context) => ListenableBuilder(
-                  listenable: groupsController,
-                  builder: (BuildContext context, Widget? child) => HomeView(
-                    key: homeViewKey,
-                    settingsController: settingsController,
-                    groupsController: groupsController,
-                  ),
+            '/': (context) => HomeView(
+                  key: homeStateGlobalKey,
+                  settingsController: settingsController,
+                  groupsController: groupsController,
                 ),
           },
           onGenerateRoute: (settings) {
@@ -60,7 +57,7 @@ class MyApp extends StatelessWidget {
               final inviteId = pathSegments.length > 1 ? pathSegments[1] : null;
 
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                homeViewKey.currentState?.handleInvite(inviteId);
+                homeStateGlobalKey.currentState?.handleInvite(inviteId);
               });
             }
             return null;
