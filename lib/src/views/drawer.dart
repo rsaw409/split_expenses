@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../settings/groups_controller.dart';
 import '../settings/settings_controller.dart';
@@ -16,6 +17,53 @@ class MyDrawer extends StatelessWidget {
 
   final GroupsController groupsController;
   final SettingsController settingsController;
+
+  void showDialog(context) async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    String appName = packageInfo.appName;
+    String version = packageInfo.version;
+    String buildNumber = packageInfo.buildNumber;
+
+    showAboutDialog(
+        context: context,
+        applicationVersion: '$version+$buildNumber',
+        applicationName: appName,
+        applicationIcon: Image.asset(
+          'assets/images/split.webp',
+          width: 50,
+          height: 50,
+        ),
+        children: [
+          const Text('Key Features:'),
+          const Divider(),
+          const Text('Join or Create Group'),
+          const Text('Record and split expenses in groups.'),
+          const Text('Record payment made within  groups.'),
+          const Text('Overview Dashboard to settle up easliy.'),
+          const Divider(),
+          RichText(
+            text: TextSpan(
+              children: const <TextSpan>[
+                TextSpan(
+                  text: 'Made with  ',
+                ),
+                TextSpan(
+                  text: '\u2764',
+                  style: TextStyle(
+                    fontFamily: 'EmojiOne',
+                  ),
+                ),
+                TextSpan(
+                  text: '  by rsaw409.',
+                ),
+              ],
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color),
+            ),
+          )
+        ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,57 +174,12 @@ class MyDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('About'),
-              // onTap: () async {
-              //   final Uri url = Uri.parse('https://portfolio.rsaw409.me/about');
-              //   if (!await launchUrl(url)) {
-              //     throw Exception('Could not launch $url');
-              //   }
-              // },
-              onTap: () {
-                showAboutDialog(
-                    context: context,
-                    applicationVersion: '1.0.1+4',
-                    applicationName: "Split Expenses",
-                    applicationIcon: Image.asset(
-                      'assets/images/split.webp',
-                      width: 50,
-                      height: 50,
-                    ),
-                    children: [
-                      const Text('Key Features:'),
-                      const Divider(),
-                      const Text('Join or Create Group'),
-                      const Text('Record and split expenses in groups.'),
-                      const Text('Record payment made within  groups.'),
-                      const Text('Overview Dashboard to settle up easliy.'),
-                      const Divider(),
-                      RichText(
-                        text: TextSpan(
-                          children: const <TextSpan>[
-                            TextSpan(
-                              text: 'Made with  ',
-                            ),
-                            TextSpan(
-                              text: '\u2764',
-                              style: TextStyle(
-                                fontFamily: 'EmojiOne',
-                              ),
-                            ),
-                            TextSpan(
-                              text: '  by rsaw409.',
-                            ),
-                          ],
-                          style: TextStyle(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.color),
-                        ),
-                      )
-                    ]);
-              }),
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About'),
+            onTap: () {
+              showDialog(context);
+            },
+          ),
         ],
       ),
     );

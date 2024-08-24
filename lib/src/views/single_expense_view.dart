@@ -78,8 +78,9 @@ class SingleExpense extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: Text(isPayment ? 'Payment on' : "Purchases on"),
-            trailing: Text(DateFormat('dd-MMM-yyyy hh:mm a')
-                .format(expense.transactionDate)),
+            trailing: Text(DateFormat('dd-MMM-yyyy hh:mm a').format(
+              expense.transactionDate.toLocal(),
+            )),
             onTap: () {},
           ),
         ],

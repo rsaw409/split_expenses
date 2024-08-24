@@ -203,7 +203,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                             double.tryParse(each['controller'].text);
 
                         // each['controller']?.dispose();
-                        each.remove('controller');
+                        // each.remove('controller');
                       }
                       widget.onSubmitSelectedUser(selectedUsers);
                       Navigator.pop(context);
@@ -220,16 +220,18 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
               if (widget.users.isNotEmpty)
                 ChipsChoice<Map<String, dynamic>>.multiple(
                   value: selectedUsers,
-                  onChanged: (val) => setState(() {
-                    selectedUsers = val;
-                    for (var user in selectedUsers) {
-                      user['controller'] ??= TextEditingController();
-                      user['controller'].text =
-                          (widget.totalAmount / selectedUsers.length)
-                              .round()
-                              .toString();
-                    }
-                  }),
+                  onChanged: (val) => setState(
+                    () {
+                      selectedUsers = val;
+                      for (var user in selectedUsers) {
+                        user['controller'] ??= TextEditingController();
+                        user['controller'].text =
+                            (widget.totalAmount / selectedUsers.length)
+                                .round()
+                                .toString();
+                      }
+                    },
+                  ),
                   choiceItems: C2Choice.listFrom<Map<String, dynamic>,
                       Map<String, dynamic>>(
                     source: widget.users.map((e) => e).toList(),
