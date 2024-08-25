@@ -71,76 +71,86 @@ class ExpandableFloatingActionButton extends StatelessWidget {
       childrenAnimation: ExpandableFabAnimation.none,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-          color: settingsController.themeMode == ThemeMode.light
-              ? Colors.white.withOpacity(0.5)
-              : Colors.black.withOpacity(0.5)),
+        color: settingsController.themeMode == ThemeMode.light
+            ? Colors.white.withOpacity(0.9)
+            : Colors.black.withOpacity(0.9),
+      ),
       children: [
-        Row(
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('New person'),
-                Text(
-                  'Somebody to split costs with',
-                  style: TextStyle(color: Colors.grey, fontSize: 12.0),
-                )
-              ],
-            ),
-            const SizedBox(width: 20),
-            FloatingActionButton.small(
-              heroTag: null,
-              onPressed: () {
-                return _addNewPersonInGroup(context);
-              },
-              child: const Icon(Icons.person_2_outlined),
-            ),
-          ],
+        InkWell(
+          onTap: () {
+            _addNewPersonInGroup(context);
+          },
+          child: const Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('New person'),
+                  Text(
+                    'Somebody to split costs with',
+                    style: TextStyle(color: Colors.grey, fontSize: 12.0),
+                  )
+                ],
+              ),
+              SizedBox(width: 20),
+              FloatingActionButton.small(
+                heroTag: null,
+                onPressed: null,
+                child: Icon(Icons.person_2_outlined),
+              ),
+            ],
+          ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('New payment'),
-                Text(
-                  'A payment made within the group',
-                  style: TextStyle(color: Colors.grey, fontSize: 12.0),
-                ),
-              ],
-            ),
-            const SizedBox(width: 20),
-            FloatingActionButton.small(
-              heroTag: null,
-              onPressed: () {
-                return _addNewPaymentInGroup(context);
-              },
-              child: const Icon(Icons.arrow_forward),
-            ),
-          ],
+        InkWell(
+          onTap: () {
+            _addNewPaymentInGroup(context);
+          },
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('New payment'),
+                  Text(
+                    'A payment made within the group',
+                    style: TextStyle(color: Colors.grey, fontSize: 12.0),
+                  ),
+                ],
+              ),
+              SizedBox(width: 20),
+              FloatingActionButton.small(
+                heroTag: null,
+                onPressed: null,
+                child: Icon(Icons.arrow_forward),
+              ),
+            ],
+          ),
         ),
-        Row(
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('New expense'),
-                Text(
-                  'A purchase made for the group',
-                  style: TextStyle(color: Colors.grey, fontSize: 12.0),
-                ),
-              ],
-            ),
-            const SizedBox(width: 20),
-            FloatingActionButton.small(
-              heroTag: null,
-              onPressed: () {
-                return _addNewExpenseInGroup(context);
-              },
-              child: const Icon(Icons.shopping_bag_outlined),
-            ),
-          ],
+        InkWell(
+          onTap: () {
+            _addNewExpenseInGroup(context);
+          },
+          child: const Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('New expense'),
+                  Text(
+                    'A purchase made for the group',
+                    style: TextStyle(color: Colors.grey, fontSize: 12.0),
+                  ),
+                ],
+              ),
+              SizedBox(width: 20),
+              FloatingActionButton.small(
+                heroTag: null,
+                onPressed: null,
+                child: Icon(Icons.shopping_bag_outlined),
+              ),
+            ],
+          ),
         ),
       ],
     );

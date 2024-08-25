@@ -17,20 +17,20 @@ class UserView extends StatelessWidget {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.person_2_outlined),
-            title: Text(userBalance.name ?? ""),
+            title: Text(userBalance.name),
             onTap: () {},
           ),
           const Divider(),
           ListTile(
             leading: const Text("Balance"),
-            trailing: Text('INR ${userBalance.balances ?? 0}'),
+            trailing: Text('INR ${userBalance.balances}'),
             onTap: () {},
           ),
           ListTile(
             leading: const Text("Expenses"),
-            trailing: Text(userBalance.numberOfTransactions ?? ""),
+            trailing: Text(userBalance.numberOfTransactions),
             onTap: () {
-              if (int.parse(userBalance.numberOfTransactions!) > 0) {
+              if (int.parse(userBalance.numberOfTransactions) > 0) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -49,9 +49,9 @@ class UserView extends StatelessWidget {
           ),
           ListTile(
             leading: const Text("Payments"),
-            trailing: Text(userBalance.numberOfPayments ?? ""),
+            trailing: Text(userBalance.numberOfPayments),
             onTap: () {
-              if (int.parse(userBalance.numberOfPayments!) > 0) {
+              if (int.parse(userBalance.numberOfPayments) > 0) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -70,9 +70,9 @@ class UserView extends StatelessWidget {
           ),
           ListTile(
               leading: const Text("Benefits from"),
-              trailing: Text('${userBalance.numberOfBenefits}'),
+              trailing: Text(userBalance.numberOfBenefits),
               onTap: () => {
-                    if (int.parse(userBalance.numberOfBenefits!) > 0)
+                    if (int.parse(userBalance.numberOfBenefits) > 0)
                       {
                         Navigator.push(
                           context,

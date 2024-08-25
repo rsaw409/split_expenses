@@ -128,7 +128,7 @@ Future<String> saveTransaction(transaction) async {
   }
 }
 
-Future<String> savePayment(payment) async {
+Future<String> savePayment(Map<String, dynamic> payment) async {
   var url = '$server/savePayment';
 
   final response = await http.post(
@@ -137,6 +137,24 @@ Future<String> savePayment(payment) async {
       'Content-Type': 'application/json; charset=UTF-8',
     },
     body: jsonEncode(payment),
+  );
+
+  if (response.statusCode == 200) {
+    return 'success';
+  } else {
+    throw Exception('Failed to save expense details in Server');
+  }
+}
+
+Future<String> savePayments(List<Map<String, dynamic>> payments) async {
+  var url = '$server/savePayments';
+
+  final response = await http.post(
+    Uri.parse(url),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(payments),
   );
 
   if (response.statusCode == 200) {
