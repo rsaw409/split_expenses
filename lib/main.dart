@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'src/app.dart';
+import 'src/services/connectivity_check.dart';
 import 'src/settings/groups_controller.dart';
 import 'src/settings/settings_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final settingsController = SettingsController();
-  final groupsController = GroupsController();
-
-  await settingsController.loadSettings();
-  await groupsController.loadGroups();
-
   runApp(
-    MyApp(
-      settingsController: settingsController,
-      groupsController: groupsController,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => InternetConnectivityHelper()),
+        ChangeNotifierProvider<SettingsController>(
+          create: (context) {
+            final settingsController = SettingsController();
+            settingsController.loadSettings();
+            return settingsController;
+          },
+        ),
+        ChangeNotifierProvider<GroupsController>(
+          create: (context) {
+            final groupsController = GroupsController();
+            groupsController.loadGroups();
+            return groupsController;
+          },
+        ),
+      ],
+      child: MyApp(),
     ),
   );
 }

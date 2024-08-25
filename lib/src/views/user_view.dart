@@ -3,10 +3,9 @@ import 'package:split_expense/src/models/user_balance.dart';
 import 'package:split_expense/src/views/expenses_view.dart';
 
 class UserView extends StatelessWidget {
-  const UserView({super.key, required this.groupId, required this.userBalance});
+  const UserView({super.key, required this.userBalance});
 
   final UserBalance userBalance;
-  final int? groupId;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +36,6 @@ class UserView extends StatelessWidget {
                     builder: (ctx) => Scaffold(
                       appBar: AppBar(),
                       body: ExpensesView(
-                        groupId: groupId,
                         byId: userBalance.userId,
                         isPayments: false,
                       ),
@@ -58,7 +56,6 @@ class UserView extends StatelessWidget {
                     builder: (ctx) => Scaffold(
                       appBar: AppBar(),
                       body: ExpensesView(
-                        groupId: groupId,
                         byId: userBalance.userId,
                         isPayments: true,
                       ),
@@ -80,7 +77,6 @@ class UserView extends StatelessWidget {
                             builder: (ctx) => Scaffold(
                               appBar: AppBar(),
                               body: ExpensesView(
-                                groupId: groupId,
                                 userId: userBalance.userId,
                               ),
                             ),

@@ -19,6 +19,7 @@ dependencies:
   http: ^1.2.2
   intl: ^0.19.0
   package_info_plus: ^8.0.2
+  provider: ^6.1.2
   share_plus: ^10.0.2
   shared_preferences: ^2.2.3
   url_launcher: ^6.3.0
@@ -33,19 +34,6 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/split.webp"
   min_sdk_android: 21 # android min sdk min:16, default 21
-  web:
-    generate: true
-    image_path: "assets/images/split.webp"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
-  windows:
-    generate: true
-    image_path: "assets/images/split.webp"
-    icon_size: 48 # min:48, max:256, default: 48
-  macos:
-    generate: true
-    image_path: "assets/images/split.webp"
-
   flutter_lints: ^3.0.0
 
 flutter:

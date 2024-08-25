@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-import 'package:split_expense/src/settings/settings_controller.dart';
+import 'package:provider/provider.dart';
 
 import '../settings/groups_controller.dart';
+import '../settings/settings_controller.dart';
 import '../views/new_expense.dart';
 import '../views/new_form.dart';
 import '../views/new_payment.dart';
 
 class ExpandableFloatingActionButton extends StatelessWidget {
-  final GroupsController groupsController;
-  final SettingsController settingsController;
+  const ExpandableFloatingActionButton({
+    super.key,
+  });
 
-  const ExpandableFloatingActionButton(
-      {super.key,
-      required this.groupsController,
-      required this.settingsController});
-
-  void _addNewPersonInGroup(context) {
-    if (groupsController.selectedGroup['id'] == null) {
+  void _addNewPersonInGroup(BuildContext context) {
+    if (context.read<GroupsController>().selectedGroup['id'] == null) {
       return;
     }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) => NewForm(
-          groupId: groupsController.selectedGroup['id'],
+        builder: (ctx) => const NewForm(
           saveButtonText: 'Save person',
           textFieldLabel: 'Person Name',
         ),
@@ -32,28 +28,26 @@ class ExpandableFloatingActionButton extends StatelessWidget {
     );
   }
 
-  void _addNewExpenseInGroup(context) {
-    if (groupsController.selectedGroup['id'] == null) {
+  void _addNewExpenseInGroup(BuildContext context) {
+    if (context.read<GroupsController>().selectedGroup['id'] == null) {
       return;
     }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) =>
-            NewExpense(groupId: groupsController.selectedGroup['id']),
+        builder: (ctx) => const NewExpense(),
       ),
     );
   }
 
-  void _addNewPaymentInGroup(context) {
-    if (groupsController.selectedGroup['id'] == null) {
+  void _addNewPaymentInGroup(BuildContext context) {
+    if (context.read<GroupsController>().selectedGroup['id'] == null) {
       return;
     }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) =>
-            NewPayment(groupId: groupsController.selectedGroup['id']),
+        builder: (ctx) => const NewPayment(),
       ),
     );
   }
@@ -61,7 +55,6 @@ class ExpandableFloatingActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ExpandableFab(
-      // key: _fabKey,
       openButtonBuilder: RotateFloatingActionButtonBuilder(
         child: const Icon(Icons.add),
         fabSize: ExpandableFabSize.regular,
@@ -71,7 +64,7 @@ class ExpandableFloatingActionButton extends StatelessWidget {
       childrenAnimation: ExpandableFabAnimation.none,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: settingsController.themeMode == ThemeMode.light
+        color: context.watch<SettingsController>().themeMode == ThemeMode.light
             ? Colors.white.withOpacity(0.9)
             : Colors.black.withOpacity(0.9),
       ),

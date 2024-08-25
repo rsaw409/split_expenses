@@ -95,8 +95,17 @@ class _SettleViewState extends State<SettleView> {
         ],
       ),
       body: payments.isEmpty
-          ? const Center(
-              child: Text('All settle up!'),
+          ? Center(
+              child: FractionallySizedBox(
+                widthFactor: 0.5, // 50% of the parent's width
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: Image.asset(
+                    "assets/images/allSettle.webp",
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             )
           : ListView.separated(
               separatorBuilder: (context, index) {

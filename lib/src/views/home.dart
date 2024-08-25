@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:split_expense/src/settings/settings_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:split_expense/src/views/drawer.dart';
-import 'package:split_expense/src/views/group_view.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
 import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
 import '../models/group.dart';
+import '../services/connectivity_check.dart';
 import '../services/group_service.dart';
 import '../settings/groups_controller.dart';
+import 'expenses_view.dart';
+import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {
-  final SettingsController settingsController;
-  final GroupsController groupsController;
-
   const HomeView({
     super.key,
-    required this.settingsController,
-    required this.groupsController,
   });
 
   @override
@@ -25,10 +22,15 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> {
-  handleInvite(String? inviteId) {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  handleInvite(BuildContext context, String? inviteId) {
     if (inviteId != null) {
       joinGroupFromInviteId(inviteId).then((Group group) {
-        widget.groupsController.saveGroups(group);
+        context.read<GroupsController>().saveGroups(group);
         var snackBar = SnackBar(
           content: Text('Successfully joined ${group.name}.'),
         );
@@ -53,51 +55,49 @@ class HomeViewState extends State<HomeView> {
     }
   }
 
-  void inviteToJoinGroup(context) {
-    final groupName = widget.groupsController.selectedGroup['name'];
-    final inviteId = widget.groupsController.selectedGroup['inviteId'];
-    showInviteDialog(context, groupName, inviteId);
-  }
-
-  Future<void> leaveGroup(context) async {
-    final groupName = widget.groupsController.selectedGroup['name'];
-
-    widget.groupsController.removeCurrentGroup();
-
-    var snackBar = SnackBar(
-      content: Text('Successfully leave group: $groupName'),
-    );
-
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(snackBar);
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final groupsController = context.read<GroupsController>();
     return DefaultTabController(
       initialIndex: 1,
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: ListenableBuilder(
-            listenable: widget.groupsController,
-            builder: (BuildContext context, Widget? child) => Text(
-                widget.groupsController.selectedGroup['name'] ??
-                    'No Group Found'),
+          title: Consumer<GroupsController>(
+            builder: (_, groupsController, __) => Text(
+                groupsController.selectedGroup['name'] ?? 'No Group Found'),
           ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: PopupMenuButton<int>(
                 onSelected: (item) async {
-                  if (widget.groupsController.selectedGroup['name'] == null) {
+                  if (groupsController.selectedGroup['name'] == null) {
                     return;
                   }
                   if (item == 0) {
-                    inviteToJoinGroup(context);
+                    showInviteDialog(
+                      context,
+                      groupsController.selectedGroup['name'],
+                      groupsController.selectedGroup['inviteId'],
+                    );
                   } else if (item == 1) {
-                    await leaveGroup(context);
+                    final groupName = groupsController.selectedGroup['name'];
+
+                    groupsController.removeCurrentGroup();
+
+                    var snackBar = SnackBar(
+                      content: Text('Successfully leave group: $groupName'),
+                    );
+
+                    ScaffoldMessenger.of(context)
+                      ..removeCurrentSnackBar()
+                      ..showSnackBar(snackBar);
                   }
                 },
                 itemBuilder: (context) => [
@@ -119,23 +119,34 @@ class HomeViewState extends State<HomeView> {
             ],
           ),
         ),
-        drawer: ListenableBuilder(
-          listenable: widget.groupsController,
-          builder: (BuildContext context, Widget? child) => MyDrawer(
-            settingsController: widget.settingsController,
-            groupsController: widget.groupsController,
-          ),
-        ),
-        body: ListenableBuilder(
-          listenable: widget.groupsController,
-          builder: (BuildContext context, Widget? child) => TabBarScreen(
-            groupId: widget.groupsController.selectedGroup['id'],
-          ),
-        ),
+        drawer:
+            context.watch<InternetConnectivityHelper>().isConnectedToInternet
+                ? const MyDrawer()
+                : null,
+        body: !context.watch<InternetConnectivityHelper>().isConnectedToInternet
+            ? Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.5,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Image.asset(
+                      'assets/images/offline.webp',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              )
+            : const TabBarView(
+                children: <Widget>[
+                  OverviewView(),
+                  ExpensesView(),
+                ],
+              ),
         floatingActionButtonLocation: ExpandableFab.location,
-        floatingActionButton: ExpandableFloatingActionButton(
-            groupsController: widget.groupsController,
-            settingsController: widget.settingsController),
+        floatingActionButton:
+            context.watch<InternetConnectivityHelper>().isConnectedToInternet
+                ? const ExpandableFloatingActionButton()
+                : null,
       ),
     );
   }

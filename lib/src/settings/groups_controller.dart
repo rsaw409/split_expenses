@@ -14,6 +14,10 @@ class GroupsController extends ChangeNotifier {
 
   Map<String, dynamic> get selectedGroup => _selectedGroup;
 
+  void refresh() {
+    notifyListeners();
+  }
+
   set selectedGroup(Map<String, dynamic> g) {
     _selectedGroup = g;
     notifyListeners();
@@ -25,8 +29,6 @@ class GroupsController extends ChangeNotifier {
 
   Future<void> loadGroups() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // prefs.remove('groups');
     String? groups = prefs.getString('groups');
     if (groups != null) {
       _groups = jsonDecode(groups).cast<Map<String, dynamic>>();

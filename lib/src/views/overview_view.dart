@@ -1,31 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/backend.dart';
+import '../settings/groups_controller.dart';
 import 'settle_view.dart';
 import 'user_view.dart';
 
 class OverviewView extends StatelessWidget {
-  const OverviewView({super.key, required this.groupId});
-
-  final int? groupId;
+  const OverviewView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final groupId = context.watch<GroupsController>().selectedGroup['id'];
     return FutureBuilder(
       future: groupId == null
           ? Future.error(Exception('Please create or join a group'))
           : fetchUserBalances(groupId),
       builder: (context, snapshot) {
-        // WHEN THE CALL IS DONE BUT HAPPENS TO HAVE AN ERROR
         if (snapshot.hasError) {
           return Center(child: Text(snapshot.error.toString()));
         }
 
-        // WHILE THE CALL IS BEING MADE AKA LOADING
         if (!snapshot.hasData) {
           return const Center(child: Text('Loading'));
         }
 
-        // IF IT WORKS IT GOES HERE!
         return ListView.builder(
           itemCount: snapshot.data!.length + 1,
           itemBuilder: (context, index) {
@@ -59,8 +57,8 @@ class OverviewView extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (ctx) => UserView(
-                          groupId: groupId, userBalance: snapshot.data![index]),
+                      builder: (ctx) =>
+                          UserView(userBalance: snapshot.data![index]),
                     ),
                   );
                 },

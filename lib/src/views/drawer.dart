@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -11,12 +12,7 @@ import 'new_form.dart';
 class MyDrawer extends StatelessWidget {
   const MyDrawer({
     super.key,
-    required this.groupsController,
-    required this.settingsController,
   });
-
-  final GroupsController groupsController;
-  final SettingsController settingsController;
 
   void showDialog(context) async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -67,6 +63,9 @@ class MyDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settiingController = context.watch<SettingsController>();
+    final groupsController = context.watch<GroupsController>();
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -77,7 +76,6 @@ class MyDrawer extends StatelessWidget {
               margin: const EdgeInsets.all(0.0),
               padding: const EdgeInsets.all(0.0),
               child: ListTile(
-                // trailing: const Icon(Icons.edit),
                 title: const Text('Groups'),
                 onTap: () {},
               ),
@@ -102,8 +100,7 @@ class MyDrawer extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (ctx) => NewForm(
-                        groupsController: groupsController,
+                      builder: (ctx) => const NewForm(
                         saveButtonText: 'Join Group',
                         textFieldLabel: 'Invite Id',
                       ),
@@ -124,8 +121,7 @@ class MyDrawer extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (ctx) => NewForm(
-                        groupsController: groupsController,
+                      builder: (ctx) => const NewForm(
                         saveButtonText: 'Create Group',
                         textFieldLabel: 'Group Name',
                       ),
@@ -141,12 +137,13 @@ class MyDrawer extends StatelessWidget {
             trailing: Transform.scale(
               scale: 0.8,
               child: Switch(
-                value: settingsController.themeMode == ThemeMode.dark,
+                value: context.watch<SettingsController>().themeMode ==
+                    ThemeMode.dark,
                 onChanged: (val) {
                   if (val) {
-                    settingsController.updateThemeMode(ThemeMode.dark);
+                    settiingController.updateThemeMode(ThemeMode.dark);
                   } else {
-                    settingsController.updateThemeMode(ThemeMode.light);
+                    settiingController.updateThemeMode(ThemeMode.light);
                   }
                 },
               ),

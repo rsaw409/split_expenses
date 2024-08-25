@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:split_expense/src/services/backend.dart';
 import 'package:split_expense/src/views/single_expense_view.dart';
 
 import '../models/expense/expense.dart';
+import '../settings/groups_controller.dart';
 
 class ExpensesView extends StatelessWidget {
-  const ExpensesView(
-      {super.key,
-      required this.groupId,
-      this.userId,
-      this.byId,
-      this.isPayments});
-
-  final int? groupId;
+  const ExpensesView({super.key, this.userId, this.byId, this.isPayments});
 
   final int? userId, byId;
 
@@ -20,22 +15,21 @@ class ExpensesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final groupId = context.watch<GroupsController>().selectedGroup["id"];
+
     return FutureBuilder(
       future: groupId == null
           ? Future.error(Exception('Please create or join a group'))
           : fetchExpenses(groupId, userId, byId, isPayments),
       builder: (context, snapshot) {
-        // WHEN THE CALL IS DONE BUT HAPPENS TO HAVE AN ERROR
         if (snapshot.hasError) {
           return Center(child: Text(snapshot.error.toString()));
         }
 
-        // WHILE THE CALL IS BEING MADE AKA LOADING
         if (!snapshot.hasData) {
           return const Center(child: Text('Loading'));
         }
 
-        // IF IT WORKS IT GOES HERE!
         return ListView.separated(
           itemCount: snapshot.data?.length ?? 0,
           itemBuilder: (context, index) {

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../components/amount_distribution.dart';
 import '../models/user.dart';
 import '../services/backend.dart';
+import '../settings/groups_controller.dart';
 
 class NewExpense extends StatefulWidget {
-  final int? groupId;
-
-  const NewExpense({super.key, required this.groupId});
+  const NewExpense({super.key});
 
   @override
   State<NewExpense> createState() => _NewExpenseState();
@@ -31,7 +31,8 @@ class _NewExpenseState extends State<NewExpense> {
   }
 
   loadUser() async {
-    List<User> tmp = await getUsersInGroup(widget.groupId);
+    final groupId = context.read<GroupsController>().selectedGroup["id"];
+    List<User> tmp = await getUsersInGroup(groupId);
     setState(() {
       userOptions = tmp;
     });
@@ -108,6 +109,8 @@ class _NewExpenseState extends State<NewExpense> {
         ..showSnackBar(
           const SnackBar(content: Text('Expense Saved.')),
         );
+
+      context.read<GroupsController>().refresh();
       Navigator.pop(context);
     }).catchError((error) {
       ScaffoldMessenger.of(context)

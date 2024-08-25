@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';
@@ -8,19 +9,16 @@ import '../services/group_service.dart';
 import '../settings/groups_controller.dart';
 
 class NewForm extends StatefulWidget {
-  const NewForm(
-      {super.key,
-      required this.saveButtonText,
-      required this.textFieldLabel,
-      this.groupId,
-      this.groupsController,
-      this.inviteId});
+  const NewForm({
+    super.key,
+    required this.saveButtonText,
+    required this.textFieldLabel,
+    this.inviteId,
+  });
 
   final String saveButtonText;
   final String textFieldLabel;
 
-  final int? groupId;
-  final GroupsController? groupsController;
   final String? inviteId;
 
   @override
@@ -42,13 +40,15 @@ class _NewFormState extends State<NewForm> {
     myController.dispose();
   }
 
-  Future<void> addPersonInGroup(context) async {
-    final res = await addUserInGroup(widget.groupId, myController.text);
+  Future<void> addPersonInGroup(BuildContext context) async {
+    final groupId = context.read<GroupsController>().selectedGroup['id'];
+    final res = await addUserInGroup(groupId, myController.text);
     SnackBar snackBar;
     if (res == 'Success') {
       snackBar = SnackBar(
         content: Text('${myController.text} added in group.'),
       );
+      context.read<GroupsController>().refresh();
     } else {
       snackBar = const SnackBar(
         content: Text('something went wrong while adding person in group.'),
@@ -59,10 +59,11 @@ class _NewFormState extends State<NewForm> {
       ..showSnackBar(snackBar);
   }
 
-  Future<void> joinGroup(context) async {
+  Future<void> joinGroup(BuildContext context) async {
     //  Join a group
     Group group = await joinGroupFromInviteId(myController.text);
-    widget.groupsController?.saveGroups(group);
+
+    context.read<GroupsController>().saveGroups(group);
 
     Navigator.pop(context);
 
@@ -75,9 +76,8 @@ class _NewFormState extends State<NewForm> {
   }
 
   Future<void> createAndJoinGroup(context) async {
-    //  Create a group
     Group group = await createGroup(myController.text);
-    widget.groupsController?.saveGroups(group);
+    context.read<GroupsController>().saveGroups(group);
 
     Navigator.pop(context);
 
@@ -89,13 +89,14 @@ class _NewFormState extends State<NewForm> {
       ..showSnackBar(snackBar);
   }
 
-  Future _saveTextFieldValue(context) async {
+  Future _saveTextFieldValue(BuildContext context) async {
     try {
       if (myController.text.trim().isEmpty) {
         throw 'Field cannot be empty';
       }
 
-      if (widget.groupId != null) {
+      final groupId = context.read<GroupsController>().selectedGroup['id'];
+      if (groupId != null) {
         await addPersonInGroup(context);
       } else if (widget.saveButtonText == 'Join Group') {
         await joinGroup(context);
