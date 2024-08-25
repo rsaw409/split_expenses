@@ -48,12 +48,15 @@ class _NewFormState extends State<NewForm> {
       snackBar = SnackBar(
         content: Text('${myController.text} added in group.'),
       );
+      if (!context.mounted) return;
       context.read<GroupsController>().refresh();
     } else {
       snackBar = const SnackBar(
         content: Text('something went wrong while adding person in group.'),
       );
     }
+    if (!context.mounted) return;
+
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
       ..showSnackBar(snackBar);
@@ -63,8 +66,9 @@ class _NewFormState extends State<NewForm> {
     //  Join a group
     Group group = await joinGroupFromInviteId(myController.text);
 
-    context.read<GroupsController>().saveGroups(group);
+    if (!context.mounted) return;
 
+    context.read<GroupsController>().saveGroups(group);
     Navigator.pop(context);
 
     var snackBar = SnackBar(
@@ -108,6 +112,8 @@ class _NewFormState extends State<NewForm> {
       var snackBar = SnackBar(
         content: Text('$error'),
       );
+
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(snackBar);
