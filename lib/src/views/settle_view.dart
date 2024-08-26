@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../models/user_balance.dart';
 import '../services/backend.dart';
+import '../settings/allexpense_controller.dart';
 import '../settings/userbalances_controller.dart';
 
 class SettleView extends StatefulWidget {
@@ -73,6 +74,7 @@ class _SettleViewState extends State<SettleView> {
         );
 
       context.read<UserBalanceController>().refresh();
+      context.read<AllExpenseController>().refresh();
 
       Navigator.pop(context);
     }).catchError((error) {

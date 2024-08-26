@@ -55,7 +55,6 @@ class _NewFormState extends State<NewForm> {
         await addUserInGroup(groupId, myController.text);
 
         userBalanceController.refresh();
-
         snackBar = SnackBar(
           content: Text('${myController.text} added in group.'),
         );

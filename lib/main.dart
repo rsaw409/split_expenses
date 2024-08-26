@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:split_expense/src/settings/allexpense_controller.dart';
 
 import 'src/app.dart';
 import 'src/services/connectivity_check.dart';
@@ -26,6 +27,14 @@ void main() async {
             final groupsController = GroupsController();
             groupsController.loadGroups();
             return groupsController;
+          },
+        ),
+        ChangeNotifierProxyProvider<GroupsController, AllExpenseController>(
+          create: (context) => AllExpenseController(
+            context.read<GroupsController>().selectedGroup["id"],
+          ),
+          update: (context, groupsController, previousUserBalanceController) {
+            return AllExpenseController(groupsController.selectedGroup["id"]);
           },
         ),
         ChangeNotifierProxyProvider<GroupsController, UserBalanceController>(

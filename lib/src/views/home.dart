@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:split_expense/src/views/all_expenses_view.dart';
 import 'package:split_expense/src/views/drawer.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
@@ -9,7 +10,6 @@ import '../models/group.dart';
 import '../services/connectivity_check.dart';
 import '../services/group_service.dart';
 import '../settings/groups_controller.dart';
-import 'expenses_view.dart';
 import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -137,7 +137,7 @@ class HomeViewState extends State<HomeView> {
               return const TabBarView(
                 children: <Widget>[
                   OverviewView(),
-                  ExpensesView(),
+                  AllExpensesView(),
                 ],
               );
             } else {

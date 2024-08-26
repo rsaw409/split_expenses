@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../components/amount_distribution.dart';
 import '../models/user.dart';
 import '../services/backend.dart';
+import '../settings/allexpense_controller.dart';
 import '../settings/groups_controller.dart';
 import '../settings/userbalances_controller.dart';
 
@@ -112,6 +113,7 @@ class _NewExpenseState extends State<NewExpense> {
         );
 
       context.read<UserBalanceController>().refresh();
+      context.read<AllExpenseController>().refresh();
 
       Navigator.pop(context);
     }).catchError((error) {
