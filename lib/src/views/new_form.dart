@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/settings/userBalances_controller.dart';
+import 'package:split_expense/src/settings/userbalances_controller.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';

@@ -5,7 +5,7 @@ import 'src/app.dart';
 import 'src/services/connectivity_check.dart';
 import 'src/settings/groups_controller.dart';
 import 'src/settings/settings_controller.dart';
-import 'src/settings/userBalances_controller.dart';
+import 'src/settings/userbalances_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

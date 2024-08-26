@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/settings/userBalances_controller.dart';
+import 'package:split_expense/src/settings/userbalances_controller.dart';
 import '../models/user_balance.dart';
 import 'settle_view.dart';
 import 'user_view.dart';

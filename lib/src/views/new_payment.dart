@@ -5,7 +5,7 @@ import 'package:split_expense/src/models/user.dart';
 
 import '../services/backend.dart';
 import '../settings/groups_controller.dart';
-import '../settings/userBalances_controller.dart';
+import '../settings/userbalances_controller.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});

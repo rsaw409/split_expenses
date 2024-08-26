@@ -6,7 +6,7 @@ import '../components/amount_distribution.dart';
 import '../models/user.dart';
 import '../services/backend.dart';
 import '../settings/groups_controller.dart';
-import '../settings/userBalances_controller.dart';
+import '../settings/userbalances_controller.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
