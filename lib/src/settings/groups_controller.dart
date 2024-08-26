@@ -38,6 +38,8 @@ class GroupsController extends ChangeNotifier {
     if (storedSelectedGroup != null) {
       _selectedGroup = jsonDecode(storedSelectedGroup);
     }
+
+    notifyListeners();
   }
 
   Future<void> saveGroups(Group group) async {

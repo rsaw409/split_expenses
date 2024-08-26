@@ -63,14 +63,17 @@ class HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
+
     return DefaultTabController(
       initialIndex: 1,
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Consumer<GroupsController>(
-            builder: (_, groupsController, __) => Text(
-                groupsController.selectedGroup['name'] ?? 'No Group Found'),
+          title: Selector<GroupsController, Map<String, dynamic>>(
+            selector: (_, GroupsController groupsController) =>
+                groupsController.selectedGroup,
+            builder: (_, Map<String, dynamic> selectedGroup, __) =>
+                Text(selectedGroup['name'] ?? 'No Group Found'),
           ),
           actions: [
             Padding(
@@ -119,12 +122,26 @@ class HomeViewState extends State<HomeView> {
             ],
           ),
         ),
-        drawer:
-            context.watch<InternetConnectivityHelper>().isConnectedToInternet
-                ? const MyDrawer()
-                : null,
-        body: !context.watch<InternetConnectivityHelper>().isConnectedToInternet
-            ? Center(
+        drawer: Consumer<InternetConnectivityHelper>(
+          builder: (_, internetConnectivity, __) {
+            if (internetConnectivity.isConnectedToInternet) {
+              return const MyDrawer();
+            } else {
+              return const SizedBox.shrink();
+            }
+          },
+        ),
+        body: Consumer<InternetConnectivityHelper>(
+          builder: (_, internetConnectivity, __) {
+            if (internetConnectivity.isConnectedToInternet) {
+              return const TabBarView(
+                children: <Widget>[
+                  OverviewView(),
+                  ExpensesView(),
+                ],
+              );
+            } else {
+              return Center(
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
                   child: ClipRRect(
@@ -135,18 +152,20 @@ class HomeViewState extends State<HomeView> {
                     ),
                   ),
                 ),
-              )
-            : const TabBarView(
-                children: <Widget>[
-                  OverviewView(),
-                  ExpensesView(),
-                ],
-              ),
+              );
+            }
+          },
+        ),
         floatingActionButtonLocation: ExpandableFab.location,
-        floatingActionButton:
-            context.watch<InternetConnectivityHelper>().isConnectedToInternet
-                ? const ExpandableFloatingActionButton()
-                : null,
+        floatingActionButton: Consumer<InternetConnectivityHelper>(
+          builder: (_, internetConnectivity, __) {
+            if (internetConnectivity.isConnectedToInternet) {
+              return const ExpandableFloatingActionButton();
+            } else {
+              return const SizedBox.shrink();
+            }
+          },
+        ),
       ),
     );
   }

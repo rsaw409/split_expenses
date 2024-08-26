@@ -80,7 +80,7 @@ Future<String> addUserInGroup(groupId, userName) async {
   if (response.statusCode == 200) {
     return 'Success';
   } else {
-    return 'Failed';
+    throw Exception('Failed to add person in group');
   }
 }
 

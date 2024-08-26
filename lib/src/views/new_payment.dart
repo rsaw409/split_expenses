@@ -60,7 +60,7 @@ class _NewPaymentState extends State<NewPayment> {
           const SnackBar(content: Text('Expense Saved.')),
         );
 
-      context.watch<GroupsController>().refresh();
+      context.read<GroupsController>().refresh();
       Navigator.pop(context);
     }).catchError((error) {
       ScaffoldMessenger.of(context)

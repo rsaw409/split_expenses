@@ -40,76 +40,53 @@ class _NewFormState extends State<NewForm> {
     myController.dispose();
   }
 
-  Future<void> addPersonInGroup(BuildContext context) async {
-    final groupId = context.read<GroupsController>().selectedGroup['id'];
-    final res = await addUserInGroup(groupId, myController.text);
-    SnackBar snackBar;
-    if (res == 'Success') {
-      snackBar = SnackBar(
-        content: Text('${myController.text} added in group.'),
-      );
-      if (!context.mounted) return;
-      context.read<GroupsController>().refresh();
-    } else {
-      snackBar = const SnackBar(
-        content: Text('something went wrong while adding person in group.'),
-      );
-    }
-    if (!context.mounted) return;
-
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(snackBar);
-  }
-
-  Future<void> joinGroup(BuildContext context) async {
-    //  Join a group
-    Group group = await joinGroupFromInviteId(myController.text);
-
-    if (!context.mounted) return;
-
-    context.read<GroupsController>().saveGroups(group);
-    Navigator.pop(context);
-
-    var snackBar = SnackBar(
-      content: Text('Successfully joined ${group.name}.'),
-    );
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(snackBar);
-  }
-
-  Future<void> createAndJoinGroup(context) async {
-    Group group = await createGroup(myController.text);
-    context.read<GroupsController>().saveGroups(group);
-
-    Navigator.pop(context);
-
-    var snackBar = SnackBar(
-      content: Text('Successfully create group: ${group.name}.'),
-    );
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(snackBar);
-  }
-
-  Future _saveTextFieldValue(BuildContext context) async {
+  Future _saveTextFieldValue(
+      BuildContext context, GroupsController groupsController) async {
     try {
       if (myController.text.trim().isEmpty) {
         throw 'Field cannot be empty';
       }
 
-      final groupId = context.read<GroupsController>().selectedGroup['id'];
-      if (groupId != null) {
-        await addPersonInGroup(context);
+      SnackBar snackBar = const SnackBar(content: Text('No action performed.'));
+
+      if (widget.saveButtonText == 'Save person') {
+        final groupId = groupsController.selectedGroup['id'];
+        await addUserInGroup(groupId, myController.text);
+
+        groupsController.refresh();
+
+        snackBar = SnackBar(
+          content: Text('${myController.text} added in group.'),
+        );
       } else if (widget.saveButtonText == 'Join Group') {
-        await joinGroup(context);
+        Group group = await joinGroupFromInviteId(myController.text);
+        await groupsController.saveGroups(group);
+        snackBar = SnackBar(
+          content: Text(
+              'Successfully joined ${groupsController.selectedGroup["name"]}.'),
+        );
+        if (!context.mounted) return;
+        Navigator.pop(context);
       } else if (widget.saveButtonText == 'Create Group') {
-        await createAndJoinGroup(context);
+        Group group = await createGroup(myController.text);
+        await groupsController.saveGroups(group);
+        snackBar = SnackBar(
+          content: Text(
+              'Successfully create group: ${groupsController.selectedGroup["name"]}.'),
+        );
+        if (!context.mounted) return;
+        Navigator.pop(context);
       }
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(snackBar);
+
       return Future.value(true);
     } catch (error) {
-      var snackBar = SnackBar(
+      final snackBar = SnackBar(
         content: Text('$error'),
       );
 
@@ -128,7 +105,9 @@ class _NewFormState extends State<NewForm> {
         actions: [
           TextButton(
               onPressed: () {
-                _saveTextFieldValue(context).then((isSuccess) {
+                final groupsController = context.read<GroupsController>();
+                _saveTextFieldValue(context, groupsController)
+                    .then((isSuccess) {
                   if (isSuccess == true) {
                     Navigator.pop(context);
                   }

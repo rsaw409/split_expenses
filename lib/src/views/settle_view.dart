@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:split_expense/src/settings/groups_controller.dart';
 
 import '../models/user_balance.dart';
 import '../services/backend.dart';
@@ -61,7 +63,7 @@ class _SettleViewState extends State<SettleView> {
     }
   }
 
-  _savePayments() {
+  _savePayments(BuildContext context) {
     payments = payments.where((e) => e['selected']).toList();
     savePayments(payments).then((val) {
       ScaffoldMessenger.of(context)
@@ -69,6 +71,8 @@ class _SettleViewState extends State<SettleView> {
         ..showSnackBar(
           const SnackBar(content: Text('Expense Saved.')),
         );
+
+      context.read<GroupsController>().refresh();
       Navigator.pop(context);
     }).catchError((error) {
       ScaffoldMessenger.of(context)
@@ -86,7 +90,7 @@ class _SettleViewState extends State<SettleView> {
         actions: [
           if (payments.any((e) => e['selected']))
             TextButton(
-              onPressed: _savePayments,
+              onPressed: _savePayments(context),
               child: const Padding(
                 padding: EdgeInsets.only(right: 10),
                 child: Text('Save payments'),

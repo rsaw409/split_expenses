@@ -63,9 +63,6 @@ class MyDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settiingController = context.watch<SettingsController>();
-    final groupsController = context.watch<GroupsController>();
-
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -81,14 +78,24 @@ class MyDrawer extends StatelessWidget {
               ),
             ),
           ),
-          ...groupsController.groups.map((group) => ListTile(
-                title: Text(group['name']),
-                onTap: () {
-                  groupsController.selectedGroup = group;
-                  Navigator.pop(context);
-                },
-              )),
-          if (groupsController.groups.isNotEmpty) const Divider(),
+          Selector<GroupsController, List<Map<String, dynamic>>>(
+            selector: (_, GroupsController groupsController) =>
+                groupsController.groups,
+            builder: (_, groups, __) => Column(
+              children: [
+                ...groups.map(
+                  (group) => ListTile(
+                    title: Text(group['name']),
+                    onTap: () {
+                      context.read<GroupsController>().selectedGroup = group;
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                if (groups.isNotEmpty) const Divider(),
+              ],
+            ),
+          ),
           ListTile(
             leading: const Icon(Icons.group),
             title: const Text('Join group'),
@@ -136,16 +143,23 @@ class MyDrawer extends StatelessWidget {
             title: const Text('Dark Mode'),
             trailing: Transform.scale(
               scale: 0.8,
-              child: Switch(
-                value: context.watch<SettingsController>().themeMode ==
-                    ThemeMode.dark,
-                onChanged: (val) {
-                  if (val) {
-                    settiingController.updateThemeMode(ThemeMode.dark);
-                  } else {
-                    settiingController.updateThemeMode(ThemeMode.light);
-                  }
-                },
+              child: Selector<SettingsController, ThemeMode>(
+                selector: (_, SettingsController settingController) =>
+                    settingController.themeMode,
+                builder: (_, ThemeMode themeMode, __) => Switch(
+                  value: themeMode == ThemeMode.dark,
+                  onChanged: (val) {
+                    if (val) {
+                      context
+                          .read<SettingsController>()
+                          .updateThemeMode(ThemeMode.dark);
+                    } else {
+                      context
+                          .read<SettingsController>()
+                          .updateThemeMode(ThemeMode.light);
+                    }
+                  },
+                ),
               ),
             ),
           ),
