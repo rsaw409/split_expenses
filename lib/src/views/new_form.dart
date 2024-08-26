@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:split_expense/src/settings/userBalances_controller.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';
@@ -40,8 +41,8 @@ class _NewFormState extends State<NewForm> {
     myController.dispose();
   }
 
-  Future _saveTextFieldValue(
-      BuildContext context, GroupsController groupsController) async {
+  _saveTextFieldValue(BuildContext context, GroupsController groupsController,
+      UserBalanceController userBalanceController) async {
     try {
       if (myController.text.trim().isEmpty) {
         throw 'Field cannot be empty';
@@ -53,7 +54,7 @@ class _NewFormState extends State<NewForm> {
         final groupId = groupsController.selectedGroup['id'];
         await addUserInGroup(groupId, myController.text);
 
-        groupsController.refresh();
+        userBalanceController.refresh();
 
         snackBar = SnackBar(
           content: Text('${myController.text} added in group.'),
@@ -106,7 +107,10 @@ class _NewFormState extends State<NewForm> {
           TextButton(
               onPressed: () {
                 final groupsController = context.read<GroupsController>();
-                _saveTextFieldValue(context, groupsController)
+                final userBalanceController =
+                    context.read<UserBalanceController>();
+                _saveTextFieldValue(
+                        context, groupsController, userBalanceController)
                     .then((isSuccess) {
                   if (isSuccess == true) {
                     Navigator.pop(context);

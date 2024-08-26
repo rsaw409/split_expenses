@@ -9,9 +9,11 @@ import '../views/new_form.dart';
 import '../views/new_payment.dart';
 
 class ExpandableFloatingActionButton extends StatelessWidget {
-  const ExpandableFloatingActionButton({
+  ExpandableFloatingActionButton({
     super.key,
   });
+
+  final _key = GlobalKey<ExpandableFabState>();
 
   void _addNewPersonInGroup(BuildContext context) {
     if (context.read<GroupsController>().selectedGroup['id'] == null) {
@@ -25,7 +27,12 @@ class ExpandableFloatingActionButton extends StatelessWidget {
           textFieldLabel: 'Person Name',
         ),
       ),
-    );
+    ).then((_) {
+      final state = _key.currentState;
+      if (state != null) {
+        state.toggle();
+      }
+    });
   }
 
   void _addNewExpenseInGroup(BuildContext context) {
@@ -37,7 +44,12 @@ class ExpandableFloatingActionButton extends StatelessWidget {
       MaterialPageRoute(
         builder: (ctx) => const NewExpense(),
       ),
-    );
+    ).then((_) {
+      final state = _key.currentState;
+      if (state != null) {
+        state.toggle();
+      }
+    });
   }
 
   void _addNewPaymentInGroup(BuildContext context) {
@@ -49,12 +61,18 @@ class ExpandableFloatingActionButton extends StatelessWidget {
       MaterialPageRoute(
         builder: (ctx) => const NewPayment(),
       ),
-    );
+    ).then((_) {
+      final state = _key.currentState;
+      if (state != null) {
+        state.toggle();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return ExpandableFab(
+      key: _key,
       openButtonBuilder: RotateFloatingActionButtonBuilder(
         child: const Icon(Icons.add),
         fabSize: ExpandableFabSize.regular,

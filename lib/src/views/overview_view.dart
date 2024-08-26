@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/backend.dart';
-import '../settings/groups_controller.dart';
+import 'package:split_expense/src/settings/userBalances_controller.dart';
+import '../models/user_balance.dart';
 import 'settle_view.dart';
 import 'user_view.dart';
 
@@ -10,63 +10,57 @@ class OverviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groupId = context.watch<GroupsController>().selectedGroup['id'];
-    return FutureBuilder(
-      future: groupId == null
-          ? Future.error(Exception('Please create or join a group'))
-          : fetchUserBalances(groupId),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text(snapshot.error.toString()));
-        }
+    UserBalanceController userBalancesController =
+        context.watch<UserBalanceController>();
 
-        if (!snapshot.hasData) {
-          return const Center(child: Text('Loading'));
-        }
+    List<UserBalance> userBalances = userBalancesController.userBalances;
+    bool isError = userBalancesController.isError;
 
-        return ListView.builder(
-          itemCount: snapshot.data!.length + 1,
-          itemBuilder: (context, index) {
-            if (index == snapshot.data.length) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 14),
-                child: Center(
-                  child: Transform.scale(
-                    scale: 1.2,
-                    child: OutlinedButton(
-                      onPressed: () {
+    return isError
+        ? const Center(child: Text('Please create or join group.'))
+        : userBalances.isNotEmpty
+            ? ListView.builder(
+                itemCount: userBalances.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == userBalances.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Center(
+                        child: Transform.scale(
+                          scale: 1.2,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (ctx) =>
+                                      SettleView(userBalances: userBalances),
+                                ),
+                              );
+                            },
+                            child: const Text('Settle up'),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return ListTile(
+                      leading: const Icon(Icons.person_2_outlined),
+                      title: Text(userBalances[index].name),
+                      trailing: Text('INR ${userBalances[index].balances}'),
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (ctx) =>
-                                SettleView(userBalances: snapshot.data),
+                                UserView(userBalance: userBalances[index]),
                           ),
                         );
                       },
-                      child: const Text('Settle up'),
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              return ListTile(
-                leading: const Icon(Icons.person_2_outlined),
-                title: Text(snapshot.data?[index].name ?? ""),
-                trailing: Text('INR ${snapshot.data?[index].balances}'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (ctx) =>
-                          UserView(userBalance: snapshot.data![index]),
-                    ),
-                  );
+                    );
+                  }
                 },
-              );
-            }
-          },
-        );
-      },
-    );
+              )
+            : const SizedBox.shrink();
   }
 }

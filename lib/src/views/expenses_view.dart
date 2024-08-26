@@ -17,11 +17,11 @@ class ExpensesView extends StatelessWidget {
   Widget build(BuildContext context) {
     final groupId = context.watch<GroupsController>().selectedGroup["id"];
 
-    return FutureBuilder(
+    return FutureBuilder<List<Expense>>(
       future: groupId == null
           ? Future.error(Exception('Please create or join a group'))
           : fetchExpenses(groupId, userId, byId, isPayments),
-      builder: (context, snapshot) {
+      builder: (context, AsyncSnapshot<List<Expense>> snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text(snapshot.error.toString()));
         }

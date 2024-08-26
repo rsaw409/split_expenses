@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/settings/groups_controller.dart';
 
 import '../models/user_balance.dart';
 import '../services/backend.dart';
+import '../settings/userBalances_controller.dart';
 
 class SettleView extends StatefulWidget {
   const SettleView({super.key, required this.userBalances});
@@ -72,7 +72,8 @@ class _SettleViewState extends State<SettleView> {
           const SnackBar(content: Text('Expense Saved.')),
         );
 
-      context.read<GroupsController>().refresh();
+      context.read<UserBalanceController>().refresh();
+
       Navigator.pop(context);
     }).catchError((error) {
       ScaffoldMessenger.of(context)
@@ -90,7 +91,7 @@ class _SettleViewState extends State<SettleView> {
         actions: [
           if (payments.any((e) => e['selected']))
             TextButton(
-              onPressed: _savePayments(context),
+              onPressed: () => _savePayments(context),
               child: const Padding(
                 padding: EdgeInsets.only(right: 10),
                 child: Text('Save payments'),

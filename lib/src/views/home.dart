@@ -160,7 +160,7 @@ class HomeViewState extends State<HomeView> {
         floatingActionButton: Consumer<InternetConnectivityHelper>(
           builder: (_, internetConnectivity, __) {
             if (internetConnectivity.isConnectedToInternet) {
-              return const ExpandableFloatingActionButton();
+              return ExpandableFloatingActionButton();
             } else {
               return const SizedBox.shrink();
             }

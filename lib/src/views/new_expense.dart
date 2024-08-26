@@ -6,6 +6,7 @@ import '../components/amount_distribution.dart';
 import '../models/user.dart';
 import '../services/backend.dart';
 import '../settings/groups_controller.dart';
+import '../settings/userBalances_controller.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -110,7 +111,8 @@ class _NewExpenseState extends State<NewExpense> {
           const SnackBar(content: Text('Expense Saved.')),
         );
 
-      context.read<GroupsController>().refresh();
+      context.read<UserBalanceController>().refresh();
+
       Navigator.pop(context);
     }).catchError((error) {
       ScaffoldMessenger.of(context)

@@ -14,10 +14,6 @@ class GroupsController extends ChangeNotifier {
 
   Map<String, dynamic> get selectedGroup => _selectedGroup;
 
-  void refresh() {
-    notifyListeners();
-  }
-
   set selectedGroup(Map<String, dynamic> g) {
     _selectedGroup = g;
     notifyListeners();
