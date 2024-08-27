@@ -90,6 +90,20 @@ class HomeViewState extends State<HomeView> {
                       groupsController.selectedGroup['inviteId'],
                     );
                   } else if (item == 1) {
+                    final isConnectedToInternet = context
+                        .read<InternetConnectivityHelper>()
+                        .isConnectedToInternet;
+                    if (!isConnectedToInternet) {
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            content: Text('No Internet'),
+                          ),
+                        );
+                      return;
+                    }
+
                     final groupName = groupsController.selectedGroup['name'];
 
                     groupsController.removeCurrentGroup();
@@ -122,15 +136,7 @@ class HomeViewState extends State<HomeView> {
             ],
           ),
         ),
-        drawer: Consumer<InternetConnectivityHelper>(
-          builder: (_, internetConnectivity, __) {
-            if (internetConnectivity.isConnectedToInternet) {
-              return const MyDrawer();
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
-        ),
+        drawer: const MyDrawer(),
         body: Consumer<InternetConnectivityHelper>(
           builder: (_, internetConnectivity, __) {
             if (internetConnectivity.isConnectedToInternet) {

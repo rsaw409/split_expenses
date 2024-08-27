@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:split_expense/src/notify_controllers/connectivity_check.dart';
 import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
 import '../models/group.dart';
@@ -105,6 +106,19 @@ class _NewFormState extends State<NewForm> {
         actions: [
           TextButton(
               onPressed: () {
+                final isConnectedToInternet = context
+                    .read<InternetConnectivityHelper>()
+                    .isConnectedToInternet;
+                if (!isConnectedToInternet) {
+                  ScaffoldMessenger.of(context)
+                    ..removeCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(
+                        content: Text('No Internet'),
+                      ),
+                    );
+                  return;
+                }
                 final groupsController = context.read<GroupsController>();
                 final userBalanceController =
                     context.read<UserBalanceController>();
