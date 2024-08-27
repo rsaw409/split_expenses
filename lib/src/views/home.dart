@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/views/all_expenses_view.dart';
-import 'package:split_expense/src/views/drawer.dart';
+import 'package:split_expense/src/components/drawer.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
 import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
 import '../models/group.dart';
-import '../services/connectivity_check.dart';
+import '../notify_controllers/connectivity_check.dart';
 import '../services/group_service.dart';
-import '../settings/groups_controller.dart';
+import '../notify_controllers/groups_controller.dart';
 import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {

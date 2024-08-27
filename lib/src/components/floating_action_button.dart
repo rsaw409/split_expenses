@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:provider/provider.dart';
 
-import '../settings/groups_controller.dart';
-import '../settings/settings_controller.dart';
+import '../notify_controllers/groups_controller.dart';
+import '../notify_controllers/settings_controller.dart';
 import '../views/new_expense.dart';
 import '../views/new_form.dart';
 import '../views/new_payment.dart';

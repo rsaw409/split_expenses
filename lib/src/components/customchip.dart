@@ -38,7 +38,7 @@ class CustomChip extends StatelessWidget {
               // Show border when selected
               foregroundColor: selected ? Colors.orange : Colors.transparent,
               backgroundColor:
-                  selected ? Colors.orange.withOpacity(0.2) : Colors.grey[200],
+                  selected ? Colors.purple.withOpacity(0.2) : Colors.grey[200],
               child: Center(
                 child: Text(
                   _getInitials(label),

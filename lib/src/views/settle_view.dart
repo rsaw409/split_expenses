@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../models/user_balance.dart';
 import '../services/backend.dart';
-import '../settings/allexpense_controller.dart';
-import '../settings/userbalances_controller.dart';
+import '../notify_controllers/allexpense_controller.dart';
+import '../notify_controllers/userbalances_controller.dart';
 
 class SettleView extends StatefulWidget {
   const SettleView({super.key, required this.userBalances});

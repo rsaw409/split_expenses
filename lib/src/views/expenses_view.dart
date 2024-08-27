@@ -4,7 +4,7 @@ import 'package:split_expense/src/services/backend.dart';
 import 'package:split_expense/src/views/single_expense_view.dart';
 
 import '../models/expense/expense.dart';
-import '../settings/groups_controller.dart';
+import '../notify_controllers/groups_controller.dart';
 
 class ExpensesView extends StatelessWidget {
   const ExpensesView({super.key, this.userId, this.byId, this.isPayments});

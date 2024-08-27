@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/settings/userbalances_controller.dart';
+import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
 import '../models/group.dart';
 import '../services/backend.dart';
 import '../services/group_service.dart';
-import '../settings/groups_controller.dart';
+import '../notify_controllers/groups_controller.dart';
 
 class NewForm extends StatefulWidget {
   const NewForm({

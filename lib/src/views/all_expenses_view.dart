@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:split_expense/src/views/single_expense_view.dart';
 
 import '../models/expense/expense.dart';
-import '../settings/allexpense_controller.dart';
+import '../notify_controllers/allexpense_controller.dart';
 
 class AllExpensesView extends StatelessWidget {
   const AllExpensesView({super.key});

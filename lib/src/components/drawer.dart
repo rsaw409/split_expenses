@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../settings/groups_controller.dart';
-import '../settings/settings_controller.dart';
-import 'new_form.dart';
+import '../notify_controllers/groups_controller.dart';
+import '../notify_controllers/settings_controller.dart';
+import '../views/new_form.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({
@@ -19,11 +19,10 @@ class MyDrawer extends StatelessWidget {
 
     String appName = packageInfo.appName;
     String version = packageInfo.version;
-    String buildNumber = packageInfo.buildNumber;
 
     showAboutDialog(
         context: context,
-        applicationVersion: '$version+$buildNumber',
+        applicationVersion: version,
         applicationName: appName,
         applicationIcon: Image.asset(
           'assets/images/split.webp',

@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:split_expense/src/models/user.dart';
 
 import '../services/backend.dart';
-import '../settings/allexpense_controller.dart';
-import '../settings/groups_controller.dart';
-import '../settings/userbalances_controller.dart';
+import '../notify_controllers/allexpense_controller.dart';
+import '../notify_controllers/groups_controller.dart';
+import '../notify_controllers/userbalances_controller.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});

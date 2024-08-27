@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/settings/allexpense_controller.dart';
+import 'package:split_expense/src/notify_controllers/allexpense_controller.dart';
 
 import 'src/app.dart';
-import 'src/services/connectivity_check.dart';
-import 'src/settings/groups_controller.dart';
-import 'src/settings/settings_controller.dart';
-import 'src/settings/userbalances_controller.dart';
+import 'src/notify_controllers/connectivity_check.dart';
+import 'src/notify_controllers/groups_controller.dart';
+import 'src/notify_controllers/settings_controller.dart';
+import 'src/notify_controllers/userbalances_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

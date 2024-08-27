@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/views/home.dart';
 
-import 'settings/settings_controller.dart';
+import 'notify_controllers/settings_controller.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({
@@ -20,7 +20,11 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [
         Locale('en', ''),
       ],
-      theme: ThemeData(),
+      theme: ThemeData(
+        appBarTheme: AppBarTheme(backgroundColor: Colors.deepPurple.shade50),
+        drawerTheme:
+            DrawerThemeData(backgroundColor: Colors.deepPurple.shade50),
+      ),
       darkTheme: ThemeData.dark(),
       themeMode: context.watch<SettingsController>().themeMode,
       initialRoute: '/',
