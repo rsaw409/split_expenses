@@ -92,6 +92,8 @@ class _NewExpenseState extends State<NewExpense> {
     }
 
     Map<String, dynamic> transaction = {};
+    transaction['groupName'] =
+        context.read<GroupsController>().selectedGroup["name"];
     transaction['by'] = by;
     transaction['title'] = title;
     transaction['totalAmount'] = totalAmount;

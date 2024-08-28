@@ -54,7 +54,12 @@ class _NewPaymentState extends State<NewPayment> {
         const SnackBar(content: Text('Saving Payment.')),
       );
 
-    Map<String, dynamic> payment = {"amount": amount, "from": from, "to": to};
+    Map<String, dynamic> payment = {
+      "amount": amount,
+      "from": from,
+      "to": to,
+      "groupName": context.read<GroupsController>().selectedGroup["name"]
+    };
     savePayment(payment).then((val) {
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()

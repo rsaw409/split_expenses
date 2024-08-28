@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "601173186872",
+    "project_id": "portfolio-rsaw409",
+    "storage_bucket": "portfolio-rsaw409.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:601173186872:android:65244c9cd69a02123fc9cd",
+        "android_client_info": {
+          "package_name": "developer.rohitsaw.split"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "601173186872-r5hm82k8q0gtigeg8aj5jtbb2l2ui7gm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABRLIp077c10dL3n9ojadA2SFLI5g4VpM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "601173186872-r5hm82k8q0gtigeg8aj5jtbb2l2ui7gm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

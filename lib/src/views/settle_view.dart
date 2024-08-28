@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 
 import '../models/user_balance.dart';
 import '../services/backend.dart';
@@ -51,7 +52,8 @@ class _SettleViewState extends State<SettleView> {
           'to': positive[j]['user_id'],
           'toName': positive[j]['name'],
           'amount': maximumPayment,
-          'selected': false
+          'selected': false,
+          'groupName': context.read<GroupsController>().selectedGroup["name"]
         });
 
         negative[i]['balances'] += maximumPayment;

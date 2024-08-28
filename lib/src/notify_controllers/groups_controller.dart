@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/group.dart';
@@ -43,6 +44,8 @@ class GroupsController extends ChangeNotifier {
         _groups.where((oldElement) => oldElement['id'] == group.id).isEmpty;
 
     if (isNotPresent == true) {
+      // OneSignal.login("externalUserId");
+      OneSignal.User.addTagWithKey('group: ${group.name}', "true");
       _groups.add(group.toMap());
     }
 
@@ -58,6 +61,9 @@ class GroupsController extends ChangeNotifier {
 
   Future<void> removeCurrentGroup() async {
     final groupid = _selectedGroup['id'];
+    final groupName = _selectedGroup["name"];
+
+    OneSignal.User.removeTag('group: $groupName');
     _groups.removeWhere((oldElement) => oldElement['id'] == groupid);
 
     _selectedGroup = (_groups.isNotEmpty) ? groups.first : {};
