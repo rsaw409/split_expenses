@@ -111,7 +111,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
       key: _formKey,
       child: SafeArea(
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.8,
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 48,
             top: 16,
