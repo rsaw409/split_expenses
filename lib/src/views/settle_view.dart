@@ -36,30 +36,35 @@ class _SettleViewState extends State<SettleView> {
     negative.sort((a, b) => a['balances'] - b['balances']);
 
     int i = 0;
+    int j = 0;
+
     while (i < negative.length) {
-      if (negative[i]['balances'] == 0) continue;
+      if (negative[i]['balances'] < 0) {
+        while (j < positive.length) {
+          int maximumPayment =
+              min(positive[j]['balances'], -negative[i]['balances']);
 
-      int j = 0;
-      while (j < positive.length) {
-        if (positive[j]['balances'] == 0) continue;
+          payments.add({
+            'from': negative[i]['user_id'],
+            'fromName': negative[i]['name'],
+            'to': positive[j]['user_id'],
+            'toName': positive[j]['name'],
+            'amount': maximumPayment,
+            'selected': false,
+            'groupName': context.read<GroupsController>().selectedGroup["name"]
+          });
 
-        int maximumPayment =
-            min(positive[j]['balances'], -negative[i]['balances']);
+          negative[i]['balances'] += maximumPayment;
+          positive[j]['balances'] -= maximumPayment;
 
-        payments.add({
-          'from': negative[i]['user_id'],
-          'fromName': negative[i]['name'],
-          'to': positive[j]['user_id'],
-          'toName': positive[j]['name'],
-          'amount': maximumPayment,
-          'selected': false,
-          'groupName': context.read<GroupsController>().selectedGroup["name"]
-        });
+          if (negative[i]['balances'] == 0) break;
+          if (positive[j]['balances'] == 0) {
+            j += 1;
+            continue;
+          }
 
-        negative[i]['balances'] += maximumPayment;
-        positive[j]['balances'] -= maximumPayment;
-
-        j += 1;
+          j += 1;
+        }
       }
 
       i += 1;
