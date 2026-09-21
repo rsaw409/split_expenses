@@ -5,6 +5,7 @@ import '../models/user.dart';
 import '../models/user_balance.dart';
 import '../models/expense/expense.dart';
 
+import './api_exception.dart';
 import './server.dart';
 
 Future<List<Expense>> fetchExpenses(groupId, userId, byId, isPayments) async {
@@ -33,7 +34,7 @@ Future<List<Expense>> fetchExpenses(groupId, userId, byId, isPayments) async {
 
     return expenses;
   } else {
-    throw Exception('Failed to load Expenses');
+    throw apiExceptionFrom(response, 'Failed to load expenses.');
   }
 }
 
@@ -60,7 +61,7 @@ Future<List<UserBalance>> fetchUserBalances(groupId) async {
 
     return users;
   } else {
-    throw Exception('Failed to load User Profile');
+    throw apiExceptionFrom(response, 'Failed to load balances.');
   }
 }
 
@@ -80,7 +81,7 @@ Future<String> addUserInGroup(groupId, userName) async {
   if (response.statusCode == 200) {
     return 'Success';
   } else {
-    throw Exception('Failed to add person in group');
+    throw apiExceptionFrom(response, 'Failed to add person to group.');
   }
 }
 
@@ -106,7 +107,7 @@ Future<List<User>> getUsersInGroup(groupId) async {
     }
     return users;
   } else {
-    throw Exception('Failed to create group details in Server');
+    throw apiExceptionFrom(response, 'Failed to load people in this group.');
   }
 }
 
@@ -124,7 +125,7 @@ Future<String> saveTransaction(transaction) async {
   if (response.statusCode == 200) {
     return 'success';
   } else {
-    throw Exception('Failed to save expense details in Server');
+    throw apiExceptionFrom(response, 'Failed to save expense.');
   }
 }
 
@@ -142,7 +143,7 @@ Future<String> savePayment(Map<String, dynamic> payment) async {
   if (response.statusCode == 200) {
     return 'success';
   } else {
-    throw Exception('Failed to save expense details in Server');
+    throw apiExceptionFrom(response, 'Failed to save payment.');
   }
 }
 
@@ -160,6 +161,6 @@ Future<String> savePayments(List<Map<String, dynamic>> payments) async {
   if (response.statusCode == 200) {
     return 'success';
   } else {
-    throw Exception('Failed to save expense details in Server');
+    throw apiExceptionFrom(response, 'Failed to save payments.');
   }
 }

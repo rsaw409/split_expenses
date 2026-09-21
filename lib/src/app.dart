@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:split_expense/src/views/home.dart';
 
 import 'notify_controllers/settings_controller.dart';
+import 'theme/app_scroll_behavior.dart';
+import 'theme/app_theme.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({
@@ -20,13 +22,10 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [
         Locale('en', ''),
       ],
-      theme: ThemeData(
-        appBarTheme: AppBarTheme(backgroundColor: Colors.deepPurple.shade50),
-        drawerTheme:
-            DrawerThemeData(backgroundColor: Colors.deepPurple.shade50),
-      ),
-      darkTheme: ThemeData.dark(),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       themeMode: context.watch<SettingsController>().themeMode,
+      scrollBehavior: const AppScrollBehavior(),
       initialRoute: '/',
       routes: {
         '/': (context) => HomeView(

@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../models/group.dart';
+import './api_exception.dart';
 import "./server.dart";
 
 Future<Group> joinGroupFromInviteId(inviteId) async {
@@ -21,8 +22,7 @@ Future<Group> joinGroupFromInviteId(inviteId) async {
     final group = Group.fromJson(jsonDecode(response.body));
     return group;
   } else {
-    // return const Group(id: 1, name: "test", inviteId: "randomtest");
-    throw Exception('Failed to get group details from Server');
+    throw apiExceptionFrom(response, 'Invalid or expired invite code.');
   }
 }
 
@@ -42,6 +42,6 @@ Future<Group> createGroup(groupName) async {
   if (response.statusCode == 200) {
     return Group.fromJson(jsonDecode(response.body));
   } else {
-    throw Exception('Failed to create group details in Server');
+    throw apiExceptionFrom(response, 'Failed to create group.');
   }
 }

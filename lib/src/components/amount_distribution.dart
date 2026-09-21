@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:split_expense/src/components/customchip.dart';
 
 import '../models/user.dart';
+import '../theme/app_theme.dart';
+import '../utils/currency.dart';
 
 void showAmountDistributionModal(
     BuildContext context,
@@ -48,6 +50,18 @@ class AmountDistributionModal extends StatefulWidget {
       _AmountDistributionModalState();
 }
 
+/// Splits [totalCents] into [count] shares that sum to exactly [totalCents].
+/// Cents that don't divide evenly are handed one-by-one to the first few
+/// shares, so at most a few participants carry an extra paisa/rupee instead
+/// of the split silently failing to add up.
+List<int> _splitCentsEqually(int totalCents, int count) {
+  if (count <= 0) return const [];
+  if (totalCents <= 0) return List.filled(count, 0);
+  final base = totalCents ~/ count;
+  final remainder = totalCents % count;
+  return List.generate(count, (i) => base + (i < remainder ? 1 : 0));
+}
+
 class _AmountDistributionModalState extends State<AmountDistributionModal> {
   final _formKey = GlobalKey<FormState>();
   String? _errorMessage;
@@ -60,7 +74,8 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
     selectedUsers = widget.selectedUsers;
     for (var user in selectedUsers) {
       user['controller'] = TextEditingController();
-      user['controller'].text = user['amount'].round().toString();
+      user['controller'].text =
+          paiseToText(amountToPaise(user['amount'] as num));
     }
   }
 
@@ -72,36 +87,20 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
     super.dispose();
   }
 
-  void onAmountChange(controller) {
-    double totalAmount = widget.totalAmount;
+  void onAmountChange(TextEditingController controller) {
+    final editedCents = amountToPaise(double.tryParse(controller.text) ?? 0);
+    controller.text = paiseToText(editedCents);
 
-    double totalClaimAmount = 0.0;
-    for (var each in selectedUsers) {
-      totalClaimAmount += double.tryParse(each['controller'].text) ?? 0;
-    }
+    final others = selectedUsers
+        .where((each) => each['controller'] != controller)
+        .toList();
+    if (others.isEmpty) return;
 
-    if (totalClaimAmount > totalAmount) {
-      double diff = totalClaimAmount - totalAmount;
+    final remainingCents = amountToPaise(widget.totalAmount) - editedCents;
+    final shares = _splitCentsEqually(remainingCents, others.length);
 
-      diff = (diff / (selectedUsers.length - 1));
-
-      for (var each in selectedUsers) {
-        if (each['controller'] != controller) {
-          var oldValue = double.tryParse(each['controller'].text) ?? 0;
-
-          each['controller'].text = (oldValue - diff).round().toString();
-        }
-      }
-    } else if (totalClaimAmount < totalAmount) {
-      double diff = totalAmount - totalClaimAmount;
-
-      diff = (diff / (selectedUsers.length - 1));
-      for (var each in selectedUsers) {
-        if (each['controller'] != controller) {
-          var oldValue = double.tryParse(each['controller'].text) ?? 0;
-          each['controller'].text = (oldValue + diff).round().toString();
-        }
-      }
+    for (var i = 0; i < others.length; i++) {
+      others[i]['controller'].text = paiseToText(shares[i]);
     }
   }
 
@@ -113,44 +112,51 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
         child: Container(
           height: MediaQuery.of(context).size.height * 0.8,
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 48,
-            top: 16,
-            left: 16,
-            right: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.xl,
+            top: AppSpacing.md,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                'Distribute Amount',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                'Split amount',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               Expanded(
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     Column(
                       children: selectedUsers.map((user) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.xs),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(user["name"]),
+                              Expanded(
+                                child: Text(
+                                  user["name"],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
                               SizedBox(
-                                width: 100,
+                                width: 120,
                                 child: TextFormField(
                                   controller: user['controller'],
                                   keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.end,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(
                                         RegExp(r'^\d*\.?\d+')),
                                   ],
                                   decoration: const InputDecoration(
-                                    labelText: 'INR',
-                                    border: OutlineInputBorder(),
+                                    prefixText: '₹ ',
                                   ),
                                   onEditingComplete: () {
                                     onAmountChange(user['controller']);
@@ -181,36 +187,37 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               if (_errorMessage != null) ...[
-                const SizedBox(height: 8),
                 Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
+                const SizedBox(height: AppSpacing.sm),
               ],
-              ElevatedButton(
+              FilledButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    double total = 0;
-                    for (var each in selectedUsers) {
-                      total += double.tryParse(each['controller'].text)!;
-                    }
+                    final totalCents = amountToPaise(widget.totalAmount);
+                    final enteredCents = [
+                      for (final each in selectedUsers)
+                        amountToPaise(double.parse(each['controller'].text)),
+                    ];
+                    final sumCents =
+                        enteredCents.fold<int>(0, (a, b) => a + b);
 
-                    if (total == widget.totalAmount) {
-                      for (var each in selectedUsers) {
-                        each['amount'] =
-                            double.tryParse(each['controller'].text);
-
-                        // each['controller']?.dispose();
-                        // each.remove('controller');
+                    if (sumCents == totalCents) {
+                      for (var i = 0; i < selectedUsers.length; i++) {
+                        selectedUsers[i]['amount'] = enteredCents[i] / 100;
                       }
                       widget.onSubmitSelectedUser(selectedUsers);
                       Navigator.pop(context);
                     } else {
+                      final diffCents = totalCents - sumCents;
                       setState(() {
-                        _errorMessage =
-                            'Total distribution is ${total.round().toString()}. It must equal be ${widget.totalAmount}';
+                        _errorMessage = diffCents > 0
+                            ? '${paiseToText(diffCents)} left to distribute.'
+                            : '${paiseToText(-diffCents)} over the total amount.';
                       });
                     }
                   }
@@ -223,12 +230,14 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                   onChanged: (val) => setState(
                     () {
                       selectedUsers = val;
-                      for (var user in selectedUsers) {
+                      final shares = _splitCentsEqually(
+                        amountToPaise(widget.totalAmount),
+                        selectedUsers.length,
+                      );
+                      for (var i = 0; i < selectedUsers.length; i++) {
+                        final user = selectedUsers[i];
                         user['controller'] ??= TextEditingController();
-                        user['controller'].text =
-                            (widget.totalAmount / selectedUsers.length)
-                                .round()
-                                .toString();
+                        user['controller'].text = paiseToText(shares[i]);
                       }
                     },
                   ),
@@ -246,7 +255,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                       onSelect: item.select!,
                     );
                   },
-                )
+                ),
             ],
           ),
         ),

@@ -44,7 +44,6 @@ class GroupsController extends ChangeNotifier {
         _groups.where((oldElement) => oldElement['id'] == group.id).isEmpty;
 
     if (isNotPresent == true) {
-      // OneSignal.login("externalUserId");
       OneSignal.User.addTagWithKey('group: ${group.name}', "true");
       _groups.add(group.toMap());
     }

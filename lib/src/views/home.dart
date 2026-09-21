@@ -10,6 +10,7 @@ import '../models/group.dart';
 import '../notify_controllers/connectivity_check.dart';
 import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
+import '../theme/app_theme.dart';
 import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -22,14 +23,10 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   handleInvite(BuildContext context, String? inviteId) {
     if (inviteId != null) {
       joinGroupFromInviteId(inviteId).then((Group group) {
+        if (!context.mounted) return;
         context.read<GroupsController>().saveGroups(group);
         var snackBar = SnackBar(
           content: Text('Successfully joined ${group.name}.'),
@@ -38,6 +35,7 @@ class HomeViewState extends State<HomeView> {
           ..removeCurrentSnackBar()
           ..showSnackBar(snackBar);
       }).catchError((error) {
+        if (!context.mounted) return;
         var snackBar = const SnackBar(
           content: Text('Failed to join group'),
         );
@@ -56,11 +54,6 @@ class HomeViewState extends State<HomeView> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
 
@@ -72,8 +65,11 @@ class HomeViewState extends State<HomeView> {
           title: Selector<GroupsController, Map<String, dynamic>>(
             selector: (_, GroupsController groupsController) =>
                 groupsController.selectedGroup,
-            builder: (_, Map<String, dynamic> selectedGroup, __) =>
-                Text(selectedGroup['name'] ?? 'No Group Found'),
+            builder: (_, Map<String, dynamic> selectedGroup, __) => Text(
+              selectedGroup['name'] ?? 'No Group Found',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           actions: [
             Padding(
@@ -127,12 +123,8 @@ class HomeViewState extends State<HomeView> {
           ],
           bottom: const TabBar(
             tabs: <Widget>[
-              Tab(
-                icon: Text('Overview'),
-              ),
-              Tab(
-                icon: Text('Expenses'),
-              ),
+              Tab(text: 'Overview'),
+              Tab(text: 'Expenses'),
             ],
           ),
         ),
@@ -148,14 +140,35 @@ class HomeViewState extends State<HomeView> {
               );
             } else {
               return Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.5,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: Image.asset(
-                      'assets/images/offline.webp',
-                      fit: BoxFit.cover,
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FractionallySizedBox(
+                        widthFactor: 0.5,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          child: Image.asset(
+                            'assets/images/offline.webp',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        "You're offline",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Check your connection to keep using Split.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
               );

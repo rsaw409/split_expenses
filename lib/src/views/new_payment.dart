@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/models/user.dart';
 
+import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
+import '../theme/app_theme.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});
@@ -16,43 +18,16 @@ class NewPayment extends StatefulWidget {
 }
 
 class _NewPaymentState extends State<NewPayment> {
+  final _formKey = GlobalKey<FormState>();
+
   List<User> userOptions = [];
   int? from;
   int? to;
   double? amount;
+  bool _isSaving = false;
 
-  void formIsValid() {
-    if (amount == null) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please enter amount.')),
-        );
-      return;
-    }
-    if (from == null) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please select who paid.')),
-        );
-      return;
-    }
-
-    if (to == null) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please select a receiver.')),
-        );
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Saving Payment.')),
-      );
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     Map<String, dynamic> payment = {
       "amount": amount,
@@ -60,24 +35,37 @@ class _NewPaymentState extends State<NewPayment> {
       "to": to,
       "groupName": context.read<GroupsController>().selectedGroup["name"]
     };
-    savePayment(payment).then((val) {
+
+    setState(() => _isSaving = true);
+
+    try {
+      await savePayment(payment);
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Expense Saved.')),
+          const SnackBar(content: Text('Payment saved.')),
         );
 
       context.read<UserBalanceController>().refresh();
       context.read<AllExpenseController>().refresh();
 
       Navigator.pop(context);
-    }).catchError((error) {
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Something went wrong.')),
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Could not save payment. Check your connection and try again.',
+            ),
+          ),
         );
-    });
+    }
   }
 
   @override
@@ -90,6 +78,7 @@ class _NewPaymentState extends State<NewPayment> {
   loadUser() async {
     final groupId = context.read<GroupsController>().selectedGroup['id'];
     List<User> tmp = await getUsersInGroup(groupId);
+    if (!mounted) return;
     setState(() {
       userOptions = tmp;
     });
@@ -108,112 +97,92 @@ class _NewPaymentState extends State<NewPayment> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text('New payment'),
         actions: [
-          TextButton(
-              onPressed: formIsValid,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Text('SAVE'),
-              ))
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: TextButton(
+              onPressed: _isSaving ? null : _submit,
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('SAVE'),
+            ),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 50, right: 50),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Amount'),
-                const SizedBox(
-                  width: 100,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              TextFormField(
+                onChanged: (value) => setState(() {
+                  amount = double.tryParse(value);
+                }),
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '₹ ',
                 ),
-                Expanded(
-                  child: TextFormField(
-                    onChanged: (value) => {
-                      setState(() {
-                        amount = double.tryParse(value);
-                      })
-                    },
-                    autofocus: true,
-                    textAlign: TextAlign.right,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Expense Amount',
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('From'),
-                const Expanded(flex: 2, child: SizedBox()),
-                Expanded(
-                  child: DropdownButtonFormField(
-                    isExpanded: true,
-                    icon: const Icon(Icons.arrow_downward),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        if (newValue != null) from = int.tryParse(newValue);
-                      });
-                    },
-                    focusColor: Colors.transparent,
-                    // dropdownColor: Colors.white,
-                    items: getUserOptions(fromOption: true).map((user) {
-                      return DropdownMenuItem(
-                        value: "${user.id}",
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Text(user.name),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('To'),
-                const Expanded(flex: 2, child: SizedBox()),
-                Expanded(
-                  child: DropdownButtonFormField(
-                    isExpanded: true,
-                    icon: const Icon(Icons.arrow_downward),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        if (newValue != null) to = int.tryParse(newValue);
-                      });
-                    },
-                    focusColor: Colors.transparent,
-                    items: getUserOptions(toOptions: true).map((user) {
-                      return DropdownMenuItem(
-                        value: "${user.id}",
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Text(user.name),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d+\.?\d{0,2}')),
+                ],
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter amount.';
+                  }
+                  if (double.tryParse(value) == null ||
+                      double.parse(value) <= 0) {
+                    return 'Enter a valid amount.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'From'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    if (newValue != null) from = int.tryParse(newValue);
+                  });
+                },
+                items: getUserOptions(fromOption: true).map((user) {
+                  return DropdownMenuItem(
+                    value: "${user.id}",
+                    child: Text(user.name, overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+                validator: (_) =>
+                    from == null ? 'Please select who paid.' : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'To'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    if (newValue != null) to = int.tryParse(newValue);
+                  });
+                },
+                items: getUserOptions(toOptions: true).map((user) {
+                  return DropdownMenuItem(
+                    value: "${user.id}",
+                    child: Text(user.name, overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+                validator: (_) =>
+                    to == null ? 'Please select a receiver.' : null,
+              ),
+            ],
+          ),
         ),
       ),
     );

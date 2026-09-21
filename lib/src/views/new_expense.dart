@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../components/amount_distribution.dart';
 import '../models/user.dart';
+import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
+import '../theme/app_theme.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -17,13 +19,16 @@ class NewExpense extends StatefulWidget {
 }
 
 class _NewExpenseState extends State<NewExpense> {
+  final _formKey = GlobalKey<FormState>();
+
   int? by;
   String? title;
   double? totalAmount;
-  List<Map<String, dynamic>>? transactionParts;
 
   List<User> userOptions = [];
   List<Map<String, dynamic>> selectedUsers = [];
+
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -35,37 +40,14 @@ class _NewExpenseState extends State<NewExpense> {
   loadUser() async {
     final groupId = context.read<GroupsController>().selectedGroup["id"];
     List<User> tmp = await getUsersInGroup(groupId);
+    if (!mounted) return;
     setState(() {
       userOptions = tmp;
     });
   }
 
-  formIsValid() async {
-    if (title == null || title!.trim().isEmpty) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Expense title cannot be empty.')),
-        );
-      return;
-    }
-    if (by == null) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please select who paid.')),
-        );
-      return;
-    }
-
-    if (totalAmount == null) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please enter expense amount.')),
-        );
-      return;
-    }
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     if (selectedUsers.isEmpty) {
       ScaffoldMessenger.of(context)
@@ -81,7 +63,9 @@ class _NewExpenseState extends State<NewExpense> {
     for (var user in selectedUsers) {
       total += user['amount'];
     }
-    if (total != totalAmount) {
+    // Compare in paise; summing rupee doubles can drift by a fraction of a
+    // cent even when the underlying paise amounts add up exactly.
+    if ((total - (totalAmount ?? 0)).abs() > 0.005) {
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -101,159 +85,144 @@ class _NewExpenseState extends State<NewExpense> {
       return {'user_id': each['id'], 'amount': each['amount']};
     }).toList();
 
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Saving Expense')),
-      );
+    setState(() => _isSaving = true);
 
-    saveTransaction(transaction).then((val) {
+    try {
+      await saveTransaction(transaction);
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Expense Saved.')),
+          const SnackBar(content: Text('Expense saved.')),
         );
 
       context.read<UserBalanceController>().refresh();
       context.read<AllExpenseController>().refresh();
 
       Navigator.pop(context);
-    }).catchError((error) {
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Something went wrong.')),
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Could not save expense. Check your connection and try again.',
+            ),
+          ),
         );
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text('New expense'),
         actions: [
-          TextButton(
-              onPressed: formIsValid,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Text('SAVE'),
-              ))
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: TextButton(
+              onPressed: _isSaving ? null : _submit,
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('SAVE'),
+            ),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 50, right: 50),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Title'),
-                const SizedBox(
-                  width: 100,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              TextFormField(
+                onChanged: (value) => setState(() => title = value),
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  hintText: 'What was this expense for?',
                 ),
-                Expanded(
-                  child: TextFormField(
-                    onChanged: (value) => setState(() {
-                      title = value;
-                    }),
-                    autofocus: true,
-                    textAlign: TextAlign.right,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Expense Title',
-                    ),
-                  ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Expense title cannot be empty.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextFormField(
+                onChanged: (value) => setState(() {
+                  totalAmount = double.tryParse(value);
+                }),
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '₹ ',
                 ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Amount'),
-                const SizedBox(
-                  width: 100,
-                ),
-                Expanded(
-                  child: TextFormField(
-                    onChanged: (value) => {
-                      setState(() {
-                        totalAmount = double.tryParse(value);
-                      })
-                    },
-                    autofocus: true,
-                    textAlign: TextAlign.right,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Expense Amount',
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            if (userOptions.isNotEmpty)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('By'),
-                  const Expanded(flex: 2, child: SizedBox()),
-                  Expanded(
-                    child: DropdownButtonFormField(
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_downward),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          if (newValue != null) by = int.tryParse(newValue);
-                        });
-                      },
-                      focusColor: Colors.transparent,
-                      // dropdownColor: Colors.white,
-                      items: userOptions.map((user) {
-                        return DropdownMenuItem(
-                          value: "${user.id}",
-                          child: Container(
-                            color: Colors.transparent,
-                            child: Text(user.name),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d+\.?\d{0,2}')),
                 ],
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter expense amount.';
+                  }
+                  if (double.tryParse(value) == null ||
+                      double.parse(value) <= 0) {
+                    return 'Enter a valid amount.';
+                  }
+                  return null;
+                },
               ),
-            if (userOptions.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('For'),
-                    const Expanded(
-                      child: SizedBox(),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        showAmountDistributionModal(context, totalAmount ?? 0,
-                            userOptions, selectedUsers, (val) {
-                          setState(() {
-                            selectedUsers = val;
-                          });
-                        });
-                      },
-                      child: Text(
-                          '${selectedUsers.isEmpty ? userOptions.length : selectedUsers.length} persons'),
-                    ),
-                  ],
+              if (userOptions.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.md),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Paid by'),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      if (newValue != null) by = int.tryParse(newValue);
+                    });
+                  },
+                  items: userOptions.map((user) {
+                    return DropdownMenuItem(
+                      value: "${user.id}",
+                      child: Text(user.name, overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                  validator: (_) =>
+                      by == null ? 'Please select who paid.' : null,
                 ),
-              ),
-          ],
+                const SizedBox(height: AppSpacing.md),
+                Card(
+                  child: ListTile(
+                    title: const Text('Split between'),
+                    subtitle: Text(
+                      '${selectedUsers.isEmpty ? userOptions.length : selectedUsers.length} people',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      showAmountDistributionModal(context, totalAmount ?? 0,
+                          userOptions, selectedUsers, (val) {
+                        setState(() {
+                          selectedUsers = val;
+                        });
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

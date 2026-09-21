@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../theme/app_theme.dart';
 
 void showInviteDialog(
   BuildContext context,
@@ -15,70 +18,98 @@ void showInviteDialog(
 
   showDialog<String>(
     context: context,
-    builder: (BuildContext context) => AlertDialog(
-      content: Padding(
-        padding:
-            const EdgeInsets.only(top: 8.0, bottom: 8, left: 20, right: 30),
-        child: Column(
+    builder: (BuildContext context) {
+      final colorScheme = Theme.of(context).colorScheme;
+      final textTheme = Theme.of(context).textTheme;
+
+      return AlertDialog(
+        icon: CircleAvatar(
+          radius: 28,
+          backgroundColor: colorScheme.primaryContainer,
+          foregroundColor: colorScheme.onPrimaryContainer,
+          child: const Icon(Icons.group_add_outlined),
+        ),
+        title: const Text(
+          'Invite to group',
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              'Share the invite below, or have them enter this code manually.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             Container(
               padding: const EdgeInsets.only(
-                  left: 10.0, right: 10, top: 5, bottom: 5),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(8.0),
+                left: AppSpacing.md,
+                top: AppSpacing.sm,
+                bottom: AppSpacing.sm,
+                right: AppSpacing.xs,
               ),
-              child: Text(
-                inviteId, // Your text
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24.0,
-                ),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      inviteId,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'monospace',
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_outlined),
+                    tooltip: 'Copy code',
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: inviteId));
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(content: Text('Code copied.')),
+                        );
+                    },
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            const Text('Others can access your group using this code.')
           ],
         ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'OK'),
-          child: const Text('LATER'),
-        ),
-        OutlinedButton(
-          onPressed: () async {
-            final result = await Share.share(msg, subject: 'Look what I made!');
-            if (result.status == ShareResultStatus.success) {
-              var snackBar = SnackBar(
-                content: Text('Successfully share group: $groupName'),
-              );
-              if (!context.mounted) return;
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'OK'),
+            child: const Text('LATER'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              final result =
+                  await Share.share(msg, subject: 'Look what I made!');
+              if (result.status == ShareResultStatus.success) {
+                var snackBar = SnackBar(
+                  content: Text('Successfully share group: $groupName'),
+                );
+                if (!context.mounted) return;
 
-              ScaffoldMessenger.of(context)
-                ..removeCurrentSnackBar()
-                ..showSnackBar(snackBar);
-              Navigator.pop(context, 'OK');
-            }
-          },
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.black, width: 2.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                ScaffoldMessenger.of(context)
+                  ..removeCurrentSnackBar()
+                  ..showSnackBar(snackBar);
+                Navigator.pop(context, 'OK');
+              }
+            },
+            icon: const Icon(Icons.ios_share),
+            label: const Text('SHARE'),
           ),
-          child: const Text(
-            'INVITE',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    ),
+        ],
+      );
+    },
   );
 }

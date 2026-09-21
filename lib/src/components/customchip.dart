@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/initials.dart';
+
 class CustomChip extends StatelessWidget {
   const CustomChip({
     super.key,
@@ -18,49 +20,56 @@ class CustomChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: () => onSelect(!selected),
       child: Container(
         margin: margin,
+        constraints: BoxConstraints(maxWidth: radius * 2.6),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: selected
+                    ? Border.all(color: colorScheme.primary, width: 2.5)
+                    : null,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8), // Space between label and avatar
-            CircleAvatar(
-              radius: radius,
-              // Show border when selected
-              foregroundColor: selected ? Colors.orange : Colors.transparent,
-              backgroundColor:
-                  selected ? Colors.purple.withOpacity(0.2) : Colors.grey[200],
-              child: Center(
+              child: CircleAvatar(
+                radius: radius,
+                backgroundColor: selected
+                    ? colorScheme.primaryContainer
+                    : colorScheme.surfaceContainerHighest,
                 child: Text(
-                  _getInitials(label),
+                  initialsOf(label),
                   style: TextStyle(
-                    fontSize: radius * 0.6, // Adjust font size based on radius
+                    fontSize: radius * 0.6,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: selected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                color: selected ? colorScheme.primary : null,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-String _getInitials(String label) {
-  List<String> words = label.split(" ");
-  String initials = words.map((word) => word[0]).join();
-  return initials.toUpperCase();
 }

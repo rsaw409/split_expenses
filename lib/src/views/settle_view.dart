@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 
 import '../models/user_balance.dart';
+import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
+import '../theme/app_theme.dart';
+import '../utils/currency.dart';
 
 class SettleView extends StatefulWidget {
   const SettleView({super.key, required this.userBalances});
@@ -20,42 +23,52 @@ class SettleView extends StatefulWidget {
 
 class _SettleViewState extends State<SettleView> {
   List<Map<String, dynamic>> payments = [];
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
 
-    final userBalances = widget.userBalances.map((e) => e.toMap());
+    // Match in paise, not rupee doubles — balances can now carry fractional
+    // rupees (e.g. -1800.33), and float subtraction across this loop can
+    // drift away from exact zero, leaving a phantom paisa-sized "balance".
+    final userBalances = widget.userBalances.map(
+      (e) => {...e.toMap(), 'balances': amountToPaise(e.balances)},
+    );
 
     List<Map<String, dynamic>> positive =
-        userBalances.where((e) => e['balances'] > 0).toList();
-    positive.sort((a, b) => b['balances'] - a['balances']);
+        userBalances.where((e) => (e['balances'] as int) > 0).toList();
+    positive.sort((a, b) => (b['balances'] as int).compareTo(a['balances'] as int));
 
     List<Map<String, dynamic>> negative =
-        userBalances.where((e) => e['balances'] < 0).toList();
-    negative.sort((a, b) => a['balances'] - b['balances']);
+        userBalances.where((e) => (e['balances'] as int) < 0).toList();
+    negative.sort((a, b) => (a['balances'] as int).compareTo(b['balances'] as int));
 
     int i = 0;
     int j = 0;
 
     while (i < negative.length) {
-      if (negative[i]['balances'] < 0) {
+      if ((negative[i]['balances'] as int) < 0) {
         while (j < positive.length) {
-          int maximumPayment =
-              min(positive[j]['balances'], -negative[i]['balances']);
+          int maximumPaymentPaise = min(
+            positive[j]['balances'] as int,
+            -(negative[i]['balances'] as int),
+          );
 
           payments.add({
             'from': negative[i]['user_id'],
             'fromName': negative[i]['name'],
             'to': positive[j]['user_id'],
             'toName': positive[j]['name'],
-            'amount': maximumPayment,
+            'amount': maximumPaymentPaise / 100,
             'selected': false,
             'groupName': context.read<GroupsController>().selectedGroup["name"]
           });
 
-          negative[i]['balances'] += maximumPayment;
-          positive[j]['balances'] -= maximumPayment;
+          negative[i]['balances'] =
+              (negative[i]['balances'] as int) + maximumPaymentPaise;
+          positive[j]['balances'] =
+              (positive[j]['balances'] as int) - maximumPaymentPaise;
 
           if (negative[i]['balances'] == 0) break;
           if (positive[j]['balances'] == 0) {
@@ -71,13 +84,16 @@ class _SettleViewState extends State<SettleView> {
     }
   }
 
-  _savePayments(BuildContext context) {
-    payments = payments.where((e) => e['selected']).toList();
-    savePayments(payments).then((val) {
+  void _savePayments(BuildContext context) {
+    final selected = payments.where((e) => e['selected']).toList();
+    setState(() => _isSaving = true);
+
+    savePayments(selected).then((val) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Expense Saved.')),
+          const SnackBar(content: Text('Payments recorded.')),
         );
 
       context.read<UserBalanceController>().refresh();
@@ -85,35 +101,52 @@ class _SettleViewState extends State<SettleView> {
 
       Navigator.pop(context);
     }).catchError((error) {
+      if (!context.mounted) return;
+      setState(() => _isSaving = false);
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Failed to save expense.')),
+          SnackBar(
+            content: Text(
+              error is ApiException
+                  ? error.message
+                  : 'Failed to save payments. Check your connection and try again.',
+            ),
+          ),
         );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasSelection = payments.any((e) => e['selected']);
+
     return Scaffold(
       appBar: AppBar(
+        title: const Text('Settle up'),
         actions: [
-          if (payments.any((e) => e['selected']))
-            TextButton(
-              onPressed: () => _savePayments(context),
-              child: const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Text('Save payments'),
+          if (hasSelection)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: TextButton(
+                onPressed: _isSaving ? null : () => _savePayments(context),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
               ),
-            )
+            ),
         ],
       ),
       body: payments.isEmpty
           ? Center(
               child: FractionallySizedBox(
-                widthFactor: 0.5, // 50% of the parent's width
+                widthFactor: 0.5,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   child: Image.asset(
                     "assets/images/allSettle.webp",
                     fit: BoxFit.cover,
@@ -122,25 +155,25 @@ class _SettleViewState extends State<SettleView> {
               ),
             )
           : ListView.separated(
-              separatorBuilder: (context, index) {
-                return const Divider(
-                  indent: 50,
-                );
-              },
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              separatorBuilder: (context, index) => const Divider(indent: 16),
               itemCount: payments.length,
               itemBuilder: (context, index) {
+                final payment = payments[index];
                 return CheckboxListTile(
                   controlAffinity: ListTileControlAffinity.leading,
-                  title: Text('From ${payments[index]['fromName']}'),
-                  subtitle: Text('To ${payments[index]['toName']}'),
-                  secondary: Text('INR ${payments[index]['amount']}'),
+                  title: Text(
+                    '${payment['fromName']} → ${payment['toName']}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(formatCurrency(payment['amount'] as num)),
                   onChanged: (val) {
                     setState(() {
-                      payments[index]['selected'] =
-                          !payments[index]['selected'];
+                      payment['selected'] = !payment['selected'];
                     });
                   },
-                  value: payments[index]['selected'],
+                  value: payment['selected'],
                 );
               },
             ),

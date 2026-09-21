@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/views/single_expense_view.dart';
 
+import '../components/async_state.dart';
+import '../components/expense_tile.dart';
 import '../models/expense/expense.dart';
 import '../notify_controllers/allexpense_controller.dart';
+import '../theme/app_theme.dart';
 
 class AllExpensesView extends StatelessWidget {
   const AllExpensesView({super.key});
@@ -13,61 +15,38 @@ class AllExpensesView extends StatelessWidget {
     AllExpenseController allExpenseController =
         context.watch<AllExpenseController>();
 
-    List<Expense> expenses = allExpenseController.expenses;
-    bool isError = allExpenseController.isError;
+    if (allExpenseController.isLoading) {
+      return const LoadingView();
+    }
 
-    return isError
-        ? const Center(child: Text('Please create or join group.'))
-        : expenses.isNotEmpty
-            ? ListView.separated(
-                itemCount: expenses.length,
-                itemBuilder: (context, index) {
-                  Expense expense = expenses[index];
+    if (allExpenseController.isError) {
+      return ErrorView(
+        message:
+            allExpenseController.errorMessage ?? 'Something went wrong.',
+        onRetry: allExpenseController.groupId == null
+            ? null
+            : allExpenseController.refresh,
+      );
+    }
 
-                  if (expense.transactionTitle == 'payment') {
-                    return ListTile(
-                      leading: const Icon(Icons.arrow_forward),
-                      title: Text('From ${expense.userName}'),
-                      subtitle: Text('To ${expense.distributions[0].userName}'),
-                      trailing: Text('INR ${expense.transactionAmount}'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => SingleExpense(
-                              expense: expense,
-                              isPayment: true,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    return ListTile(
-                      leading: const Icon(Icons.shopping_bag_outlined),
-                      title: Text(expense.transactionTitle),
-                      subtitle: Text(expenses[index].userName),
-                      trailing: Text('INR ${expense.transactionAmount}'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => SingleExpense(
-                              expense: expense,
-                              isPayment: false,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  }
-                },
-                separatorBuilder: (context, index) {
-                  return const Divider(
-                    indent: 50,
-                  );
-                },
-              )
-            : const SizedBox.shrink();
+    final List<Expense> expenses = allExpenseController.expenses;
+
+    if (expenses.isEmpty) {
+      return const EmptyStateView(
+        icon: Icons.receipt_long_outlined,
+        title: 'No expenses yet',
+        subtitle: 'Expenses and payments you record will show up here.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async => allExpenseController.refresh(),
+      child: ListView.separated(
+        padding: const EdgeInsets.only(bottom: AppSpacing.fabClearance),
+        itemCount: expenses.length,
+        itemBuilder: (context, index) => ExpenseTile(expense: expenses[index]),
+        separatorBuilder: (context, index) => const Divider(indent: 72),
+      ),
+    );
   }
 }

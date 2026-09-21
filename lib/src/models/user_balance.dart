@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 class UserBalance extends Equatable {
   final String name;
   final int userId;
-  final int balances;
+  final num balances;
   final String numberOfTransactions;
   final String numberOfBenefits;
   final String numberOfPayments;
@@ -21,7 +21,7 @@ class UserBalance extends Equatable {
   factory UserBalance.fromMap(Map<String, dynamic> data) => UserBalance(
         name: data['name'] as String,
         userId: data['user_id'] as int,
-        balances: data['balances'] as int,
+        balances: data['balances'] as num,
         numberOfTransactions: data['number_of_transactions'] as String,
         numberOfBenefits: data['number_of_benefits'] as String,
         numberOfPayments: data['number_of_payments'] as String,
