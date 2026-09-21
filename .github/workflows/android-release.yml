@@ -48,8 +48,12 @@ jobs:
 
       - name: Set build version code from run number
         run: |
-          version_name=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | cut -d '+' -f1)
-          sed -i "s/^version: .*/version: ${version_name}+${{ github.run_number }}/" pubspec.yaml
+          version_name=$(grep -m1 '^version:[[:space:]]*[0-9]' pubspec.yaml | sed -E 's/^version:[[:space:]]*//' | cut -d '+' -f1)
+          if [ -z "$version_name" ]; then
+            echo "::error::Could not parse 'version: X.Y.Z' from pubspec.yaml. Keep it on a single line."
+            exit 1
+          fi
+          sed -i "s/^version:.*/version: ${version_name}+${{ github.run_number }}/" pubspec.yaml
 
       - name: Start Android Release Build
         run: flutter build appbundle

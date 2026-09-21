@@ -4,9 +4,9 @@ description: "Managing group expenses made easy."
 # Prevent accidental publishing to pub.dev.
 publish_to: "none"
 
-version:
-  1.2.0+34 # only need to update version code (eg: 1.1.9) ;
-  # version number will get automatically updated in the github build (eg: 34)
+# Only bump the name part (eg: 1.2.0) before a release.
+# The version code (the +N suffix) is overwritten automatically by CI.
+version: 1.2.1+34
 
 environment:
   sdk: ">=3.4.4 <4.0.0"
