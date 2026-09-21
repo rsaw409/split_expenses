@@ -65,16 +65,18 @@ jobs:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment:
+      name: production
     steps:
       - name: Get Android Build from artifacts
         uses: actions/download-artifact@v4
         with:
           name: android-release
-      - name: Release Build to beta track
+      - name: Release Build to production track
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
           packageName: developer.rohitsaw.split
           releaseFiles: app-release.aab
-          track: beta
+          track: production
           status: completed
