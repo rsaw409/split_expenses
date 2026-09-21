@@ -8,7 +8,8 @@ import '../models/expense/expense.dart';
 import './api_exception.dart';
 import './server.dart';
 
-Future<List<Expense>> fetchExpenses(groupId, userId, byId, isPayments) async {
+Future<List<Expense>> fetchExpenses(
+    int? groupId, int? userId, int? byId, bool? isPayments) async {
   var url = '$server/getAllExpensesInGroup';
 
   final response = await http.post(
@@ -38,7 +39,7 @@ Future<List<Expense>> fetchExpenses(groupId, userId, byId, isPayments) async {
   }
 }
 
-Future<List<UserBalance>> fetchUserBalances(groupId) async {
+Future<List<UserBalance>> fetchUserBalances(int? groupId) async {
   var url = '$server/getOverviewDataInGroup';
 
   final response = await http.post(
@@ -65,7 +66,7 @@ Future<List<UserBalance>> fetchUserBalances(groupId) async {
   }
 }
 
-Future<String> addUserInGroup(groupId, userName) async {
+Future<String> addUserInGroup(int? groupId, String userName) async {
   var url = '$server/createUser';
   final response = await http.post(
     Uri.parse(url),
@@ -74,7 +75,7 @@ Future<String> addUserInGroup(groupId, userName) async {
     },
     body: jsonEncode(<String, String>{
       'group_id': '$groupId',
-      'name': '$userName',
+      'name': userName,
     }),
   );
 
@@ -85,7 +86,7 @@ Future<String> addUserInGroup(groupId, userName) async {
   }
 }
 
-Future<List<User>> getUsersInGroup(groupId) async {
+Future<List<User>> getUsersInGroup(int? groupId) async {
   var url = '$server/getAllUsersInGroup';
 
   final response = await http.post(
@@ -111,7 +112,7 @@ Future<List<User>> getUsersInGroup(groupId) async {
   }
 }
 
-Future<String> saveTransaction(transaction) async {
+Future<String> saveTransaction(Map<String, dynamic> transaction) async {
   var url = '$server/saveTransaction';
 
   final response = await http.post(

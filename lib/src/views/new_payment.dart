@@ -75,7 +75,7 @@ class _NewPaymentState extends State<NewPayment> {
     loadUser();
   }
 
-  loadUser() async {
+  Future<void> loadUser() async {
     final groupId = context.read<GroupsController>().selectedGroup['id'];
     List<User> tmp = await getUsersInGroup(groupId);
     if (!mounted) return;
@@ -84,7 +84,7 @@ class _NewPaymentState extends State<NewPayment> {
     });
   }
 
-  List<User> getUserOptions({fromOption = false, toOptions = false}) {
+  List<User> getUserOptions({bool fromOption = false, bool toOptions = false}) {
     var copy = [...userOptions];
 
     if (fromOption) copy.removeWhere((each) => each.id == to);

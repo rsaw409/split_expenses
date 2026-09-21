@@ -5,7 +5,7 @@ import '../models/group.dart';
 import './api_exception.dart';
 import "./server.dart";
 
-Future<Group> joinGroupFromInviteId(inviteId) async {
+Future<Group> joinGroupFromInviteId(String inviteId) async {
   var url = '$server/joinGroup';
 
   final response = await http.post(
@@ -14,7 +14,7 @@ Future<Group> joinGroupFromInviteId(inviteId) async {
       'Content-Type': 'application/json; charset=UTF-8',
     },
     body: jsonEncode(<String, String>{
-      'invite_id': '$inviteId',
+      'invite_id': inviteId,
     }),
   );
 
@@ -26,7 +26,7 @@ Future<Group> joinGroupFromInviteId(inviteId) async {
   }
 }
 
-Future<Group> createGroup(groupName) async {
+Future<Group> createGroup(String groupName) async {
   var url = '$server/createGroup';
 
   final response = await http.post(
@@ -35,7 +35,7 @@ Future<Group> createGroup(groupName) async {
       'Content-Type': 'application/json; charset=UTF-8',
     },
     body: jsonEncode(<String, String>{
-      'name': '$groupName',
+      'name': groupName,
     }),
   );
 

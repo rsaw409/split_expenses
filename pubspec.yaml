@@ -6,32 +6,42 @@ publish_to: "none"
 
 # Only bump the name part (eg: 1.2.0) before a release.
 # The version code (the +N suffix) is overwritten automatically by CI.
-version: 1.2.1+34
+version: 1.2.2+34
 
 environment:
   sdk: ">=3.4.4 <4.0.0"
 
 dependencies:
   chips_choice: ^3.0.1
-  equatable: ^2.0.5
+  equatable: ^3.0.0
   flutter:
     sdk: flutter
-  flutter_expandable_fab: ^2.2.0
-  flutter_launcher_icons: ^0.13.1
+  # Pinned below 3.0.0: that release migrates the widget to material_ui
+  # instead of package:flutter/material.dart, which this app doesn't use.
+  flutter_expandable_fab: ^2.5.2
+  flutter_launcher_icons: ^0.14.4
   http: ^1.2.2
-  intl: ^0.19.0
-  package_info_plus: ^8.0.2
+  intl: ^0.20.3
+  # Pinned below 10.0.0: that release needs win32 ^6.0.1, which conflicts
+  # with share_plus (stuck at 10.x -- see note there).
+  package_info_plus: ^9.0.1
   provider: ^6.1.2
+  # Pinned below 11.0.0: every 12.x/13.x version tried fails to compile
+  # against this project's AGP 9.0.1/Kotlin 2.3.20 toolchain with
+  # "Unresolved reference 'ShareSuccessManager'" in share_plus's own bundled
+  # Android Kotlin source -- reproduced on 12.0.2 and 13.2.1/13.3.0, so it's
+  # a real toolchain incompatibility, not a single broken release. 10.x is
+  # the newest version confirmed to actually build in this project.
   share_plus: ^10.0.2
   shared_preferences: ^2.2.3
   url_launcher: ^6.3.0
-  onesignal_flutter: ^5.1.2
-  firebase_core: ^2.24.2
+  onesignal_flutter: ^5.6.11
+  firebase_core: ^4.15.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -23,7 +23,7 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> {
-  handleInvite(BuildContext context, String? inviteId) {
+  void handleInvite(BuildContext context, String? inviteId) {
     if (inviteId != null) {
       joinGroupFromInviteId(inviteId).then((Group group) {
         if (!context.mounted) return;

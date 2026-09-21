@@ -12,12 +12,12 @@ class AllExpenseController extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   bool _isError = false;
-  get isError => _isError;
+  bool get isError => _isError;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  get expenses => _expenses;
+  List<Expense> get expenses => _expenses;
 
   AllExpenseController(this.groupId) {
     _load();

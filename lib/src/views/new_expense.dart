@@ -37,7 +37,7 @@ class _NewExpenseState extends State<NewExpense> {
     loadUser();
   }
 
-  loadUser() async {
+  Future<void> loadUser() async {
     final groupId = context.read<GroupsController>().selectedGroup["id"];
     List<User> tmp = await getUsersInGroup(groupId);
     if (!mounted) return;

@@ -12,12 +12,12 @@ class UserBalanceController extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   bool _isError = false;
-  get isError => _isError;
+  bool get isError => _isError;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  get userBalances => _userBalances;
+  List<UserBalance> get userBalances => _userBalances;
 
   UserBalanceController(this.groupId) {
     _load();
