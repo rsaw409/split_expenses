@@ -6,6 +6,7 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
 import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
+import '../components/leave_group_dialog.dart';
 import '../models/group.dart';
 import '../notify_controllers/connectivity_check.dart';
 import '../services/group_service.dart';
@@ -101,6 +102,11 @@ class HomeViewState extends State<HomeView> {
                     }
 
                     final groupName = groupsController.selectedGroup['name'];
+
+                    final confirmed =
+                        await showLeaveGroupDialog(context, groupName);
+                    if (!confirmed) return;
+                    if (!context.mounted) return;
 
                     groupsController.removeCurrentGroup();
 

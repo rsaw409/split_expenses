@@ -6,7 +6,7 @@ publish_to: "none"
 
 # Only bump the name part (eg: 1.2.0) before a release.
 # The version code (the +N suffix) is overwritten automatically by CI.
-version: 1.2.2+34
+version: 1.2.3+34
 
 environment:
   sdk: ">=3.4.4 <4.0.0"
