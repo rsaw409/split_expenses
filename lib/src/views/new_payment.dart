@@ -9,6 +9,7 @@ import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});
@@ -28,6 +29,10 @@ class _NewPaymentState extends State<NewPayment> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!requireOnline(context,
+        message: "You're offline — connect to save this payment.")) {
+      return;
+    }
 
     Map<String, dynamic> payment = {
       "amount": amount,

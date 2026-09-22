@@ -15,6 +15,14 @@ class AllExpensesView extends StatelessWidget {
     AllExpenseController allExpenseController =
         context.watch<AllExpenseController>();
 
+    if (allExpenseController.groupId == null) {
+      return const EmptyStateView(
+        icon: Icons.group_add_outlined,
+        title: 'No group yet',
+        subtitle: 'Join or create a group from the menu to get started.',
+      );
+    }
+
     if (allExpenseController.isLoading) {
       return const LoadingView();
     }
@@ -23,9 +31,7 @@ class AllExpensesView extends StatelessWidget {
       return ErrorView(
         message:
             allExpenseController.errorMessage ?? 'Something went wrong.',
-        onRetry: allExpenseController.groupId == null
-            ? null
-            : allExpenseController.refresh,
+        onRetry: allExpenseController.refresh,
       );
     }
 
@@ -40,7 +46,7 @@ class AllExpensesView extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async => allExpenseController.refresh(),
+      onRefresh: allExpenseController.refresh,
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: AppSpacing.fabClearance),
         itemCount: expenses.length,

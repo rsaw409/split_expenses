@@ -5,6 +5,7 @@ import 'package:split_expense/src/notify_controllers/userbalances_controller.dar
 import '../components/async_state.dart';
 import '../models/user_balance.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity.dart';
 import '../utils/currency.dart';
 import '../utils/initials.dart';
 import 'settle_view.dart';
@@ -18,6 +19,14 @@ class OverviewView extends StatelessWidget {
     UserBalanceController userBalancesController =
         context.watch<UserBalanceController>();
 
+    if (userBalancesController.groupId == null) {
+      return const EmptyStateView(
+        icon: Icons.group_add_outlined,
+        title: 'No group yet',
+        subtitle: 'Join or create a group from the menu to get started.',
+      );
+    }
+
     if (userBalancesController.isLoading) {
       return const LoadingView();
     }
@@ -26,9 +35,7 @@ class OverviewView extends StatelessWidget {
       return ErrorView(
         message:
             userBalancesController.errorMessage ?? 'Something went wrong.',
-        onRetry: userBalancesController.groupId == null
-            ? null
-            : userBalancesController.refresh,
+        onRetry: userBalancesController.refresh,
       );
     }
 
@@ -43,7 +50,7 @@ class OverviewView extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async => userBalancesController.refresh(),
+      onRefresh: userBalancesController.refresh,
       child: ListView.separated(
         padding: const EdgeInsets.only(
           top: AppSpacing.sm,
@@ -60,15 +67,19 @@ class OverviewView extends StatelessWidget {
               ),
               child: Center(
                 child: FilledButton.tonalIcon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (ctx) =>
-                            SettleView(userBalances: userBalances),
-                      ),
-                    );
-                  },
+                  // Disabled offline: settling up is a write, and selecting
+                  // who pays whom only to fail at Save wastes real work.
+                  onPressed: !watchIsOnline(context)
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) =>
+                                  SettleView(userBalances: userBalances),
+                            ),
+                          );
+                        },
                   icon: const Icon(Icons.handshake_outlined),
                   label: const Text('Settle up'),
                 ),

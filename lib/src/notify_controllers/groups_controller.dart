@@ -5,6 +5,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/group.dart';
+import '../services/cache_service.dart';
 
 class GroupsController extends ChangeNotifier {
   List<Map<String, dynamic>> _groups = [];
@@ -64,6 +65,10 @@ class GroupsController extends ChangeNotifier {
 
     OneSignal.User.removeTag('group: $groupName');
     _groups.removeWhere((oldElement) => oldElement['id'] == groupid);
+
+    if (groupid != null) {
+      await clearGroupCache(groupid as int);
+    }
 
     _selectedGroup = (_groups.isNotEmpty) ? groups.first : {};
 

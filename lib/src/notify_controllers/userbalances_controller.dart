@@ -1,55 +1,24 @@
-import 'package:flutter/material.dart';
-
 import '../models/user_balance.dart';
-import '../services/api_exception.dart';
 import '../services/backend.dart';
+import '../services/cache_service.dart';
+import 'cached_list_controller.dart';
 
-class UserBalanceController extends ChangeNotifier {
-  final int? groupId;
-  List<UserBalance> _userBalances = [];
+class UserBalanceController extends CachedListController<UserBalance> {
+  UserBalanceController(super.groupId);
 
-  bool _isLoading = true;
-  bool get isLoading => _isLoading;
+  List<UserBalance> get userBalances => items;
 
-  bool _isError = false;
-  bool get isError => _isError;
+  @override
+  Future<List<UserBalance>> fetchFromNetwork(int id) => fetchUserBalances(id);
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+  @override
+  Future<List<UserBalance>?> readFromCache(int id) => getCachedBalances(id);
 
-  List<UserBalance> get userBalances => _userBalances;
+  @override
+  Future<void> writeToCache(int id, List<UserBalance> items) =>
+      setCachedBalances(id, items);
 
-  UserBalanceController(this.groupId) {
-    _load();
-  }
-
-  void refresh() => _load();
-
-  void _load() {
-    if (groupId == null) {
-      _isLoading = false;
-      _isError = true;
-      _errorMessage = 'Create or join a group to see balances.';
-      notifyListeners();
-      return;
-    }
-
-    _isLoading = true;
-    _isError = false;
-    notifyListeners();
-
-    fetchUserBalances(groupId).then((userbalances) {
-      _userBalances = userbalances;
-      _isLoading = false;
-      _isError = false;
-      notifyListeners();
-    }).catchError((e) {
-      _isLoading = false;
-      _isError = true;
-      _errorMessage = e is ApiException
-          ? e.message
-          : 'Could not load balances. Check your connection and try again.';
-      notifyListeners();
-    });
-  }
+  @override
+  String get fetchFailureMessage =>
+      'Could not load balances. Check your connection and try again.';
 }

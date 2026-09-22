@@ -40,20 +40,36 @@ void main() async {
             return groupsController;
           },
         ),
-        ChangeNotifierProxyProvider<GroupsController, AllExpenseController>(
+        ChangeNotifierProxyProvider2<GroupsController,
+            InternetConnectivityHelper, AllExpenseController>(
           create: (context) => AllExpenseController(
             context.read<GroupsController>().selectedGroup["id"],
           ),
-          update: (context, groupsController, previousUserBalanceController) {
-            return AllExpenseController(groupsController.selectedGroup["id"]);
+          update: (context, groupsController, connectivity, previous) {
+            final int? groupId =
+                groupsController.selectedGroup["id"] as int?;
+            if (previous != null && previous.groupId == groupId) {
+              previous.onConnectivityChanged(
+                  connectivity.isConnectedToInternet);
+              return previous;
+            }
+            return AllExpenseController(groupId);
           },
         ),
-        ChangeNotifierProxyProvider<GroupsController, UserBalanceController>(
+        ChangeNotifierProxyProvider2<GroupsController,
+            InternetConnectivityHelper, UserBalanceController>(
           create: (context) => UserBalanceController(
             context.read<GroupsController>().selectedGroup["id"],
           ),
-          update: (context, groupsController, previousUserBalanceController) {
-            return UserBalanceController(groupsController.selectedGroup["id"]);
+          update: (context, groupsController, connectivity, previous) {
+            final int? groupId =
+                groupsController.selectedGroup["id"] as int?;
+            if (previous != null && previous.groupId == groupId) {
+              previous.onConnectivityChanged(
+                  connectivity.isConnectedToInternet);
+              return previous;
+            }
+            return UserBalanceController(groupId);
           },
         ),
       ],

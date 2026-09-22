@@ -10,6 +10,7 @@ import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -48,6 +49,10 @@ class _NewExpenseState extends State<NewExpense> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!requireOnline(context,
+        message: "You're offline — connect to save this expense.")) {
+      return;
+    }
 
     if (selectedUsers.isEmpty) {
       ScaffoldMessenger.of(context)

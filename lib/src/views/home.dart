@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:split_expense/src/views/all_expenses_view.dart';
 import 'package:split_expense/src/components/drawer.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
@@ -8,10 +9,13 @@ import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
 import '../components/leave_group_dialog.dart';
 import '../models/group.dart';
+import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/connectivity_check.dart';
+import '../notify_controllers/userbalances_controller.dart';
 import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity.dart';
 import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -23,8 +27,52 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => HomeViewState();
 }
 
-class HomeViewState extends State<HomeView> {
+class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
+  late final OnNotificationClickListener _notificationClickListener;
+  late final OnNotificationWillDisplayListener _notificationWillDisplayListener;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationClickListener = (event) => _refreshCurrentGroupData();
+    _notificationWillDisplayListener = (event) => _refreshCurrentGroupData();
+    OneSignal.Notifications.addClickListener(_notificationClickListener);
+    OneSignal.Notifications
+        .addForegroundWillDisplayListener(_notificationWillDisplayListener);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    OneSignal.Notifications.removeClickListener(_notificationClickListener);
+    OneSignal.Notifications
+        .removeForegroundWillDisplayListener(_notificationWillDisplayListener);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back after a while would otherwise keep showing cached data: the
+    // controllers aren't rebuilt on resume and connectivity hasn't changed.
+    if (state == AppLifecycleState.resumed) {
+      _refreshCurrentGroupData();
+    }
+  }
+
+  void _refreshCurrentGroupData() {
+    if (!mounted) return;
+    if (context.read<GroupsController>().selectedGroup['id'] == null) return;
+    context.read<AllExpenseController>().refresh();
+    context.read<UserBalanceController>().refresh();
+  }
+
   void handleInvite(BuildContext context, String? inviteId) {
+    if (!requireOnline(context,
+        message: "You're offline — connect to join this group.")) {
+      return;
+    }
+
     if (inviteId != null) {
       joinGroupFromInviteId(inviteId).then((Group group) {
         if (!context.mounted) return;
@@ -57,6 +105,7 @@ class HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
+    final isOnline = watchIsOnline(context);
 
     return DefaultTabController(
       initialIndex: 1,
@@ -67,7 +116,7 @@ class HomeViewState extends State<HomeView> {
             selector: (_, GroupsController groupsController) =>
                 groupsController.selectedGroup,
             builder: (_, Map<String, dynamic> selectedGroup, __) => Text(
-              selectedGroup['name'] ?? 'No Group Found',
+              selectedGroup['name'] ?? 'Split',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -87,17 +136,9 @@ class HomeViewState extends State<HomeView> {
                       groupsController.selectedGroup['inviteId'],
                     );
                   } else if (item == 1) {
-                    final isConnectedToInternet = context
-                        .read<InternetConnectivityHelper>()
-                        .isConnectedToInternet;
-                    if (!isConnectedToInternet) {
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text('No Internet'),
-                          ),
-                        );
+                    if (!requireOnline(context,
+                        message:
+                            "You're offline — connect to leave this group.")) {
                       return;
                     }
 
@@ -135,62 +176,77 @@ class HomeViewState extends State<HomeView> {
           ),
         ),
         drawer: const MyDrawer(),
-        body: Consumer<InternetConnectivityHelper>(
-          builder: (_, internetConnectivity, __) {
-            if (internetConnectivity.isConnectedToInternet) {
-              return const TabBarView(
+        body: Column(
+          children: [
+            const _OfflineBanner(),
+            const Expanded(
+              child: TabBarView(
                 children: <Widget>[
                   OverviewView(),
                   AllExpensesView(),
                 ],
-              );
-            } else {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FractionallySizedBox(
-                        widthFactor: 0.5,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                          child: Image.asset(
-                            'assets/images/offline.webp',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        "You're offline",
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Check your connection to keep using Split.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-          },
+              ),
+            ),
+          ],
         ),
-        floatingActionButtonLocation: ExpandableFab.location,
-        floatingActionButton: Consumer<InternetConnectivityHelper>(
-          builder: (_, internetConnectivity, __) {
-            if (internetConnectivity.isConnectedToInternet) {
-              return ExpandableFloatingActionButton();
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
-        ),
+        // ExpandableFab.location only positions the expandable FAB; a plain
+        // one placed there never appears on screen.
+        floatingActionButtonLocation: isOnline
+            ? ExpandableFab.location
+            : FloatingActionButtonLocation.endFloat,
+        floatingActionButton: isOnline
+            ? ExpandableFloatingActionButton()
+            // Muted rather than hidden, and still tappable so it can say why:
+            // a FAB with a null onPressed keeps its enabled colours, which
+            // would just look broken.
+            : FloatingActionButton(
+                onPressed: () => requireOnline(context),
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                foregroundColor:
+                    Theme.of(context).colorScheme.onSurfaceVariant,
+                elevation: 0,
+                child: const Icon(Icons.add),
+              ),
+      ),
+    );
+  }
+}
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final isOffline = !context.watch<InternetConnectivityHelper>().isConnectedToInternet;
+    if (!isOffline) return const SizedBox.shrink();
+
+    // With no group there is nothing to be stale and nothing this banner can
+    // usefully explain: the onboarding empty state is the message, and the
+    // drawer's disabled Join/Create buttons already say why they're off.
+    final expenses = context.watch<AllExpenseController>();
+    if (expenses.groupId == null) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+    // Nothing cached means nothing can be stale — don't claim otherwise.
+    final hasData = expenses.items.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      color: colorScheme.errorContainer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Text(
+        hasData
+            ? "You're offline — data might be stale"
+            : "You're offline",
+        textAlign: TextAlign.center,
+        style: Theme.of(context)
+            .textTheme
+            .bodySmall
+            ?.copyWith(color: colorScheme.onErrorContainer),
       ),
     );
   }

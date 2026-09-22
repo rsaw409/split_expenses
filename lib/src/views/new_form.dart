@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/notify_controllers/connectivity_check.dart';
 import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
 import '../models/group.dart';
@@ -11,6 +10,7 @@ import '../services/backend.dart';
 import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/connectivity.dart';
 
 class NewForm extends StatefulWidget {
   const NewForm({
@@ -112,16 +112,7 @@ class _NewFormState extends State<NewForm> {
   void _submit(BuildContext context) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final isConnectedToInternet =
-        context.read<InternetConnectivityHelper>().isConnectedToInternet;
-    if (!isConnectedToInternet) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('No Internet')),
-        );
-      return;
-    }
+    if (!requireOnline(context)) return;
 
     final groupsController = context.read<GroupsController>();
     final userBalanceController = context.read<UserBalanceController>();

@@ -91,8 +91,9 @@ void showInviteDialog(
           ),
           FilledButton.icon(
             onPressed: () async {
-              final result =
-                  await Share.share(msg, subject: 'Look what I made!');
+              final result = await SharePlus.instance.share(
+                ShareParams(text: msg, subject: 'Look what I made!'),
+              );
               if (result.status == ShareResultStatus.success) {
                 var snackBar = SnackBar(
                   content: Text('Successfully share group: $groupName'),
