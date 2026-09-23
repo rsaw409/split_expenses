@@ -12,6 +12,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity.dart';
 import '../utils/currency.dart';
+import '../utils/idempotency.dart';
 
 class SettleView extends StatefulWidget {
   const SettleView({super.key, required this.userBalances});
@@ -25,6 +26,7 @@ class SettleView extends StatefulWidget {
 class _SettleViewState extends State<SettleView> {
   List<Map<String, dynamic>> payments = [];
   bool _isSaving = false;
+  final _idempotency = IdempotencyKeySet();
 
   @override
   void initState() {
@@ -91,11 +93,26 @@ class _SettleViewState extends State<SettleView> {
       return;
     }
 
-    final selected = payments.where((e) => e['selected']).toList();
+    // A key per payment, identified by who pays whom and how much, so a retry
+    // after a partial failure re-applies only what did not land. The
+    // settlement walk never pays the same creditor twice from one debtor, so
+    // these identities cannot collide within a batch.
+    final selected = payments
+        .where((e) => e['selected'])
+        .map((payment) => {
+              ...payment,
+              'idempotency_key': _idempotency.forPayload({
+                'from': payment['from'],
+                'to': payment['to'],
+                'amount': payment['amount'],
+              }),
+            })
+        .toList();
     setState(() => _isSaving = true);
 
     savePayments(selected).then((val) {
       if (!context.mounted) return;
+      _idempotency.reset();
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -109,14 +126,21 @@ class _SettleViewState extends State<SettleView> {
     }).catchError((error) {
       if (!context.mounted) return;
       setState(() => _isSaving = false);
+
+      // See new_expense.dart. This one matters most: a replayed settle-up
+      // could double-record several payments at once.
+      final serverAnswered = error is ApiException;
+      if (!serverAnswered) {
+        context.read<UserBalanceController>().refresh();
+        context.read<AllExpenseController>().refresh();
+      }
+
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             content: Text(
-              error is ApiException
-                  ? error.message
-                  : 'Failed to save payments. Check your connection and try again.',
+              serverAnswered ? error.message : unconfirmedWriteMessage,
             ),
           ),
         );

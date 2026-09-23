@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:split_expense/src/services/api_exception.dart';
-import 'package:split_expense/src/services/backend.dart';
 
 import '../components/async_state.dart';
 import '../components/expense_tile.dart';
 import '../models/expense/expense.dart';
-import '../notify_controllers/groups_controller.dart';
+import '../notify_controllers/allexpense_controller.dart';
+import '../utils/expense_filters.dart';
 
+/// A per-user slice of the group's transactions, filtered from the cached list
+/// the group already loaded — no request of its own, so it works offline.
 class ExpensesView extends StatelessWidget {
   const ExpensesView({super.key, this.userId, this.byId, this.isPayments});
 
@@ -17,41 +18,48 @@ class ExpensesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groupId = context.watch<GroupsController>().selectedGroup["id"];
+    final allExpenseController = context.watch<AllExpenseController>();
 
-    return FutureBuilder<List<Expense>>(
-      future: groupId == null
-          ? Future.error(const ApiException('Create or join a group first.'))
-          : fetchExpenses(groupId, userId, byId, isPayments),
-      builder: (context, AsyncSnapshot<List<Expense>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingView();
-        }
+    if (allExpenseController.groupId == null) {
+      return const EmptyStateView(
+        icon: Icons.group_add_outlined,
+        title: 'No group yet',
+        subtitle: 'Join or create a group from the menu to get started.',
+      );
+    }
 
-        if (snapshot.hasError) {
-          final error = snapshot.error;
-          return ErrorView(
-            message: error is ApiException
-                ? error.message
-                : 'Could not load expenses. Check your connection and try again.',
-          );
-        }
+    if (allExpenseController.isLoading) {
+      return const LoadingView();
+    }
 
-        final expenses = snapshot.data ?? [];
+    if (allExpenseController.isError) {
+      return ErrorView(
+        message: allExpenseController.errorMessage ?? 'Something went wrong.',
+        onRetry: allExpenseController.refresh,
+      );
+    }
 
-        if (expenses.isEmpty) {
-          return const EmptyStateView(
-            icon: Icons.receipt_long_outlined,
-            title: 'No expenses yet',
-          );
-        }
+    final List<Expense> expenses = filterExpenses(
+      allExpenseController.expenses,
+      userId: userId,
+      byId: byId,
+      isPayments: isPayments,
+    );
 
-        return ListView.separated(
-          itemCount: expenses.length,
-          itemBuilder: (context, index) => ExpenseTile(expense: expenses[index]),
-          separatorBuilder: (context, index) => const Divider(indent: 72),
-        );
-      },
+    if (expenses.isEmpty) {
+      return const EmptyStateView(
+        icon: Icons.receipt_long_outlined,
+        title: 'No expenses yet',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: allExpenseController.refresh,
+      child: ListView.separated(
+        itemCount: expenses.length,
+        itemBuilder: (context, index) => ExpenseTile(expense: expenses[index]),
+        separatorBuilder: (context, index) => const Divider(indent: 72),
+      ),
     );
   }
 }

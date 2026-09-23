@@ -10,6 +10,7 @@ import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity.dart';
+import '../utils/idempotency.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});
@@ -20,6 +21,7 @@ class NewPayment extends StatefulWidget {
 
 class _NewPaymentState extends State<NewPayment> {
   final _formKey = GlobalKey<FormState>();
+  final _idempotency = IdempotencyKey();
 
   List<User> userOptions = [];
   int? from;
@@ -44,8 +46,12 @@ class _NewPaymentState extends State<NewPayment> {
     setState(() => _isSaving = true);
 
     try {
-      await savePayment(payment);
+      await savePayment(
+        payment,
+        idempotencyKey: _idempotency.forPayload(payment),
+      );
       if (!mounted) return;
+      _idempotency.reset();
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -59,14 +65,21 @@ class _NewPaymentState extends State<NewPayment> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _isSaving = false);
+
+      // See new_expense.dart: no response means it may have committed, so
+      // refresh instead of reporting a clean failure, and keep the key.
+      final serverAnswered = error is ApiException;
+      if (!serverAnswered) {
+        context.read<UserBalanceController>().refresh();
+        context.read<AllExpenseController>().refresh();
+      }
+
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             content: Text(
-              error is ApiException
-                  ? error.message
-                  : 'Could not save payment. Check your connection and try again.',
+              serverAnswered ? error.message : unconfirmedWriteMessage,
             ),
           ),
         );

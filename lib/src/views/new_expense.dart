@@ -11,6 +11,7 @@ import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/connectivity.dart';
+import '../utils/idempotency.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -21,6 +22,7 @@ class NewExpense extends StatefulWidget {
 
 class _NewExpenseState extends State<NewExpense> {
   final _formKey = GlobalKey<FormState>();
+  final _idempotency = IdempotencyKey();
 
   int? by;
   String? title;
@@ -93,8 +95,12 @@ class _NewExpenseState extends State<NewExpense> {
     setState(() => _isSaving = true);
 
     try {
-      await saveTransaction(transaction);
+      await saveTransaction(
+        transaction,
+        idempotencyKey: _idempotency.forPayload(transaction),
+      );
       if (!mounted) return;
+      _idempotency.reset();
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -108,14 +114,23 @@ class _NewExpenseState extends State<NewExpense> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _isSaving = false);
+
+      // An ApiException means the server answered and rejected it, so nothing
+      // was committed. Anything else means no response at all: it may have
+      // landed, so refresh rather than implying a clean failure. The key is
+      // deliberately kept, making a retry safe once the server honours it.
+      final serverAnswered = error is ApiException;
+      if (!serverAnswered) {
+        context.read<UserBalanceController>().refresh();
+        context.read<AllExpenseController>().refresh();
+      }
+
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             content: Text(
-              error is ApiException
-                  ? error.message
-                  : 'Could not save expense. Check your connection and try again.',
+              serverAnswered ? error.message : unconfirmedWriteMessage,
             ),
           ),
         );
