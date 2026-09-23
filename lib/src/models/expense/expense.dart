@@ -11,6 +11,11 @@ class Expense extends Equatable {
   final String userName;
   final int transactionId;
   final String transactionTitle;
+
+  /// `'payment'` for transfers between members, null for ordinary expenses.
+  /// The authoritative discriminator — see `isPayment` in
+  /// `utils/expense_filters.dart`.
+  final String? transactionCategory;
   final num transactionAmount;
   final DateTime transactionDate;
   final List<Distribution> distributions;
@@ -25,6 +30,7 @@ class Expense extends Equatable {
     required this.transactionAmount,
     required this.transactionDate,
     required this.distributions,
+    this.transactionCategory,
   });
 
   factory Expense.fromMap(Map<String, dynamic> data) => Expense(
@@ -34,6 +40,16 @@ class Expense extends Equatable {
         userName: data['user_name'] as String,
         transactionId: data['transaction_id'] as int,
         transactionTitle: data['transaction_title'] as String,
+        // A cache entry written before this field existed has no key at all,
+        // as distinct from the server sending it as null for an expense. Only
+        // in that legacy case is the old title heuristic used, so payments
+        // already on disk keep rendering as payments instead of degrading
+        // until the next refetch. Once the entry is rewritten the
+        // authoritative value takes over, and a fresh row whose category is
+        // genuinely null stays an expense even if it is titled "payment".
+        transactionCategory: data.containsKey('transaction_category')
+            ? data['transaction_category'] as String?
+            : (data['transaction_title'] == 'payment' ? 'payment' : null),
         transactionAmount: data['transaction_amount'] as num,
         transactionDate: DateTime.parse(data['transaction_date'] as String),
         distributions: (data['distributions'] as List<dynamic>)
@@ -48,6 +64,7 @@ class Expense extends Equatable {
         'user_name': userName,
         'transaction_id': transactionId,
         'transaction_title': transactionTitle,
+        'transaction_category': transactionCategory,
         'transaction_amount': transactionAmount,
         'transaction_date': transactionDate.toIso8601String(),
         'distributions': distributions.map((e) => e.toMap()).toList(),
@@ -74,6 +91,7 @@ class Expense extends Equatable {
       userName,
       transactionId,
       transactionTitle,
+      transactionCategory,
       transactionAmount,
       transactionDate,
       distributions,

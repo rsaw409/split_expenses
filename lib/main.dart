@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 import 'src/app.dart';
-import 'src/notify_controllers/connectivity_check.dart';
+import 'src/notify_controllers/backend_reachability.dart';
 import 'src/notify_controllers/groups_controller.dart';
 import 'src/notify_controllers/settings_controller.dart';
 import 'src/notify_controllers/userbalances_controller.dart';
@@ -25,7 +25,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => InternetConnectivityHelper()),
+        ChangeNotifierProvider(create: (_) => BackendReachability()),
         ChangeNotifierProvider<SettingsController>(
           create: (context) {
             final settingsController = SettingsController();
@@ -41,32 +41,30 @@ void main() async {
           },
         ),
         ChangeNotifierProxyProvider2<GroupsController,
-            InternetConnectivityHelper, AllExpenseController>(
+            BackendReachability, AllExpenseController>(
           create: (context) => AllExpenseController(
             context.read<GroupsController>().selectedGroup["id"],
           ),
-          update: (context, groupsController, connectivity, previous) {
+          update: (context, groupsController, reachability, previous) {
             final int? groupId =
                 groupsController.selectedGroup["id"] as int?;
             if (previous != null && previous.groupId == groupId) {
-              previous.onConnectivityChanged(
-                  connectivity.isConnectedToInternet);
+              previous.onReachabilityChanged(reachability.isReachable);
               return previous;
             }
             return AllExpenseController(groupId);
           },
         ),
         ChangeNotifierProxyProvider2<GroupsController,
-            InternetConnectivityHelper, UserBalanceController>(
+            BackendReachability, UserBalanceController>(
           create: (context) => UserBalanceController(
             context.read<GroupsController>().selectedGroup["id"],
           ),
-          update: (context, groupsController, connectivity, previous) {
+          update: (context, groupsController, reachability, previous) {
             final int? groupId =
                 groupsController.selectedGroup["id"] as int?;
             if (previous != null && previous.groupId == groupId) {
-              previous.onConnectivityChanged(
-                  connectivity.isConnectedToInternet);
+              previous.onReachabilityChanged(reachability.isReachable);
               return previous;
             }
             return UserBalanceController(groupId);

@@ -10,12 +10,13 @@ import '../components/invite_dialog.dart';
 import '../components/leave_group_dialog.dart';
 import '../models/group.dart';
 import '../notify_controllers/allexpense_controller.dart';
-import '../notify_controllers/connectivity_check.dart';
+import '../notify_controllers/backend_reachability.dart';
 import '../notify_controllers/userbalances_controller.dart';
+import '../services/api_exception.dart';
 import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import 'overview_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -68,8 +69,8 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   }
 
   void handleInvite(BuildContext context, String? inviteId) {
-    if (!requireOnline(context,
-        message: "You're offline — connect to join this group.")) {
+    if (!requireReachable(context,
+        message: "Can't reach Split — try joining again in a moment.")) {
       return;
     }
 
@@ -85,8 +86,12 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
           ..showSnackBar(snackBar);
       }).catchError((error) {
         if (!context.mounted) return;
-        var snackBar = const SnackBar(
-          content: Text('Failed to join group'),
+        var snackBar = SnackBar(
+          content: Text(
+            error is ApiException
+                ? error.message
+                : "Can't reach Split — couldn't join this group.",
+          ),
         );
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
@@ -105,7 +110,7 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
-    final isOnline = watchIsOnline(context);
+    final isOnline = watchIsReachable(context);
 
     return DefaultTabController(
       initialIndex: 1,
@@ -136,9 +141,9 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       groupsController.selectedGroup['inviteId'],
                     );
                   } else if (item == 1) {
-                    if (!requireOnline(context,
+                    if (!requireReachable(context,
                         message:
-                            "You're offline — connect to leave this group.")) {
+                            "Can't reach Split — try again in a moment.")) {
                       return;
                     }
 
@@ -178,7 +183,7 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
         drawer: const MyDrawer(),
         body: Column(
           children: [
-            const _OfflineBanner(),
+            const _UnreachableBanner(),
             const Expanded(
               child: TabBarView(
                 children: <Widget>[
@@ -194,32 +199,44 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
         floatingActionButtonLocation: isOnline
             ? ExpandableFab.location
             : FloatingActionButtonLocation.endFloat,
-        floatingActionButton: isOnline
-            ? ExpandableFloatingActionButton()
-            // Muted rather than hidden, and still tappable so it can say why:
-            // a FAB with a null onPressed keeps its enabled colours, which
-            // would just look broken.
-            : FloatingActionButton(
-                onPressed: () => requireOnline(context),
-                backgroundColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
-                foregroundColor:
-                    Theme.of(context).colorScheme.onSurfaceVariant,
-                elevation: 0,
-                child: const Icon(Icons.add),
-              ),
+        floatingActionButton: Selector<GroupsController, bool>(
+          selector: (_, controller) => controller.selectedGroup['id'] != null,
+          builder: (context, hasGroup, __) {
+            // Hidden outright with no group: every action needs one to attach
+            // to, so the FAB used to open a menu whose three items all
+            // silently did nothing. Joining or creating a group lives in the
+            // drawer, which is what the empty state points at.
+            if (!hasGroup) return const SizedBox.shrink();
+
+            if (isOnline) return ExpandableFloatingActionButton();
+
+            // Offline it is muted rather than hidden, and still tappable so it
+            // can say why: the action exists, it is just unavailable for now.
+            // A FAB with a null onPressed keeps its enabled colours and would
+            // simply look broken.
+            return FloatingActionButton(
+              onPressed: () => requireReachable(context),
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              elevation: 0,
+              child: const Icon(Icons.add),
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class _OfflineBanner extends StatelessWidget {
-  const _OfflineBanner();
+class _UnreachableBanner extends StatelessWidget {
+  const _UnreachableBanner();
 
   @override
   Widget build(BuildContext context) {
-    final isOffline = !context.watch<InternetConnectivityHelper>().isConnectedToInternet;
-    if (!isOffline) return const SizedBox.shrink();
+    if (context.watch<BackendReachability>().isReachable) {
+      return const SizedBox.shrink();
+    }
 
     // With no group there is nothing to be stale and nothing this banner can
     // usefully explain: the onboarding empty state is the message, and the
@@ -240,8 +257,8 @@ class _OfflineBanner extends StatelessWidget {
       ),
       child: Text(
         hasData
-            ? "You're offline — data might be stale"
-            : "You're offline",
+            ? "Can't reach Split — data might be stale"
+            : "Can't reach Split",
         textAlign: TextAlign.center,
         style: Theme.of(context)
             .textTheme

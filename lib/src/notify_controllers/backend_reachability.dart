@@ -4,17 +4,23 @@ import 'dart:async';
 
 import '../services/server.dart';
 
-class InternetConnectivityHelper extends ChangeNotifier
-    with WidgetsBindingObserver {
+/// Whether the app can currently reach its own backend — which is what
+/// actually governs whether anything works, and deliberately not the same
+/// question as "is this device online".
+///
+/// A failed probe cannot distinguish a dropped connection from a server that
+/// is down, so nothing here claims to know which it is; the UI says only that
+/// Split is unreachable.
+class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
   /// Null until the first probe resolves. "Not checked yet" must not read as
-  /// offline, or every cold start briefly claims to be offline before it has
+  /// unreachable, or every cold start briefly claims failure before it has
   /// looked — which is the first thing a new user would see.
-  bool? _isConnectedToInternet;
-  bool get isConnectedToInternet => _isConnectedToInternet ?? true;
-  Timer? _internetCheckTimer;
+  bool? _isReachable;
+  bool get isReachable => _isReachable ?? true;
+  Timer? _probeTimer;
   final Duration checkInterval;
 
-  InternetConnectivityHelper(
+  BackendReachability(
       {this.checkInterval = const Duration(seconds: 10)}) {
     WidgetsBinding.instance.addObserver(this);
     _startChecking();
@@ -25,24 +31,22 @@ class InternetConnectivityHelper extends ChangeNotifier
     if (state == AppLifecycleState.resumed) {
       _startChecking();
     } else {
-      _internetCheckTimer?.cancel();
+      _probeTimer?.cancel();
     }
   }
 
-  // Start periodic checking
   void _startChecking() {
-    _internetCheckTimer?.cancel();
-    _internetCheckTimer = Timer.periodic(checkInterval, (timer) {
-      _updateConnectionStatus();
+    _probeTimer?.cancel();
+    _probeTimer = Timer.periodic(checkInterval, (timer) {
+      _refreshReachability();
     });
-    _updateConnectionStatus();
+    _refreshReachability();
   }
 
-  // Function to update the connection status
-  Future<void> _updateConnectionStatus() async {
-    bool isConnected = await _canReachBackend();
-    if (_isConnectedToInternet != isConnected) {
-      _isConnectedToInternet = isConnected;
+  Future<void> _refreshReachability() async {
+    final reachable = await _canReachBackend();
+    if (_isReachable != reachable) {
+      _isReachable = reachable;
       notifyListeners();
     }
   }
@@ -63,11 +67,10 @@ class InternetConnectivityHelper extends ChangeNotifier
     }
   }
 
-  // Stop periodic checking
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _internetCheckTimer?.cancel();
+    _probeTimer?.cancel();
     super.dispose();
   }
 }

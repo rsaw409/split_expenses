@@ -3,15 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../components/amount_distribution.dart';
-import '../models/user.dart';
 import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
+import '../utils/members.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -28,7 +28,6 @@ class _NewExpenseState extends State<NewExpense> {
   String? title;
   double? totalAmount;
 
-  List<User> userOptions = [];
   List<Map<String, dynamic>> selectedUsers = [];
 
   bool _isSaving = false;
@@ -37,22 +36,16 @@ class _NewExpenseState extends State<NewExpense> {
   void initState() {
     super.initState();
 
-    loadUser();
-  }
-
-  Future<void> loadUser() async {
-    final groupId = context.read<GroupsController>().selectedGroup["id"];
-    List<User> tmp = await getUsersInGroup(groupId);
-    if (!mounted) return;
-    setState(() {
-      userOptions = tmp;
-    });
+    // Members come from the cached balances, so the pickers render instantly
+    // instead of waiting on a request. Refresh anyway, unawaited, in case
+    // someone was added on another device since the last sync.
+    context.read<UserBalanceController>().refresh();
   }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!requireOnline(context,
-        message: "You're offline — connect to save this expense.")) {
+    if (!requireReachable(context,
+        message: "Can't reach Split — this expense wasn't saved.")) {
       return;
     }
 
@@ -139,6 +132,10 @@ class _NewExpenseState extends State<NewExpense> {
 
   @override
   Widget build(BuildContext context) {
+    final userOptions = membersFromBalances(
+      context.watch<UserBalanceController>().userBalances,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('New expense'),

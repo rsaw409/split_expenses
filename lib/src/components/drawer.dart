@@ -8,7 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/settings_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import '../utils/initials.dart';
 import '../views/new_form.dart';
 
@@ -117,7 +117,7 @@ class MyDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isOffline = !watchIsOnline(context);
+    final isOffline = !watchIsReachable(context);
 
     return Drawer(
       child: SafeArea(
@@ -311,7 +311,7 @@ class MyDrawer extends StatelessWidget {
                   if (isOffline) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      "You're offline — connect to join or create a group.",
+                      "Can't reach Split — joining or creating a group needs a connection.",
                       textAlign: TextAlign.center,
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,

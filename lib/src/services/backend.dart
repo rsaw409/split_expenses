@@ -1,7 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../models/user.dart';
 import '../models/user_balance.dart';
 import '../models/expense/expense.dart';
 
@@ -23,7 +22,7 @@ Future<List<Expense>> fetchExpenses(
       'by': '$byId',
       'payments': isPayments
     }),
-  );
+  ).timeout(readTimeout);
 
   if (response.statusCode == 200) {
     var tmp = jsonDecode(response.body);
@@ -50,7 +49,7 @@ Future<List<UserBalance>> fetchUserBalances(int? groupId) async {
     body: jsonEncode(<String, String>{
       'group_id': '$groupId',
     }),
-  );
+  ).timeout(readTimeout);
 
   if (response.statusCode == 200) {
     var tmp = jsonDecode(response.body);
@@ -77,7 +76,7 @@ Future<String> addUserInGroup(int? groupId, String userName) async {
       'group_id': '$groupId',
       'name': userName,
     }),
-  );
+  ).timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     return 'Success';
@@ -85,36 +84,6 @@ Future<String> addUserInGroup(int? groupId, String userName) async {
     throw apiExceptionFrom(response, 'Failed to add person to group.');
   }
 }
-
-Future<List<User>> getUsersInGroup(int? groupId) async {
-  var url = '$server/getAllUsersInGroup';
-
-  final response = await http.post(
-    Uri.parse(url),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, String>{
-      'group_id': '$groupId',
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    var tmp = jsonDecode(response.body);
-
-    List<User> users = [];
-    for (int i = 0; i < tmp.length; i++) {
-      users.add(User.fromJson(tmp[i]));
-    }
-    return users;
-  } else {
-    throw apiExceptionFrom(response, 'Failed to load people in this group.');
-  }
-}
-
-/// Bounded so a hung write fails predictably instead of sitting on an open
-/// socket for minutes, which leaves the user unsure whether it landed.
-const Duration _writeTimeout = Duration(seconds: 20);
 
 const Map<String, String> _jsonHeaders = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -141,7 +110,7 @@ Future<String> saveTransaction(
           'idempotency_key': idempotencyKey,
         }),
       )
-      .timeout(_writeTimeout);
+      .timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     return 'success';
@@ -165,7 +134,7 @@ Future<String> savePayment(
           'idempotency_key': idempotencyKey,
         }),
       )
-      .timeout(_writeTimeout);
+      .timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     return 'success';
@@ -192,7 +161,7 @@ Future<String> savePayments(List<Map<String, dynamic>> payments) async {
         headers: _jsonHeaders,
         body: jsonEncode(payments),
       )
-      .timeout(_writeTimeout);
+      .timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     return 'success';

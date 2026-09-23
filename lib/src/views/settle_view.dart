@@ -10,7 +10,7 @@ import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import '../utils/currency.dart';
 import '../utils/idempotency.dart';
 
@@ -88,8 +88,8 @@ class _SettleViewState extends State<SettleView> {
   }
 
   void _savePayments(BuildContext context) {
-    if (!requireOnline(context,
-        message: "You're offline — connect to record these payments.")) {
+    if (!requireReachable(context,
+        message: "Can't reach Split — these payments weren't recorded.")) {
       return;
     }
 

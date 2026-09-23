@@ -8,7 +8,7 @@ import '../services/api_exception.dart';
 ///
 /// Cold start serves the cache immediately (no spinner) and then refetches. A
 /// failed refetch keeps whatever is already on screen and reports [isStale]
-/// instead of [isError], so losing connectivity degrades to last-known data
+/// instead of [isError], so losing the backend degrades to last-known data
 /// rather than an error screen.
 abstract class CachedListController<T> extends ChangeNotifier {
   CachedListController(this.groupId) {
@@ -57,25 +57,25 @@ abstract class CachedListController<T> extends ChangeNotifier {
 
   bool _disposed = false;
 
-  bool? _wasOnline;
+  bool? _wasReachable;
 
-  /// A fetch issued the instant connectivity returns can still fail while the
-  /// radio settles, and no further transition follows to trigger another try.
-  /// One delayed retry covers that; it is not re-armed until the next success
-  /// or connectivity edge, so a failing backend is never hammered.
+  /// A fetch issued the instant the backend becomes reachable can still fail
+  /// while the radio settles, and no further transition follows to trigger
+  /// another try. One delayed retry covers that; it is not re-armed until the
+  /// next success or reachability edge, so a failing backend is never hammered.
   static const _retryDelay = Duration(seconds: 3);
   Timer? _retryTimer;
   bool _retriedSinceLastSuccess = false;
 
   Future<void> refresh() => _load();
 
-  /// Refetches on a real offline→online edge. Keyed off the transition rather
-  /// than [isStale] because going offline without attempting a fetch leaves
-  /// data un-stale yet still potentially outdated.
-  void onConnectivityChanged(bool isOnline) {
-    final wasOnline = _wasOnline;
-    _wasOnline = isOnline;
-    if (isOnline && wasOnline == false && groupId != null) {
+  /// Refetches on a real unreachable→reachable edge. Keyed off the transition
+  /// rather than [isStale] because losing the backend without attempting a
+  /// fetch leaves data un-stale yet still potentially outdated.
+  void onReachabilityChanged(bool isReachable) {
+    final wasReachable = _wasReachable;
+    _wasReachable = isReachable;
+    if (isReachable && wasReachable == false && groupId != null) {
       _retriedSinceLastSuccess = false;
       scheduleMicrotask(refresh);
     }
@@ -156,12 +156,12 @@ abstract class CachedListController<T> extends ChangeNotifier {
         _errorMessage = e is ApiException ? e.message : fetchFailureMessage;
       }
       _notify();
-      _scheduleRetryIfOnline();
+      _scheduleRetryIfReachable();
     }
   }
 
-  void _scheduleRetryIfOnline() {
-    if (_wasOnline != true || _retriedSinceLastSuccess) return;
+  void _scheduleRetryIfReachable() {
+    if (_wasReachable != true || _retriedSinceLastSuccess) return;
     _retriedSinceLastSuccess = true;
     _retryTimer?.cancel();
     _retryTimer = Timer(_retryDelay, () {

@@ -1,7 +1,16 @@
 import '../models/expense/expense.dart';
 
-/// The backend marks payments by title rather than a dedicated field.
-bool isPayment(Expense expense) => expense.transactionTitle == 'payment';
+/// Payments are identified by the server's own category, not by their title.
+///
+/// Matching on `transactionTitle == 'payment'` meant a user who titled an
+/// ordinary expense "payment" had it rendered as a transfer and counted in the
+/// Payments row. There is deliberately no fallback to that title check: it
+/// cannot tell a real payment from an expense named like one, so keeping it
+/// would preserve the very bug this replaces. The cost is that cache entries
+/// written before this field existed decode with a null category, so on the
+/// first launch after updating, a payment may paint as an expense until the
+/// refetch lands a moment later.
+bool isPayment(Expense expense) => expense.transactionCategory == 'payment';
 
 /// Mirrors `getAllExpensesInGroup`'s server-side filters so the per-user views
 /// can be served from the cached full list instead of a round trip.

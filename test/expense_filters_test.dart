@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:split_expense/src/models/expense/distribution.dart';
 import 'package:split_expense/src/models/expense/expense.dart';
@@ -17,6 +19,7 @@ Expense _expense({
   required String payerName,
   required num amount,
   required List<int> distributedTo,
+  String? category,
 }) =>
     Expense(
       groupId: 63,
@@ -25,6 +28,7 @@ Expense _expense({
       userName: payerName,
       transactionId: transactionId,
       transactionTitle: title,
+      transactionCategory: category,
       transactionAmount: amount,
       transactionDate: DateTime(2026, 9, 21),
       distributions: distributedTo
@@ -40,6 +44,7 @@ final _all = <Expense>[
   _expense(
     transactionId: 223,
     title: 'payment',
+    category: 'payment',
     payerId: _neha,
     payerName: 'Neha',
     amount: 1500,
@@ -76,9 +81,35 @@ List<int> _ids(List<Expense> expenses) =>
 
 void main() {
   group('filterExpenses', () {
-    test('identifies payments by title', () {
+    test('identifies payments by the server category, not the title', () {
       expect(isPayment(_all.first), isTrue);
-      expect(_all.skip(1).every(isPayment), isFalse);
+      expect(_all.skip(1).any(isPayment), isFalse);
+    });
+
+    test('an expense merely titled "payment" is not a payment', () {
+      // The bug this discriminator replaces: matching on the title made any
+      // expense a user happened to call "payment" render as a transfer and
+      // land in the Payments row.
+      final titledPayment = _expense(
+        transactionId: 300,
+        title: 'payment',
+        payerId: _rohit,
+        payerName: 'Rohit',
+        amount: 250,
+        distributedTo: [_rohit, _neha],
+      );
+
+      expect(isPayment(titledPayment), isFalse);
+      expect(
+        filterExpenses([titledPayment], byId: _rohit, isPayments: true),
+        isEmpty,
+        reason: 'it must not be counted as one of Rohit\'s payments',
+      );
+      expect(
+        filterExpenses([titledPayment], byId: _rohit, isPayments: false),
+        hasLength(1),
+        reason: 'it belongs in the Expenses row',
+      );
     });
 
     test('"Expenses" row: paid by the user, excluding payments', () {
@@ -126,6 +157,59 @@ void main() {
 
     test('no filters returns everything, in the original order', () {
       expect(_ids(filterExpenses(_all)), [223, 222, 221, 220]);
+    });
+  });
+
+  group('wire and cache round trip', () {
+    // Copied from a real getAllExpensesInGroup response, so this pins the
+    // field name the discriminator depends on.
+    Map<String, dynamic> row(Object? category) => {
+          'group_id': 63,
+          'group_name': 'Goa Trip',
+          'user_id': 142,
+          'user_name': 'Neha',
+          'transaction_id': 223,
+          'transaction_title': 'payment',
+          'transaction_category': category,
+          'transaction_amount': 1500,
+          'transaction_date': '2026-09-21T00:00:00.000Z',
+          'distributions': [
+            {'amount': 1500, 'user_id': 139, 'user_name': 'Rohit'},
+          ],
+        };
+
+    test('parses transaction_category from the API payload', () {
+      expect(isPayment(Expense.fromMap(row('payment'))), isTrue);
+      expect(isPayment(Expense.fromMap(row(null))), isFalse);
+    });
+
+    test('survives the cache round trip, so cached payments stay payments', () {
+      final cached = Expense.fromMap(
+        jsonDecode(jsonEncode(Expense.fromMap(row('payment')).toMap()))
+            as Map<String, dynamic>,
+      );
+
+      expect(isPayment(cached), isTrue);
+    });
+
+    test('infers the category for a cache entry predating the field', () {
+      // No key at all means a cache entry written by an older build. Falling
+      // back to the title only here keeps payments already on disk rendering
+      // correctly instead of degrading to "payment / <payer>" until a refetch.
+      final legacy = row('payment')..remove('transaction_category');
+
+      expect(isPayment(Expense.fromMap(legacy)), isTrue);
+    });
+
+    test('a present-but-null category is authoritative, not a missing field',
+        () {
+      // This is the distinction that lets the fallback exist without
+      // reinstating the bug: the server sends the key as null for expenses, so
+      // an expense titled "payment" must stay an expense.
+      final titled = row(null)..['transaction_title'] = 'payment';
+
+      expect(titled.containsKey('transaction_category'), isTrue);
+      expect(isPayment(Expense.fromMap(titled)), isFalse);
     });
   });
 }

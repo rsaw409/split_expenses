@@ -148,7 +148,7 @@ void main() {
       await pumpEventQueue();
     });
 
-    test('refetches only on an offline to online transition', () async {
+    test('refetches only on an unreachable to reachable transition', () async {
       final controller = _FakeController(
         1,
         onFetch: (_) async => ['fetched'],
@@ -157,13 +157,13 @@ void main() {
       await pumpEventQueue();
       expect(controller.fetchCount, 1);
 
-      controller.onConnectivityChanged(true);
+      controller.onReachabilityChanged(true);
       await pumpEventQueue();
       expect(controller.fetchCount, 1,
           reason: 'first observation is not a transition');
 
-      controller.onConnectivityChanged(false);
-      controller.onConnectivityChanged(true);
+      controller.onReachabilityChanged(false);
+      controller.onReachabilityChanged(true);
       await pumpEventQueue();
       expect(controller.fetchCount, 2);
     });
@@ -182,8 +182,8 @@ void main() {
       await pumpEventQueue();
       expect(controller.fetchCount, 1);
 
-      controller.onConnectivityChanged(false);
-      controller.onConnectivityChanged(true);
+      controller.onReachabilityChanged(false);
+      controller.onReachabilityChanged(true);
       await pumpEventQueue();
       expect(controller.fetchCount, 2, reason: 'reconnect refetches');
 
@@ -201,8 +201,8 @@ void main() {
       );
 
       await pumpEventQueue();
-      controller.onConnectivityChanged(false);
-      controller.onConnectivityChanged(true);
+      controller.onReachabilityChanged(false);
+      controller.onReachabilityChanged(true);
       await pumpEventQueue();
       final afterReconnect = controller.fetchCount;
 
@@ -212,18 +212,18 @@ void main() {
           reason: 'at most one automatic retry until the next success or edge');
     });
 
-    test('does not retry while offline', () async {
+    test('does not retry while the backend is unreachable', () async {
       final controller = _FakeController(
         1,
         onFetch: (_) => Future.error(Exception('offline')),
       );
 
       await pumpEventQueue();
-      controller.onConnectivityChanged(false);
+      controller.onReachabilityChanged(false);
       await Future<void>.delayed(const Duration(seconds: 4));
       await pumpEventQueue();
       expect(controller.fetchCount, 1,
-          reason: 'retrying with no connectivity just burns battery');
+          reason: 'retrying with no backend just burns battery');
     });
 
     test('treats having no group as empty, not as an error', () async {

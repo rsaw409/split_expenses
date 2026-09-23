@@ -16,13 +16,20 @@ Future<Group> joinGroupFromInviteId(String inviteId) async {
     body: jsonEncode(<String, String>{
       'invite_id': inviteId,
     }),
-  );
+  ).timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     final group = Group.fromJson(jsonDecode(response.body));
     return group;
   } else {
-    throw apiExceptionFrom(response, 'Invalid or expired invite code.');
+    // The server reports a mistyped code as a raw crypto error under a 400, so
+    // its message is never shown here — for the user there is only one
+    // meaningful outcome: the code didn't work.
+    throw apiExceptionFrom(
+      response,
+      'Invalid or expired invite code.',
+      useServerMessage: false,
+    );
   }
 }
 
@@ -37,7 +44,7 @@ Future<Group> createGroup(String groupName) async {
     body: jsonEncode(<String, String>{
       'name': groupName,
     }),
-  );
+  ).timeout(writeTimeout);
 
   if (response.statusCode == 200) {
     return Group.fromJson(jsonDecode(response.body));

@@ -9,8 +9,9 @@ import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
+import '../utils/members.dart';
 
 class NewPayment extends StatefulWidget {
   const NewPayment({super.key});
@@ -31,8 +32,8 @@ class _NewPaymentState extends State<NewPayment> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!requireOnline(context,
-        message: "You're offline — connect to save this payment.")) {
+    if (!requireReachable(context,
+        message: "Can't reach Split — this payment wasn't saved.")) {
       return;
     }
 
@@ -90,20 +91,18 @@ class _NewPaymentState extends State<NewPayment> {
   void initState() {
     super.initState();
 
-    loadUser();
+    // Members come from the cached balances, so the pickers render instantly
+    // instead of waiting on a request. Refresh anyway, unawaited, in case
+    // someone was added on another device since the last sync.
+    context.read<UserBalanceController>().refresh();
   }
 
-  Future<void> loadUser() async {
-    final groupId = context.read<GroupsController>().selectedGroup['id'];
-    List<User> tmp = await getUsersInGroup(groupId);
-    if (!mounted) return;
-    setState(() {
-      userOptions = tmp;
-    });
-  }
-
-  List<User> getUserOptions({bool fromOption = false, bool toOptions = false}) {
-    var copy = [...userOptions];
+  List<User> getUserOptions(
+    List<User> members, {
+    bool fromOption = false,
+    bool toOptions = false,
+  }) {
+    var copy = [...members];
 
     if (fromOption) copy.removeWhere((each) => each.id == to);
     if (toOptions) copy.removeWhere((each) => each.id == from);
@@ -113,6 +112,10 @@ class _NewPaymentState extends State<NewPayment> {
 
   @override
   Widget build(BuildContext context) {
+    final members = membersFromBalances(
+      context.watch<UserBalanceController>().userBalances,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('New payment'),
@@ -172,7 +175,7 @@ class _NewPaymentState extends State<NewPayment> {
                     if (newValue != null) from = int.tryParse(newValue);
                   });
                 },
-                items: getUserOptions(fromOption: true).map((user) {
+                items: getUserOptions(members, fromOption: true).map((user) {
                   return DropdownMenuItem(
                     value: "${user.id}",
                     child: Text(user.name, overflow: TextOverflow.ellipsis),
@@ -190,7 +193,7 @@ class _NewPaymentState extends State<NewPayment> {
                     if (newValue != null) to = int.tryParse(newValue);
                   });
                 },
-                items: getUserOptions(toOptions: true).map((user) {
+                items: getUserOptions(members, toOptions: true).map((user) {
                   return DropdownMenuItem(
                     value: "${user.id}",
                     child: Text(user.name, overflow: TextOverflow.ellipsis),

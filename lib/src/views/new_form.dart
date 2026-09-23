@@ -10,7 +10,7 @@ import '../services/backend.dart';
 import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 
 class NewForm extends StatefulWidget {
   const NewForm({
@@ -112,7 +112,7 @@ class _NewFormState extends State<NewForm> {
   void _submit(BuildContext context) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    if (!requireOnline(context)) return;
+    if (!requireReachable(context)) return;
 
     final groupsController = context.read<GroupsController>();
     final userBalanceController = context.read<UserBalanceController>();

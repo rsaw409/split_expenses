@@ -5,7 +5,7 @@ import 'package:split_expense/src/notify_controllers/userbalances_controller.dar
 import '../components/async_state.dart';
 import '../models/user_balance.dart';
 import '../theme/app_theme.dart';
-import '../utils/connectivity.dart';
+import '../utils/reachability.dart';
 import '../utils/currency.dart';
 import '../utils/initials.dart';
 import 'settle_view.dart';
@@ -69,7 +69,7 @@ class OverviewView extends StatelessWidget {
                 child: FilledButton.tonalIcon(
                   // Disabled offline: settling up is a write, and selecting
                   // who pays whom only to fail at Save wastes real work.
-                  onPressed: !watchIsOnline(context)
+                  onPressed: !watchIsReachable(context)
                       ? null
                       : () {
                           Navigator.push(
