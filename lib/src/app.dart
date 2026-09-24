@@ -5,6 +5,7 @@ import 'package:split_expense/src/views/home.dart';
 import 'notify_controllers/settings_controller.dart';
 import 'theme/app_scroll_behavior.dart';
 import 'theme/app_theme.dart';
+import 'utils/invite_link.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({
@@ -13,6 +14,17 @@ class MyApp extends StatelessWidget {
 
   final GlobalKey<HomeViewState> homeStateGlobalKey =
       GlobalKey<HomeViewState>();
+
+  Widget _buildHome(BuildContext context) => HomeView(key: homeStateGlobalKey);
+
+  void _handleDeepLink(String routeName) {
+    if (!isJoinGroupRoute(routeName)) return;
+
+    final inviteId = inviteIdFromRoute(routeName);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      homeStateGlobalKey.currentState?.handleInvite(inviteId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,21 +40,25 @@ class MyApp extends StatelessWidget {
       scrollBehavior: const AppScrollBehavior(),
       initialRoute: '/',
       routes: {
-        '/': (context) => HomeView(
-              key: homeStateGlobalKey,
-            ),
+        '/': _buildHome,
       },
+      // A cold-start deep link arrives as the initial route. Navigator's
+      // default splits it into one route per path prefix and generates each,
+      // so '/joinGroup/a/b' ran the invite handler for '/joinGroup' and
+      // '/joinGroup/a' too, racing a truncated join against the real one.
+      // Handling it here sees the whole link exactly once.
+      onGenerateInitialRoutes: (initialRoute) {
+        _handleDeepLink(initialRoute);
+        return [
+          MaterialPageRoute<void>(
+            settings: const RouteSettings(name: Navigator.defaultRouteName),
+            builder: _buildHome,
+          ),
+        ];
+      },
+      // A deep link while the app is running is pushed as a single name.
       onGenerateRoute: (settings) {
-        final uri = Uri.parse(settings.name!);
-        final pathSegments = uri.pathSegments;
-
-        if (pathSegments.isNotEmpty && pathSegments[0] == 'joinGroup') {
-          final inviteId = pathSegments.length > 1 ? pathSegments[1] : null;
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            homeStateGlobalKey.currentState?.handleInvite(context, inviteId);
-          });
-        }
+        _handleDeepLink(settings.name!);
         return null;
       },
     );
