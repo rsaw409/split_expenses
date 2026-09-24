@@ -14,7 +14,7 @@ void showInviteDialog(
   final userJoinLink = 'https://portfolio.rsaw409.me/joinGroup/$inviteId';
 
   final msg =
-      'Join our group "$groupName".\n\n1. Download Split: $url\n2. Open this link on your smartphone: $userJoinLink\n\nEnter the following code: $inviteId';
+      'Join our group "$groupName".\n\n1. Download Split: $url\n2. Open this link on your smartphone: $userJoinLink\n';
 
   showDialog<String>(
     context: context,

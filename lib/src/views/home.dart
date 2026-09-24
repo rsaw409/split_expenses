@@ -110,7 +110,6 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
-    final isOnline = watchIsReachable(context);
 
     return DefaultTabController(
       initialIndex: 1,
@@ -141,12 +140,6 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                       groupsController.selectedGroup['inviteId'],
                     );
                   } else if (item == 1) {
-                    if (!requireReachable(context,
-                        message:
-                            "Can't reach Split — try again in a moment.")) {
-                      return;
-                    }
-
                     final groupName = groupsController.selectedGroup['name'];
 
                     final confirmed =
@@ -194,11 +187,7 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
             ),
           ],
         ),
-        // ExpandableFab.location only positions the expandable FAB; a plain
-        // one placed there never appears on screen.
-        floatingActionButtonLocation: isOnline
-            ? ExpandableFab.location
-            : FloatingActionButtonLocation.endFloat,
+        floatingActionButtonLocation: ExpandableFab.location,
         floatingActionButton: Selector<GroupsController, bool>(
           selector: (_, controller) => controller.selectedGroup['id'] != null,
           builder: (context, hasGroup, __) {
@@ -208,20 +197,10 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
             // drawer, which is what the empty state points at.
             if (!hasGroup) return const SizedBox.shrink();
 
-            if (isOnline) return ExpandableFloatingActionButton();
-
-            // Offline it is muted rather than hidden, and still tappable so it
-            // can say why: the action exists, it is just unavailable for now.
-            // A FAB with a null onPressed keeps its enabled colours and would
-            // simply look broken.
-            return FloatingActionButton(
-              onPressed: () => requireReachable(context),
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-              elevation: 0,
-              child: const Icon(Icons.add),
-            );
+            // Available even when Split is unreachable: each form checks
+            // reachability on submit, so the user can fill it in offline and
+            // retry without retyping.
+            return ExpandableFloatingActionButton();
           },
         ),
       ),
@@ -240,7 +219,7 @@ class _UnreachableBanner extends StatelessWidget {
 
     // With no group there is nothing to be stale and nothing this banner can
     // usefully explain: the onboarding empty state is the message, and the
-    // drawer's disabled Join/Create buttons already say why they're off.
+    // Join/Create forms report it themselves on submit.
     final expenses = context.watch<AllExpenseController>();
     if (expenses.groupId == null) return const SizedBox.shrink();
 
