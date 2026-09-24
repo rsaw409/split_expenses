@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:split_expense/src/views/all_expenses_view.dart';
 import 'package:split_expense/src/components/drawer.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
 import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
@@ -128,114 +127,96 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
 
-    final theme = Theme.of(context);
-
     return DefaultTabController(
       initialIndex: 1,
       length: 2,
-      // Snackbars shown here must be fixed, not floating. ExpandableFab lays
-      // itself out full-screen, and Scaffold places a floating snackbar above
-      // the FAB's top edge, which is off the top of the screen: every snackbar
-      // on this screen was silently invisible. A fixed one sits at the bottom
-      // of the content, and ExpandableFab.location lifts the FAB above it.
-      child: Theme(
-        data: theme.copyWith(
-          snackBarTheme: SnackBarThemeData(
-            behavior: SnackBarBehavior.fixed,
-            backgroundColor: theme.snackBarTheme.backgroundColor,
-            contentTextStyle: theme.snackBarTheme.contentTextStyle,
-            actionTextColor: theme.snackBarTheme.actionTextColor,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Selector<GroupsController, Map<String, dynamic>>(
+            selector: (_, GroupsController groupsController) =>
+                groupsController.selectedGroup,
+            builder: (_, Map<String, dynamic> selectedGroup, __) => Text(
+              selectedGroup['name'] ?? 'Split',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: PopupMenuButton<int>(
+                onSelected: (item) async {
+                  if (groupsController.selectedGroup['name'] == null) {
+                    return;
+                  }
+                  if (item == 0) {
+                    showInviteDialog(
+                      context,
+                      groupsController.selectedGroup['name'],
+                      groupsController.selectedGroup['inviteId'],
+                    );
+                  } else if (item == 1) {
+                    final groupName = groupsController.selectedGroup['name'];
+
+                    final confirmed =
+                        await showLeaveGroupDialog(context, groupName);
+                    if (!confirmed) return;
+                    if (!context.mounted) return;
+
+                    groupsController.removeCurrentGroup();
+
+                    var snackBar = SnackBar(
+                      content: Text('Successfully leave group: $groupName'),
+                    );
+
+                    ScaffoldMessenger.of(context)
+                      ..removeCurrentSnackBar()
+                      ..showSnackBar(snackBar);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<int>(value: 0, child: Text('Invite')),
+                  const PopupMenuItem<int>(
+                      value: 1, child: Text('Leave group')),
+                ],
+              ),
+            ),
+          ],
+          bottom: const TabBar(
+            tabs: <Widget>[
+              Tab(text: 'Overview'),
+              Tab(text: 'Expenses'),
+            ],
           ),
         ),
-        child: Scaffold(
-          appBar: AppBar(
-            title: Selector<GroupsController, Map<String, dynamic>>(
-              selector: (_, GroupsController groupsController) =>
-                  groupsController.selectedGroup,
-              builder: (_, Map<String, dynamic> selectedGroup, __) => Text(
-                selectedGroup['name'] ?? 'Split',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        drawer: const MyDrawer(),
+        body: Column(
+          children: [
+            const _UnreachableBanner(),
+            const Expanded(
+              child: TabBarView(
+                children: <Widget>[
+                  OverviewView(),
+                  AllExpensesView(),
+                ],
               ),
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: PopupMenuButton<int>(
-                  onSelected: (item) async {
-                    if (groupsController.selectedGroup['name'] == null) {
-                      return;
-                    }
-                    if (item == 0) {
-                      showInviteDialog(
-                        context,
-                        groupsController.selectedGroup['name'],
-                        groupsController.selectedGroup['inviteId'],
-                      );
-                    } else if (item == 1) {
-                      final groupName = groupsController.selectedGroup['name'];
+          ],
+        ),
+        floatingActionButton: Selector<GroupsController, bool>(
+          selector: (_, controller) => controller.selectedGroup['id'] != null,
+          builder: (context, hasGroup, __) {
+            // Hidden outright with no group: every action needs one to attach
+            // to, so the FAB used to open a menu whose three items all
+            // silently did nothing. Joining or creating a group lives in the
+            // drawer, which is what the empty state points at.
+            if (!hasGroup) return const SizedBox.shrink();
 
-                      final confirmed =
-                          await showLeaveGroupDialog(context, groupName);
-                      if (!confirmed) return;
-                      if (!context.mounted) return;
-
-                      groupsController.removeCurrentGroup();
-
-                      var snackBar = SnackBar(
-                        content: Text('Successfully leave group: $groupName'),
-                      );
-
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(snackBar);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<int>(value: 0, child: Text('Invite')),
-                    const PopupMenuItem<int>(
-                        value: 1, child: Text('Leave group')),
-                  ],
-                ),
-              ),
-            ],
-            bottom: const TabBar(
-              tabs: <Widget>[
-                Tab(text: 'Overview'),
-                Tab(text: 'Expenses'),
-              ],
-            ),
-          ),
-          drawer: const MyDrawer(),
-          body: Column(
-            children: [
-              const _UnreachableBanner(),
-              const Expanded(
-                child: TabBarView(
-                  children: <Widget>[
-                    OverviewView(),
-                    AllExpensesView(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          floatingActionButtonLocation: ExpandableFab.location,
-          floatingActionButton: Selector<GroupsController, bool>(
-            selector: (_, controller) => controller.selectedGroup['id'] != null,
-            builder: (context, hasGroup, __) {
-              // Hidden outright with no group: every action needs one to attach
-              // to, so the FAB used to open a menu whose three items all
-              // silently did nothing. Joining or creating a group lives in the
-              // drawer, which is what the empty state points at.
-              if (!hasGroup) return const SizedBox.shrink();
-
-              // Available even when Split is unreachable: each form checks
-              // reachability on submit, so the user can fill it in offline and
-              // retry without retyping.
-              return ExpandableFloatingActionButton();
-            },
-          ),
+            // Available even when Split is unreachable: each form checks
+            // reachability on submit, so the user can fill it in offline and
+            // retry without retyping.
+            return const ExpandableFloatingActionButton();
+          },
         ),
       ),
     );

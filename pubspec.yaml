@@ -16,9 +16,6 @@ dependencies:
   equatable: ^3.0.0
   flutter:
     sdk: flutter
-  # Pinned below 3.0.0: that release migrates the widget to material_ui
-  # instead of package:flutter/material.dart, which this app doesn't use.
-  flutter_expandable_fab: ^2.5.2
   flutter_launcher_icons: ^0.14.4
   http: ^1.2.2
   intl: ^0.20.3

@@ -165,15 +165,30 @@ abstract final class AppTheme {
         space: 1,
         thickness: 1,
       ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
-        actionTextColor: colorScheme.inversePrimary,
-      ),
+      // Material 3's inverse colours read well in light mode (a dark bar), but
+      // in dark mode they give a pale grey slab that clashes with the dark
+      // purple UI. Dark mode uses a raised dark surface with an outline
+      // instead, which stays distinct from the background.
+      snackBarTheme: brightness == Brightness.dark
+          ? SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                side: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              contentTextStyle: TextStyle(color: colorScheme.onSurface),
+              actionTextColor: colorScheme.primary,
+            )
+          : SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              backgroundColor: colorScheme.inverseSurface,
+              contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
+              actionTextColor: colorScheme.inversePrimary,
+            ),
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
