@@ -11,12 +11,15 @@ void showInviteDialog(
   String groupName,
   String inviteId,
 ) {
-  const url =
-      'https://play.google.com/store/apps/details?id=developer.rohitsaw.split';
+  // One link covers everyone: it opens Split if installed, and otherwise the
+  // web page sends them to the Play Store with the invite attached, so their
+  // first launch joins the group automatically.
   final userJoinLink = inviteLink(inviteId).toString();
 
-  final msg =
-      'Join our group "$groupName".\n\n1. Download Split: $url\n2. Open this link on your smartphone: $userJoinLink\n';
+  final msg = 'Join our group "$groupName" on Split: $userJoinLink\n\n'
+      "Tap the link to open it in Split. Don't have Split yet? The link "
+      "takes you to Google Play, and you'll join the group when you first "
+      'open the app.\n';
 
   showDialog<String>(
     context: context,
@@ -117,11 +120,11 @@ void showInviteDialog(
           FilledButton.icon(
             onPressed: () async {
               final result = await SharePlus.instance.share(
-                ShareParams(text: msg, subject: 'Look what I made!'),
+                ShareParams(text: msg, subject: 'Join "$groupName" on Split'),
               );
               if (result.status == ShareResultStatus.success) {
                 var snackBar = SnackBar(
-                  content: Text('Successfully share group: $groupName'),
+                  content: Text('Invite to $groupName shared.'),
                 );
                 if (!context.mounted) return;
 

@@ -32,3 +32,28 @@ bool isJoinGroupRoute(String routeName) {
   final segments = Uri.parse(routeName).pathSegments;
   return segments.isNotEmpty && segments.first == 'joinGroup';
 }
+
+/// The invite id carried by a Google Play install referrer, or null.
+///
+/// The web fallback page (the portfolio repo's `public/split-join.html`)
+/// sends people without the app to the Play Store with
+/// `&referrer=<encoded "invite=<encoded id>">`. Play decodes the outer layer
+/// and hands the app `invite=<encoded id>`, a query string, so the id still
+/// arrives intact even though it contains `/`, `+` and `=`. Installs that did
+/// not come from an invite get Play's own value, such as
+/// `utm_source=google-play&utm_medium=organic`, which has no `invite`.
+String? inviteIdFromInstallReferrer(String? referrer) {
+  if (referrer == null || referrer.isEmpty) return null;
+
+  final Map<String, String> params;
+  try {
+    params = Uri.splitQueryString(referrer);
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    // What splitQueryString throws for a bad escape such as `%zz`.
+    return null;
+  }
+  final inviteId = params['invite'];
+  return inviteId == null || inviteId.isEmpty ? null : inviteId;
+}

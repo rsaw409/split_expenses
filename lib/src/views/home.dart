@@ -14,6 +14,7 @@ import '../notify_controllers/backend_reachability.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
+import '../services/install_referrer.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
@@ -41,6 +42,15 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     OneSignal.Notifications.addClickListener(_notificationClickListener);
     OneSignal.Notifications
         .addForegroundWillDisplayListener(_notificationWillDisplayListener);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _joinFromInstallReferrer());
+  }
+
+  /// First launch after installing from an invite link: join that group.
+  Future<void> _joinFromInstallReferrer() async {
+    final inviteId = await takeInstallReferrerInvite();
+    if (inviteId == null || !mounted) return;
+    handleInvite(inviteId);
   }
 
   @override
