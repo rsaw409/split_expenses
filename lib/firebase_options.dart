@@ -33,15 +33,16 @@ class DefaultFirebaseOptions {
     appId: '1:601173186872:android:65244c9cd69a02123fc9cd',
     messagingSenderId: '601173186872',
     projectId: 'portfolio-rsaw409',
-    storageBucket: 'portfolio-rsaw409.appspot.com',
+    storageBucket: 'portfolio-rsaw409.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBZ1-PnXAwaBtXfyPcUaiEQtCpby-D8gpw',
-    appId: '1:601173186872:ios:c93451938058a0593fc9cd',
+    appId: '1:601173186872:ios:ade9ecfcd7852f273fc9cd',
     messagingSenderId: '601173186872',
     projectId: 'portfolio-rsaw409',
-    storageBucket: 'portfolio-rsaw409.appspot.com',
-    iosBundleId: 'com.example.splitExpense',
+    storageBucket: 'portfolio-rsaw409.firebasestorage.app',
+    iosBundleId: 'developer.rohitsaw.split',
   );
+
 }

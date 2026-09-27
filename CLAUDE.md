@@ -83,6 +83,12 @@ The QR code is always dark on white (scanners often fail on inverted codes), and
 
 ## CI/CD
 
-`.github/workflows/android-release.yml` runs `flutter analyze` then `flutter test` on push/PR to `main`, builds a signed Android app bundle (keystore from secrets), and on pushes to `main` deploys to the Play Store **production** track (`developer.rohitsaw.split`) as a completed release.
+`.github/workflows/release.yml` (renamed from `android-release.yml`) runs in stages, on push/PR to `main`:
+1. **check** — `flutter analyze`, `flutter test`, and computing the version.
+2. **build-android** (signed app bundle + APK, keystore from secrets) and **build-ios** (an **unsigned** build on a macOS runner packaged as an `.ipa` — no Apple signing is configured, so it must be re-signed before it installs), in parallel.
+3. **publish-android** deploys the bundle to the Play Store **production** track (`developer.rohitsaw.split`) as a completed release; **publish-ios** is a placeholder, since App Store publishing isn't supported yet.
+4. **github-release** publishes a GitHub Release tagged `v<version name>-build<version code>` with the APK, AAB and IPA attached.
 
-**Versioning is not fully manual**: the workflow rewrites `pubspec.yaml` to `<version name>+${{ github.run_number }}` before building, so the `+N` you commit is overwritten and irrelevant — only the version *name* (e.g. `1.2.4`) needs bumping by hand. One latent caveat: because the code comes from the workflow's run number, recreating or renaming the workflow would reset it to 1 and Play would then reject uploads as non-increasing.
+Stages 3 and 4 only run on pushes to `main`, and the GitHub release is created only if both publish jobs succeed.
+
+**Versioning is not fully manual**: builds pass `--build-name=<version name> --build-number=<run number + VERSION_CODE_OFFSET>`, so the `+N` you commit in `pubspec.yaml` is ignored — only the version *name* (e.g. `1.2.4`) needs bumping by hand. The offset (100) exists because the run number counts per workflow *file*: the rename restarted it at 1 after the old file's run #70, and Play rejects a version code that doesn't increase. Renaming the file again means raising the offset past the final run number of the file being replaced.
