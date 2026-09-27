@@ -11,6 +11,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
+import '../utils/currency.dart';
 import '../utils/members.dart';
 
 class NewExpense extends StatefulWidget {
@@ -26,7 +27,7 @@ class _NewExpenseState extends State<NewExpense> {
 
   int? by;
   String? title;
-  double? totalAmount;
+  int? totalPaise;
 
   List<Map<String, dynamic>> selectedUsers = [];
 
@@ -59,13 +60,11 @@ class _NewExpenseState extends State<NewExpense> {
       return;
     }
 
-    double total = 0;
-    for (var user in selectedUsers) {
-      total += user['amount'];
-    }
-    // Compare in paise; summing rupee doubles can drift by a fraction of a
-    // cent even when the underlying paise amounts add up exactly.
-    if ((total - (totalAmount ?? 0)).abs() > 0.005) {
+    // Shares are paise, so they must add up exactly. They can stop matching
+    // if the total is edited after the split was made.
+    final total = selectedUsers.fold<int>(
+        0, (sum, user) => sum + (user['amount'] as int));
+    if (total != totalPaise) {
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -80,7 +79,7 @@ class _NewExpenseState extends State<NewExpense> {
         context.read<GroupsController>().selectedGroup["name"];
     transaction['by'] = by;
     transaction['title'] = title;
-    transaction['totalAmount'] = totalAmount;
+    transaction['totalAmount'] = totalPaise;
     transaction['transactionParts'] = selectedUsers.map((each) {
       return {'user_id': each['id'], 'amount': each['amount']};
     }).toList();
@@ -178,7 +177,8 @@ class _NewExpenseState extends State<NewExpense> {
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 onChanged: (value) => setState(() {
-                  totalAmount = double.tryParse(value);
+                  final rupees = double.tryParse(value);
+                  totalPaise = rupees == null ? null : rupeesToPaise(rupees);
                 }),
                 decoration: const InputDecoration(
                   labelText: 'Amount',
@@ -228,7 +228,7 @@ class _NewExpenseState extends State<NewExpense> {
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      showAmountDistributionModal(context, totalAmount ?? 0,
+                      showAmountDistributionModal(context, totalPaise ?? 0,
                           userOptions, selectedUsers, (val) {
                         setState(() {
                           selectedUsers = val;

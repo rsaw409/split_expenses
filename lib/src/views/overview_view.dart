@@ -125,7 +125,7 @@ class _BalanceTile extends StatelessWidget {
         isSettled ? 'Settled up' : (isOwed ? 'Gets back' : 'Owes'),
       ),
       trailing: Text(
-        formatCurrency(balance.balances.abs()),
+        formatPaise(balance.balances.abs()),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(

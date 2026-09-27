@@ -3,14 +3,15 @@ import 'dart:convert';
 import 'package:equatable/equatable.dart';
 
 class Distribution extends Equatable {
-  final num? amount;
+  /// In paise.
+  final int? amount;
   final int? userId;
   final String? userName;
 
   const Distribution({this.amount, this.userId, this.userName});
 
   factory Distribution.fromMap(Map<String, dynamic> data) => Distribution(
-        amount: data['amount'] as num?,
+        amount: data['amount'] as int?,
         userId: data['user_id'] as int?,
         userName: data['user_name'] as String?,
       );

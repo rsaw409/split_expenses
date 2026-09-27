@@ -11,6 +11,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
+import '../utils/currency.dart';
 import '../utils/members.dart';
 
 class NewPayment extends StatefulWidget {
@@ -27,7 +28,7 @@ class _NewPaymentState extends State<NewPayment> {
   List<User> userOptions = [];
   int? from;
   int? to;
-  double? amount;
+  int? amountPaise;
   bool _isSaving = false;
 
   Future<void> _submit() async {
@@ -38,7 +39,7 @@ class _NewPaymentState extends State<NewPayment> {
     }
 
     Map<String, dynamic> payment = {
-      "amount": amount,
+      "amount": amountPaise,
       "from": from,
       "to": to,
       "groupName": context.read<GroupsController>().selectedGroup["name"]
@@ -143,7 +144,8 @@ class _NewPaymentState extends State<NewPayment> {
             children: [
               TextFormField(
                 onChanged: (value) => setState(() {
-                  amount = double.tryParse(value);
+                  final rupees = double.tryParse(value);
+                  amountPaise = rupees == null ? null : rupeesToPaise(rupees);
                 }),
                 autofocus: true,
                 decoration: const InputDecoration(

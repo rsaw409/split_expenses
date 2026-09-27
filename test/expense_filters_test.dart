@@ -17,7 +17,7 @@ Expense _expense({
   required String title,
   required int payerId,
   required String payerName,
-  required num amount,
+  required int amount, // paise
   required List<int> distributedTo,
   String? category,
 }) =>
@@ -33,7 +33,7 @@ Expense _expense({
       transactionDate: DateTime(2026, 9, 21),
       distributions: distributedTo
           .map((id) => Distribution(
-                amount: amount / distributedTo.length,
+                amount: amount ~/ distributedTo.length,
                 userId: id,
                 userName: '$id',
               ))
@@ -47,7 +47,7 @@ final _all = <Expense>[
     category: 'payment',
     payerId: _neha,
     payerName: 'Neha',
-    amount: 1500,
+    amount: 150000,
     distributedTo: [_rohit],
   ),
   _expense(
@@ -55,7 +55,7 @@ final _all = <Expense>[
     title: 'Scooty Rental',
     payerId: _aman,
     payerName: 'Aman',
-    amount: 1200,
+    amount: 120000,
     distributedTo: [_neha, _rohit, _priya, _aman],
   ),
   _expense(
@@ -63,7 +63,7 @@ final _all = <Expense>[
     title: 'Dinner at Beach Shack',
     payerId: _priya,
     payerName: 'Priya',
-    amount: 2400,
+    amount: 240000,
     distributedTo: [_aman, _priya, _rohit, _neha],
   ),
   _expense(
@@ -71,7 +71,7 @@ final _all = <Expense>[
     title: 'Beach Resort Booking',
     payerId: _rohit,
     payerName: 'Rohit',
-    amount: 8000,
+    amount: 800000,
     distributedTo: [_aman, _rohit, _neha, _priya],
   ),
 ];
@@ -95,7 +95,7 @@ void main() {
         title: 'payment',
         payerId: _rohit,
         payerName: 'Rohit',
-        amount: 250,
+        amount: 25000,
         distributedTo: [_rohit, _neha],
       );
 
@@ -171,10 +171,10 @@ void main() {
           'transaction_id': 223,
           'transaction_title': 'payment',
           'transaction_category': category,
-          'transaction_amount': 1500,
+          'transaction_amount': 150000,
           'transaction_date': '2026-09-21T00:00:00.000Z',
           'distributions': [
-            {'amount': 1500, 'user_id': 139, 'user_name': 'Rohit'},
+            {'amount': 150000, 'user_id': 139, 'user_name': 'Rohit'},
           ],
         };
 

@@ -6,10 +6,10 @@ import 'package:split_expense/src/utils/members.dart';
 UserBalance _balance({
   required String name,
   required int userId,
-  required num balances,
-  String transactions = '1',
-  String payments = '0',
-  String benefits = '1',
+  required int balances, // paise
+  int transactions = 1,
+  int payments = 0,
+  int benefits = 1,
 }) =>
     UserBalance(
       name: name,
@@ -24,8 +24,8 @@ void main() {
   group('membersFromBalances', () {
     test('maps every balance row to a member option', () {
       final members = membersFromBalances([
-        _balance(name: 'Rohit', userId: 139, balances: 3600),
-        _balance(name: 'Neha', userId: 142, balances: -1400),
+        _balance(name: 'Rohit', userId: 139, balances: 360000),
+        _balance(name: 'Neha', userId: 142, balances: -140000),
       ]);
 
       expect(members, const [
@@ -40,14 +40,14 @@ void main() {
       // zero balance and zero counts. If such members were dropped, someone
       // just added to the group could not be picked as the payer.
       final members = membersFromBalances([
-        _balance(name: 'Rohit', userId: 139, balances: 3600),
+        _balance(name: 'Rohit', userId: 139, balances: 360000),
         _balance(
           name: 'zz-test-member',
           userId: 150,
           balances: 0,
-          transactions: '0',
-          payments: '0',
-          benefits: '0',
+          transactions: 0,
+          payments: 0,
+          benefits: 0,
         ),
       ]);
 

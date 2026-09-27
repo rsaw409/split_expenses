@@ -5,8 +5,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/expense/expense.dart';
 import '../models/user_balance.dart';
 
-String _expensesKey(int groupId) => 'cache_expenses_$groupId';
-String _balancesKey(int groupId) => 'cache_balances_$groupId';
+// Versioned because amounts changed unit from rupees to paise. An old entry
+// can parse cleanly (a whole-rupee 100 is a valid int) and would then read as
+// ₹1, so the unit change cannot rely on the parse failing. Bump the version
+// whenever the meaning of a cached field changes, not only its shape.
+const _version = 2;
+
+String _expensesKey(int groupId) => 'cache_v${_version}_expenses_$groupId';
+String _balancesKey(int groupId) => 'cache_v${_version}_balances_$groupId';
+
+/// Deletes entries written under an older [_version], which are never read.
+Future<void> dropStaleCaches() async {
+  final prefs = await SharedPreferences.getInstance();
+  final current = 'cache_v${_version}_';
+  for (final key in prefs.getKeys().toList()) {
+    if (key.startsWith('cache_') && !key.startsWith(current)) {
+      await prefs.remove(key);
+    }
+  }
+}
 
 Future<List<Expense>?> getCachedExpenses(int groupId) =>
     _readList(_expensesKey(groupId), Expense.fromMap);

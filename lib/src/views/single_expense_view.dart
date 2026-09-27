@@ -14,7 +14,7 @@ class SingleExpense extends StatelessWidget {
   final Expense expense;
   final bool isPayment;
 
-  String _percentageOf(num amount) {
+  String _percentageOf(int amount) {
     final percentage = (amount * 100) / expense.transactionAmount;
     return '${percentage.toStringAsFixed(2)}%';
   }
@@ -52,7 +52,7 @@ class SingleExpense extends StatelessWidget {
               children: [
                 DetailRow(
                   label: 'Amount',
-                  value: formatCurrency(expense.transactionAmount),
+                  value: formatPaise(expense.transactionAmount),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 DetailRow(
@@ -122,7 +122,7 @@ class SingleExpense extends StatelessWidget {
                   ),
                 ),
                 trailing: Text(
-                  formatCurrency(each.amount ?? 0),
+                  formatPaise(each.amount ?? 0),
                   style: textTheme.titleMedium,
                 ),
               );

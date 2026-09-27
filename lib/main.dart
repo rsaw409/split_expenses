@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 import 'src/app.dart';
+import 'src/services/cache_service.dart';
 import 'src/notify_controllers/backend_reachability.dart';
 import 'src/notify_controllers/groups_controller.dart';
 import 'src/notify_controllers/settings_controller.dart';
@@ -21,6 +22,10 @@ void main() async {
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("e6cdb8fb-192b-4a0e-81e1-5762f7e0b630");
   OneSignal.Notifications.requestPermission(true);
+
+  // Unawaited: the current cache never reads the old entries, so this only
+  // reclaims space.
+  dropStaleCaches();
 
   runApp(
     MultiProvider(

@@ -32,12 +32,8 @@ class _SettleViewState extends State<SettleView> {
   void initState() {
     super.initState();
 
-    // Match in paise, not rupee doubles — balances can now carry fractional
-    // rupees (e.g. -1800.33), and float subtraction across this loop can
-    // drift away from exact zero, leaving a phantom paisa-sized "balance".
-    final userBalances = widget.userBalances.map(
-      (e) => {...e.toMap(), 'balances': amountToPaise(e.balances)},
-    );
+    // Balances are paise, so this walk is exact integer arithmetic.
+    final userBalances = widget.userBalances.map((e) => e.toMap());
 
     List<Map<String, dynamic>> positive =
         userBalances.where((e) => (e['balances'] as int) > 0).toList();
@@ -63,7 +59,7 @@ class _SettleViewState extends State<SettleView> {
             'fromName': negative[i]['name'],
             'to': positive[j]['user_id'],
             'toName': positive[j]['name'],
-            'amount': maximumPaymentPaise / 100,
+            'amount': maximumPaymentPaise,
             'selected': false,
             'groupName': context.read<GroupsController>().selectedGroup["name"]
           });
@@ -197,7 +193,7 @@ class _SettleViewState extends State<SettleView> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text(formatCurrency(payment['amount'] as num)),
+                  subtitle: Text(formatPaise(payment['amount'] as int)),
                   onChanged: (val) {
                     setState(() {
                       payment['selected'] = !payment['selected'];

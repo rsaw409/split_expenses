@@ -5,10 +5,12 @@ import 'package:equatable/equatable.dart';
 class UserBalance extends Equatable {
   final String name;
   final int userId;
-  final num balances;
-  final String numberOfTransactions;
-  final String numberOfBenefits;
-  final String numberOfPayments;
+  /// In paise, like every amount the API sends. Positive means the member
+  /// gets money back.
+  final int balances;
+  final int numberOfTransactions;
+  final int numberOfBenefits;
+  final int numberOfPayments;
 
   const UserBalance(
       {required this.name,
@@ -21,10 +23,10 @@ class UserBalance extends Equatable {
   factory UserBalance.fromMap(Map<String, dynamic> data) => UserBalance(
         name: data['name'] as String,
         userId: data['user_id'] as int,
-        balances: data['balances'] as num,
-        numberOfTransactions: data['number_of_transactions'] as String,
-        numberOfBenefits: data['number_of_benefits'] as String,
-        numberOfPayments: data['number_of_payments'] as String,
+        balances: data['balances'] as int,
+        numberOfTransactions: data['number_of_transactions'] as int,
+        numberOfBenefits: data['number_of_benefits'] as int,
+        numberOfPayments: data['number_of_payments'] as int,
       );
 
   Map<String, dynamic> toMap() => {

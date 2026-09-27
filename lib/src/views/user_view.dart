@@ -22,9 +22,9 @@ class UserView extends StatelessWidget {
             ? colorScheme.positive
             : colorScheme.error;
 
-    final transactions = int.tryParse(userBalance.numberOfTransactions) ?? 0;
-    final payments = int.tryParse(userBalance.numberOfPayments) ?? 0;
-    final benefits = int.tryParse(userBalance.numberOfBenefits) ?? 0;
+    final transactions = userBalance.numberOfTransactions;
+    final payments = userBalance.numberOfPayments;
+    final benefits = userBalance.numberOfBenefits;
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +54,7 @@ class UserView extends StatelessWidget {
               isSettled ? 'Settled up' : (isOwed ? 'Gets back' : 'Owes'),
             ),
             trailing: Text(
-              formatCurrency(userBalance.balances.abs()),
+              formatPaise(userBalance.balances.abs()),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: amountColor,
                     fontWeight: FontWeight.w600,

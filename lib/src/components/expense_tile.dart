@@ -36,7 +36,7 @@ class ExpenseTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(
-        formatCurrency(expense.transactionAmount),
+        formatPaise(expense.transactionAmount),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.titleMedium,

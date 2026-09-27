@@ -9,7 +9,7 @@ import '../utils/currency.dart';
 
 void showAmountDistributionModal(
     BuildContext context,
-    double totalAmount,
+    int totalPaise,
     List<User> userOptions,
     List<Map<String, dynamic>> selectedUsers,
     Function onSubmit) {
@@ -22,7 +22,7 @@ void showAmountDistributionModal(
     isScrollControlled: true,
     builder: (BuildContext context) {
       return AmountDistributionModal(
-        totalAmount: totalAmount,
+        totalPaise: totalPaise,
         users: allUsers,
         selectedUsers: selectedUsers,
         onSubmitSelectedUser: onSubmit,
@@ -32,14 +32,15 @@ void showAmountDistributionModal(
 }
 
 class AmountDistributionModal extends StatefulWidget {
-  final double totalAmount;
+  /// The expense total, in paise. Shares are read and handed back in paise.
+  final int totalPaise;
   final List<Map<String, dynamic>> users;
   final List<Map<String, dynamic>> selectedUsers;
   final Function onSubmitSelectedUser;
 
   const AmountDistributionModal({
     super.key,
-    required this.totalAmount,
+    required this.totalPaise,
     required this.users,
     required this.selectedUsers,
     required this.onSubmitSelectedUser,
@@ -66,41 +67,88 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
   final _formKey = GlobalKey<FormState>();
   String? _errorMessage;
 
-  List<Map<String, dynamic>> selectedUsers = [];
+  // Selection is tracked by user id, never by map identity. The chips' options
+  // are rebuilt from `User.toMap()` on every open, so a map handed back from a
+  // previous open is a different object (Dart maps compare by identity) and
+  // would neither show as selected nor be recognised when tapped again, which
+  // appended the same person a second time.
+  List<int> _selectedIds = [];
+  final Map<int, TextEditingController> _controllers = {};
+
+  Map<String, dynamic>? _userById(int id) {
+    for (final user in widget.users) {
+      if (user['id'] == id) return user;
+    }
+    return null;
+  }
 
   @override
   void initState() {
     super.initState();
-    selectedUsers = widget.selectedUsers;
-    for (var user in selectedUsers) {
-      user['controller'] = TextEditingController();
-      user['controller'].text =
-          paiseToText(amountToPaise(user['amount'] as num));
+    for (final user in widget.selectedUsers) {
+      final id = user['id'] as int;
+      // Skip members who are no longer offered, and any duplicate a previous
+      // build of this sheet may already have stored.
+      if (_userById(id) == null || _controllers.containsKey(id)) continue;
+      _selectedIds.add(id);
+      _controllers[id] = TextEditingController(
+          text: paiseToText(user['amount'] as int));
     }
   }
 
   @override
   void dispose() {
-    for (var user in selectedUsers) {
-      user['controller']?.dispose();
+    for (final controller in _controllers.values) {
+      controller.dispose();
     }
     super.dispose();
   }
 
-  void onAmountChange(TextEditingController controller) {
-    final editedCents = amountToPaise(double.tryParse(controller.text) ?? 0);
-    controller.text = paiseToText(editedCents);
+  void onSelectionChanged(List<int> ids) {
+    final removed = [
+      for (final id in _controllers.keys)
+        if (!ids.contains(id)) id,
+    ];
+    final stale = [for (final id in removed) _controllers.remove(id)!];
 
-    final others = selectedUsers
-        .where((each) => each['controller'] != controller)
-        .toList();
+    setState(() {
+      _selectedIds = ids.toSet().toList();
+      final shares = _splitCentsEqually(
+        widget.totalPaise,
+        _selectedIds.length,
+      );
+      for (var i = 0; i < _selectedIds.length; i++) {
+        final controller = _controllers.putIfAbsent(
+            _selectedIds[i], TextEditingController.new);
+        controller.text = paiseToText(shares[i]);
+      }
+    });
+
+    // The removed rows' fields are still mounted until this rebuild lands.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final controller in stale) {
+        controller.dispose();
+      }
+    });
+  }
+
+  /// Hands whatever the edited share leaves over to everyone else, so the
+  /// shares always add up to the total. Runs on every keystroke: waiting for
+  /// the keyboard's action key let a user edit one field and press Done with
+  /// the others never rebalanced. The edited field itself is left exactly as
+  /// typed, or a trailing "16." would be rewritten out from under the user.
+  void onAmountChange(int editedId) {
+    final controller = _controllers[editedId]!;
+    final editedCents = rupeesToPaise(double.tryParse(controller.text) ?? 0);
+
+    final others = _selectedIds.where((id) => id != editedId).toList();
     if (others.isEmpty) return;
 
-    final remainingCents = amountToPaise(widget.totalAmount) - editedCents;
+    final remainingCents = widget.totalPaise - editedCents;
     final shares = _splitCentsEqually(remainingCents, others.length);
 
     for (var i = 0; i < others.length; i++) {
-      others[i]['controller'].text = paiseToText(shares[i]);
+      _controllers[others[i]]!.text = paiseToText(shares[i]);
     }
   }
 
@@ -131,7 +179,8 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                   children: [
                     const SizedBox(height: AppSpacing.md),
                     Column(
-                      children: selectedUsers.map((user) {
+                      children: _selectedIds.map((id) {
+                        final user = _userById(id)!;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               vertical: AppSpacing.xs),
@@ -148,19 +197,23 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                               SizedBox(
                                 width: 120,
                                 child: TextFormField(
-                                  controller: user['controller'],
-                                  keyboardType: TextInputType.number,
+                                  controller: _controllers[id],
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
                                   textAlign: TextAlign.end,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(
-                                        RegExp(r'^\d*\.?\d+')),
+                                        // Same filter as the expense and payment
+                                        // amount fields. The old `\d*\.?\d+`
+                                        // deleted a trailing ".", so no decimal
+                                        // could ever be typed.
+                                        RegExp(r'^\d+\.?\d{0,2}')),
                                   ],
                                   decoration: const InputDecoration(
                                     prefixText: '₹ ',
                                   ),
-                                  onEditingComplete: () {
-                                    onAmountChange(user['controller']);
-                                  },
+                                  onChanged: (_) => onAmountChange(id),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Enter amount';
@@ -171,8 +224,8 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                                     if (double.tryParse(value)! <= 0) {
                                       return 'Must be greater than zero';
                                     }
-                                    if (double.tryParse(value)! >
-                                        widget.totalAmount) {
+                                    if (rupeesToPaise(double.parse(value)) >
+                                        widget.totalPaise) {
                                       return 'Must be less the total amount';
                                     }
                                     return null;
@@ -198,19 +251,23 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
               FilledButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    final totalCents = amountToPaise(widget.totalAmount);
+                    final totalCents = widget.totalPaise;
                     final enteredCents = [
-                      for (final each in selectedUsers)
-                        amountToPaise(double.parse(each['controller'].text)),
+                      for (final id in _selectedIds)
+                        rupeesToPaise(double.parse(_controllers[id]!.text)),
                     ];
-                    final sumCents =
-                        enteredCents.fold<int>(0, (a, b) => a + b);
+                    final sumCents = enteredCents.fold<int>(0, (a, b) => a + b);
 
                     if (sumCents == totalCents) {
-                      for (var i = 0; i < selectedUsers.length; i++) {
-                        selectedUsers[i]['amount'] = enteredCents[i] / 100;
-                      }
-                      widget.onSubmitSelectedUser(selectedUsers);
+                      // Hand back fresh maps: the caller must not hold on to
+                      // this sheet's controllers, which die with it.
+                      widget.onSubmitSelectedUser([
+                        for (var i = 0; i < _selectedIds.length; i++)
+                          {
+                            ..._userById(_selectedIds[i])!,
+                            'amount': enteredCents[i],
+                          },
+                      ]);
                       Navigator.pop(context);
                     } else {
                       final diffCents = totalCents - sumCents;
@@ -225,26 +282,12 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                 child: const Text('Done'),
               ),
               if (widget.users.isNotEmpty)
-                ChipsChoice<Map<String, dynamic>>.multiple(
-                  value: selectedUsers,
-                  onChanged: (val) => setState(
-                    () {
-                      selectedUsers = val;
-                      final shares = _splitCentsEqually(
-                        amountToPaise(widget.totalAmount),
-                        selectedUsers.length,
-                      );
-                      for (var i = 0; i < selectedUsers.length; i++) {
-                        final user = selectedUsers[i];
-                        user['controller'] ??= TextEditingController();
-                        user['controller'].text = paiseToText(shares[i]);
-                      }
-                    },
-                  ),
-                  choiceItems: C2Choice.listFrom<Map<String, dynamic>,
-                      Map<String, dynamic>>(
-                    source: widget.users.map((e) => e).toList(),
-                    value: (i, v) => v,
+                ChipsChoice<int>.multiple(
+                  value: _selectedIds,
+                  onChanged: onSelectionChanged,
+                  choiceItems: C2Choice.listFrom<int, Map<String, dynamic>>(
+                    source: widget.users,
+                    value: (i, v) => v['id'] as int,
                     label: (i, v) => v['name'],
                   ),
                   choiceBuilder: (item, i) {

@@ -16,7 +16,8 @@ class Expense extends Equatable {
   /// The authoritative discriminator — see `isPayment` in
   /// `utils/expense_filters.dart`.
   final String? transactionCategory;
-  final num transactionAmount;
+  /// In paise.
+  final int transactionAmount;
   final DateTime transactionDate;
   final List<Distribution> distributions;
 
@@ -50,7 +51,7 @@ class Expense extends Equatable {
         transactionCategory: data.containsKey('transaction_category')
             ? data['transaction_category'] as String?
             : (data['transaction_title'] == 'payment' ? 'payment' : null),
-        transactionAmount: data['transaction_amount'] as num,
+        transactionAmount: data['transaction_amount'] as int,
         transactionDate: DateTime.parse(data['transaction_date'] as String),
         distributions: (data['distributions'] as List<dynamic>)
             .map((e) => Distribution.fromMap(e as Map<String, dynamic>))
