@@ -1,0 +1,212 @@
+name: Release
+
+# Stages: check -> build (android, ios) -> publish (android, ios) and GitHub release, in parallel.
+# Publishing and the GitHub release only run on pushes to main.
+
+# Play's version code is the run number plus this offset. The run number
+# restarts at 1 whenever this file is renamed (it was android-release.yml,
+# last run #70), and Play rejects a version code that doesn't increase, so bump
+# this past the old workflow's final run number on any future rename.
+env:
+  VERSION_CODE_OFFSET: 100
+  FLUTTER_VERSION: "3.44.9"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    outputs:
+      version_name: ${{ steps.version.outputs.name }}
+      build_number: ${{ steps.version.outputs.build_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      # Only the version name in pubspec.yaml is maintained by hand; the build
+      # number committed there is ignored and replaced by this one.
+      - name: Compute version
+        id: version
+        run: |
+          version_name=$(grep -m1 '^version:[[:space:]]*[0-9]' pubspec.yaml | sed -E 's/^version:[[:space:]]*//' | cut -d '+' -f1)
+          if [ -z "$version_name" ]; then
+            echo "::error::Could not parse 'version: X.Y.Z' from pubspec.yaml. Keep it on a single line."
+            exit 1
+          fi
+          echo "name=${version_name}" >> "$GITHUB_OUTPUT"
+          echo "build_number=$(( ${{ github.run_number }} + VERSION_CODE_OFFSET ))" >> "$GITHUB_OUTPUT"
+
+  build-android:
+    name: Build Android
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Android keystore
+        id: android_keystore
+        uses: timheuer/base64-to-file@v1.0.3
+        with:
+          fileName: upload-keystore.jks
+          encodedString: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      - name: Create key.properties
+        run: |
+          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
+          echo "storePassword=${{ secrets.STOREPASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEYPASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEYALIAS }}" >> android/key.properties
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: gradle
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build app bundle
+        run: >-
+          flutter build appbundle --release
+          --build-name=${{ needs.check.outputs.version_name }}
+          --build-number=${{ needs.check.outputs.build_number }}
+
+      # The .aab is what Play wants; the .apk is for the GitHub release, since
+      # an app bundle can't be installed on a device directly.
+      - name: Build APK
+        run: >-
+          flutter build apk --release
+          --build-name=${{ needs.check.outputs.version_name }}
+          --build-number=${{ needs.check.outputs.build_number }}
+
+      - name: Upload app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-ios:
+    name: Build iOS (unsigned)
+    needs: check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # No Apple signing identity is configured, so this is an unsigned build:
+      # it has to be re-signed (e.g. AltStore/Sideloadly) before it installs.
+      - name: Build iOS app
+        run: >-
+          flutter build ios --release --no-codesign
+          --build-name=${{ needs.check.outputs.version_name }}
+          --build-number=${{ needs.check.outputs.build_number }}
+
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qry app-release-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: app-release-unsigned.ipa
+
+  publish-android:
+    name: Publish Android (Play Store)
+    needs: build-android
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Download app bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab
+      - name: Release to production track
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
+          packageName: developer.rohitsaw.split
+          releaseFiles: app-release.aab
+          track: production
+          status: completed
+
+  # Placeholder: App Store publishing isn't supported yet (needs Apple signing
+  # and App Store Connect credentials). Replace the step below when it is.
+  publish-ios:
+    name: Publish iOS (App Store)
+    needs: build-ios
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip
+        run: echo "::notice::iOS publishing is not supported yet; the unsigned IPA is attached to the GitHub release only."
+
+  github-release:
+    name: GitHub Release
+    needs: [check, build-android, build-ios]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Name release files
+        run: |
+          base="split-${{ needs.check.outputs.version_name }}-${{ needs.check.outputs.build_number }}"
+          mv dist/app-release.apk "dist/${base}.apk"
+          mv dist/app-release.aab "dist/${base}.aab"
+          mv dist/app-release-unsigned.ipa "dist/${base}-unsigned.ipa"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check.outputs.version_name }}-build${{ needs.check.outputs.build_number }}
+          name: v${{ needs.check.outputs.version_name }} (build ${{ needs.check.outputs.build_number }})
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: dist/*
