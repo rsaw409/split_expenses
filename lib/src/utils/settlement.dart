@@ -2,8 +2,8 @@ import 'dart:math';
 
 import '../models/user_balance.dart';
 
-/// One payment that settle-up suggests: [fromName] pays [toName] [amount]
-/// paise.
+/// One payment that settle-up suggests: [fromName] pays [toName] [amount],
+/// in the group currency's minor units.
 class SuggestedPayment {
   const SuggestedPayment({
     required this.from,
@@ -18,7 +18,7 @@ class SuggestedPayment {
   final int to;
   final String toName;
 
-  /// In paise.
+  /// In the group currency's minor units (paise for INR).
   final int amount;
 
   /// The wire shape `savePayments` expects, minus the idempotency key. No
@@ -34,7 +34,7 @@ class SuggestedPayment {
 }
 
 /// Pairs the largest debtors with the largest creditors until every balance
-/// is zero. Balances are paise, so this is exact integer arithmetic.
+/// is zero. Balances are minor units, so this is exact integer arithmetic.
 ///
 /// Each step advances at least one side, so a debtor never pays the same
 /// creditor twice — settle-up's idempotency keys (from/to/amount) rely on

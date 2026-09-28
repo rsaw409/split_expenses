@@ -6,7 +6,7 @@ import 'package:split_expense/src/utils/members.dart';
 UserBalance _balance({
   required String name,
   required int userId,
-  required int balances, // paise
+  required int balances, // minor units
   int transactions = 1,
   int payments = 0,
   int benefits = 1,

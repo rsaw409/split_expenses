@@ -6,7 +6,7 @@ import '../components/async_state.dart';
 import '../models/user_balance.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/initials.dart';
 import 'settle_view.dart';
 import 'user_view.dart';
@@ -125,7 +125,7 @@ class _BalanceTile extends StatelessWidget {
         isSettled ? 'Settled up' : (isOwed ? 'Gets back' : 'Owes'),
       ),
       trailing: Text(
-        formatPaise(balance.balances.abs()),
+        context.groupCurrency.format(balance.balances.abs()),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(

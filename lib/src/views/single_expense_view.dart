@@ -5,6 +5,7 @@ import '../components/detail_row.dart';
 import '../models/expense/expense.dart';
 import '../theme/app_theme.dart';
 import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/initials.dart';
 
 class SingleExpense extends StatelessWidget {
@@ -22,6 +23,7 @@ class SingleExpense extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final currency = context.groupCurrency;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Details')),
@@ -52,7 +54,7 @@ class SingleExpense extends StatelessWidget {
               children: [
                 DetailRow(
                   label: 'Amount',
-                  value: formatPaise(expense.transactionAmount),
+                  value: currency.format(expense.transactionAmount),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 DetailRow(
@@ -67,7 +69,7 @@ class SingleExpense extends StatelessWidget {
                       : '${expense.distributions.length} people',
                   onTap: isPayment
                       ? null
-                      : () => _showDistributionDialog(context),
+                      : () => _showDistributionDialog(context, currency),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 DetailRow(
@@ -84,7 +86,10 @@ class SingleExpense extends StatelessWidget {
     );
   }
 
-  void _showDistributionDialog(BuildContext context) {
+  // Takes the currency rather than reading `context.groupCurrency` in the
+  // list's itemBuilder: that is a `context.select`, which provider asserts
+  // against inside a SliverList item.
+  void _showDistributionDialog(BuildContext context, Currency currency) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -122,7 +127,7 @@ class SingleExpense extends StatelessWidget {
                   ),
                 ),
                 trailing: Text(
-                  formatPaise(each.amount ?? 0),
+                  currency.format(each.amount ?? 0),
                   style: textTheme.titleMedium,
                 ),
               );

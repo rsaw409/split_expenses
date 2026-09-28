@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 class UserBalance extends Equatable {
   final String name;
   final int userId;
-  /// In paise, like every amount the API sends. Positive means the member
+  /// In the group currency's minor units, like every amount the API sends. Positive means the member
   /// gets money back.
   final int balances;
   final int numberOfTransactions;

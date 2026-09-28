@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:equatable/equatable.dart';
 
 class Distribution extends Equatable {
-  /// In paise.
+  /// In the group currency's minor units (paise for INR).
   final int? amount;
   final int? userId;
   final String? userName;

@@ -9,10 +9,11 @@ import '../utils/currency.dart';
 
 void showAmountDistributionModal(
     BuildContext context,
-    int totalPaise,
+    int total,
     List<User> userOptions,
     List<Map<String, dynamic>> selectedUsers,
-    Function onSubmit) {
+    Function onSubmit,
+    {Currency? currency}) {
   List<Map<String, dynamic>> allUsers =
       userOptions.map((e) => e.toMap()).toList();
 
@@ -22,7 +23,8 @@ void showAmountDistributionModal(
     isScrollControlled: true,
     builder: (BuildContext context) {
       return AmountDistributionModal(
-        totalPaise: totalPaise,
+        total: total,
+        currency: currency ?? currencyFor(null),
         users: allUsers,
         selectedUsers: selectedUsers,
         onSubmitSelectedUser: onSubmit,
@@ -32,15 +34,20 @@ void showAmountDistributionModal(
 }
 
 class AmountDistributionModal extends StatefulWidget {
-  /// The expense total, in paise. Shares are read and handed back in paise.
-  final int totalPaise;
+  /// The expense total, in [currency]'s minor units; shares are read and
+  /// handed back in the same units.
+  final int total;
+
+  /// The group's currency, for how shares are typed and shown.
+  final Currency currency;
   final List<Map<String, dynamic>> users;
   final List<Map<String, dynamic>> selectedUsers;
   final Function onSubmitSelectedUser;
 
   const AmountDistributionModal({
     super.key,
-    required this.totalPaise,
+    required this.total,
+    required this.currency,
     required this.users,
     required this.selectedUsers,
     required this.onSubmitSelectedUser,
@@ -51,15 +58,15 @@ class AmountDistributionModal extends StatefulWidget {
       _AmountDistributionModalState();
 }
 
-/// Splits [totalCents] into [count] shares that sum to exactly [totalCents].
-/// Cents that don't divide evenly are handed one-by-one to the first few
-/// shares, so at most a few participants carry an extra paisa/rupee instead
-/// of the split silently failing to add up.
-List<int> _splitCentsEqually(int totalCents, int count) {
+/// Splits [total] into [count] shares that sum to exactly [total].
+/// Minor units that don't divide evenly are handed one-by-one to the first
+/// few shares, so at most a few participants carry one extra unit (a paisa,
+/// a cent, a yen) instead of the split silently failing to add up.
+List<int> _splitEqually(int total, int count) {
   if (count <= 0) return const [];
-  if (totalCents <= 0) return List.filled(count, 0);
-  final base = totalCents ~/ count;
-  final remainder = totalCents % count;
+  if (total <= 0) return List.filled(count, 0);
+  final base = total ~/ count;
+  final remainder = total % count;
   return List.generate(count, (i) => base + (i < remainder ? 1 : 0));
 }
 
@@ -92,7 +99,7 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
       if (_userById(id) == null || _controllers.containsKey(id)) continue;
       _selectedIds.add(id);
       _controllers[id] = TextEditingController(
-          text: paiseToText(user['amount'] as int));
+          text: widget.currency.toText(user['amount'] as int));
     }
   }
 
@@ -113,14 +120,14 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
 
     setState(() {
       _selectedIds = ids.toSet().toList();
-      final shares = _splitCentsEqually(
-        widget.totalPaise,
+      final shares = _splitEqually(
+        widget.total,
         _selectedIds.length,
       );
       for (var i = 0; i < _selectedIds.length; i++) {
         final controller = _controllers.putIfAbsent(
             _selectedIds[i], TextEditingController.new);
-        controller.text = paiseToText(shares[i]);
+        controller.text = widget.currency.toText(shares[i]);
       }
     });
 
@@ -139,16 +146,16 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
   /// typed, or a trailing "16." would be rewritten out from under the user.
   void onAmountChange(int editedId) {
     final controller = _controllers[editedId]!;
-    final editedCents = rupeesToPaise(double.tryParse(controller.text) ?? 0);
+    final edited = widget.currency.parse(controller.text) ?? 0;
 
     final others = _selectedIds.where((id) => id != editedId).toList();
     if (others.isEmpty) return;
 
-    final remainingCents = widget.totalPaise - editedCents;
-    final shares = _splitCentsEqually(remainingCents, others.length);
+    final remaining = widget.total - edited;
+    final shares = _splitEqually(remaining, others.length);
 
     for (var i = 0; i < others.length; i++) {
-      _controllers[others[i]]!.text = paiseToText(shares[i]);
+      _controllers[others[i]]!.text = widget.currency.toText(shares[i]);
     }
   }
 
@@ -199,8 +206,9 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                                 child: TextFormField(
                                   controller: _controllers[id],
                                   keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
+                                      TextInputType.numberWithOptions(
+                                          decimal:
+                                              widget.currency.decimals > 0),
                                   textAlign: TextAlign.end,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(
@@ -208,24 +216,26 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                                         // amount fields. The old `\d*\.?\d+`
                                         // deleted a trailing ".", so no decimal
                                         // could ever be typed.
-                                        RegExp(r'^\d+\.?\d{0,2}')),
+                                        widget.currency.inputPattern),
                                   ],
-                                  decoration: const InputDecoration(
-                                    prefixText: '₹ ',
+                                  decoration: InputDecoration(
+                                    prefixText:
+                                        '${widget.currency.symbol.trim()} ',
                                   ),
                                   onChanged: (_) => onAmountChange(id),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Enter amount';
                                     }
-                                    if (double.tryParse(value) == null) {
+                                    final amount =
+                                        widget.currency.parse(value);
+                                    if (amount == null) {
                                       return 'Invalid number';
                                     }
-                                    if (double.tryParse(value)! <= 0) {
+                                    if (amount <= 0) {
                                       return 'Must be greater than zero';
                                     }
-                                    if (rupeesToPaise(double.parse(value)) >
-                                        widget.totalPaise) {
+                                    if (amount > widget.total) {
                                       return 'Must be less the total amount';
                                     }
                                     return null;
@@ -251,30 +261,32 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
               FilledButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    final totalCents = widget.totalPaise;
-                    final enteredCents = [
+                    final total = widget.total;
+                    final entered = [
                       for (final id in _selectedIds)
-                        rupeesToPaise(double.parse(_controllers[id]!.text)),
+                        widget.currency.parse(_controllers[id]!.text)!,
                     ];
-                    final sumCents = enteredCents.fold<int>(0, (a, b) => a + b);
+                    final sum = entered.fold<int>(0, (a, b) => a + b);
 
-                    if (sumCents == totalCents) {
+                    if (sum == total) {
                       // Hand back fresh maps: the caller must not hold on to
                       // this sheet's controllers, which die with it.
                       widget.onSubmitSelectedUser([
                         for (var i = 0; i < _selectedIds.length; i++)
                           {
                             ..._userById(_selectedIds[i])!,
-                            'amount': enteredCents[i],
+                            'amount': entered[i],
                           },
                       ]);
                       Navigator.pop(context);
                     } else {
-                      final diffCents = totalCents - sumCents;
+                      final diff = total - sum;
                       setState(() {
-                        _errorMessage = diffCents > 0
-                            ? '${paiseToText(diffCents)} left to distribute.'
-                            : '${paiseToText(-diffCents)} over the total amount.';
+                        _errorMessage = diff > 0
+                            ? '${widget.currency.format(diff)} left to '
+                                'distribute.'
+                            : '${widget.currency.format(-diff)} over the '
+                                'total amount.';
                       });
                     }
                   }

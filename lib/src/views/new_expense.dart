@@ -10,7 +10,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/members.dart';
 
 class NewExpense extends StatefulWidget {
@@ -26,7 +26,7 @@ class _NewExpenseState extends State<NewExpense> {
 
   int? by;
   String? title;
-  int? totalPaise;
+  int? totalAmount;
 
   List<Map<String, dynamic>> selectedUsers = [];
 
@@ -59,11 +59,11 @@ class _NewExpenseState extends State<NewExpense> {
       return;
     }
 
-    // Shares are paise, so they must add up exactly. They can stop matching
-    // if the total is edited after the split was made.
-    final total = selectedUsers.fold<int>(
+    // Shares are minor units, so they must add up exactly. They can stop
+    // matching if the total is edited after the split was made.
+    final sharesTotal = selectedUsers.fold<int>(
         0, (sum, user) => sum + (user['amount'] as int));
-    if (total != totalPaise) {
+    if (sharesTotal != totalAmount) {
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(
@@ -76,7 +76,7 @@ class _NewExpenseState extends State<NewExpense> {
     Map<String, dynamic> transaction = {};
     transaction['by'] = by;
     transaction['title'] = title;
-    transaction['totalAmount'] = totalPaise;
+    transaction['totalAmount'] = totalAmount;
     transaction['transactionParts'] = selectedUsers.map((each) {
       return {'user_id': each['id'], 'amount': each['amount']};
     }).toList();
@@ -128,6 +128,7 @@ class _NewExpenseState extends State<NewExpense> {
 
   @override
   Widget build(BuildContext context) {
+    final currency = context.groupCurrency;
     final userOptions = membersFromBalances(
       context.watch<UserBalanceController>().userBalances,
     );
@@ -173,25 +174,23 @@ class _NewExpenseState extends State<NewExpense> {
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
-                onChanged: (value) => setState(() {
-                  final rupees = double.tryParse(value);
-                  totalPaise = rupees == null ? null : rupeesToPaise(rupees);
-                }),
-                decoration: const InputDecoration(
+                onChanged: (value) =>
+                    setState(() => totalAmount = currency.parse(value)),
+                decoration: InputDecoration(
                   labelText: 'Amount',
-                  prefixText: '₹ ',
+                  prefixText: '${currency.symbol.trim()} ',
                 ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d+\.?\d{0,2}')),
+                  FilteringTextInputFormatter.allow(currency.inputPattern),
                 ],
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.numberWithOptions(
+                  decimal: currency.decimals > 0,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter expense amount.';
                   }
-                  if (double.tryParse(value) == null ||
-                      double.parse(value) <= 0) {
+                  if ((currency.parse(value) ?? 0) <= 0) {
                     return 'Enter a valid amount.';
                   }
                   return null;
@@ -225,12 +224,12 @@ class _NewExpenseState extends State<NewExpense> {
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      showAmountDistributionModal(context, totalPaise ?? 0,
+                      showAmountDistributionModal(context, totalAmount ?? 0,
                           userOptions, selectedUsers, (val) {
                         setState(() {
                           selectedUsers = val;
                         });
-                      });
+                      }, currency: currency);
                     },
                   ),
                 ),

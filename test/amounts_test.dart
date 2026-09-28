@@ -7,24 +7,73 @@ import 'package:split_expense/src/models/user_balance.dart';
 import 'package:split_expense/src/services/cache_service.dart';
 import 'package:split_expense/src/utils/currency.dart';
 
-// The API sends and accepts integer paise. Rupees exist only at the UI edges.
+// The API sends and accepts integers in the group currency's minor unit
+// (paise for INR). Decimals exist only at the UI edges.
 void main() {
   group('currency', () {
-    test('formats paise as rupees', () {
-      expect(formatPaise(12050), '₹120.50');
-      expect(formatPaise(100000), '₹1,000');
-      expect(formatPaise(16667), '₹166.67');
+    final inr = currencyFor('INR');
+    final jpy = currencyFor('JPY');
+    final kwd = currencyFor('KWD');
+    final usd = currencyFor('USD');
+
+    test('formats minor units in the currency, dropping zero decimals', () {
+      expect(inr.format(12050), '₹120.50');
+      expect(inr.format(100000), '₹1,000');
+      expect(inr.format(10000000), '₹1,00,000'); // Indian grouping
+      expect(usd.format(10000000), r'$100,000');
+      expect(jpy.format(1500), '¥1,500'); // yen have no minor unit
+      expect(kwd.format(1250), 'KWD 1.250'); // 1000 fils to the dinar
+      expect(kwd.format(2000), 'KWD 2');
     });
 
-    test('parses typed rupees into paise', () {
-      expect(rupeesToPaise(166.67), 16667);
-      expect(rupeesToPaise(0.1), 10);
-      expect(paiseToText(16667), '166.67');
-      expect(paiseToText(10000), '100');
+    test('parses typed amounts exactly, per the currency\'s decimals', () {
+      expect(inr.parse('166.67'), 16667);
+      expect(inr.parse('0.1'), 10);
+      expect(inr.parse('100'), 10000);
+      expect(inr.parse('12.'), 1200);
+      expect(jpy.parse('1500'), 1500);
+      expect(kwd.parse('1.25'), 1250);
+      expect(kwd.parse('0.005'), 5);
+    });
+
+    test('refuses amounts with more decimals than the currency has', () {
+      expect(inr.parse('1.234'), isNull);
+      expect(jpy.parse('1.5'), isNull);
+      expect(kwd.parse('1.2345'), isNull);
+      expect(inr.parse(''), isNull);
+      expect(inr.parse('abc'), isNull);
+    });
+
+    test('writes amounts back for a text field', () {
+      expect(inr.toText(16667), '166.67');
+      expect(inr.toText(10000), '100');
+      expect(inr.toText(1205), '12.05');
+      expect(jpy.toText(1500), '1500');
+      expect(kwd.toText(1005), '1.005');
+      expect(inr.toText(-250), '-2.50');
+    });
+
+    test('text round-trips through parse without drift', () {
+      for (final c in [inr, jpy, kwd]) {
+        for (final amount in [0, 1, 7, 99, 100, 1001, 123456]) {
+          expect(c.parse(c.toText(amount)), amount, reason: '$c $amount');
+        }
+      }
+    });
+
+    test('the input filter follows the decimals', () {
+      expect(inr.inputPattern.stringMatch('12.345'), '12.34');
+      expect(jpy.inputPattern.stringMatch('12.5'), '12');
+      expect(kwd.inputPattern.stringMatch('1.2345'), '1.234');
+    });
+
+    test('an unknown or missing code falls back to INR', () {
+      expect(currencyFor(null).code, 'INR');
+      expect(currencyFor('XYZ').code, 'INR');
     });
   });
 
-  group('models read the paise API', () {
+  group('models read integer amounts from the API', () {
     test('balances and counts are ints', () {
       final balance = UserBalance.fromMap({
         'name': 'Neha',

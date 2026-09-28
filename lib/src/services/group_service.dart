@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../models/group.dart';
+import '../utils/currency.dart';
 import './api_exception.dart';
 import "./server.dart";
 
@@ -53,7 +54,7 @@ Future<Group> createGroup({
     },
     body: jsonEncode({
       'name': name,
-      'currency': currency,
+      ...currencyFor(currency).toApiFields(),
       'members': members,
       'idempotency_key': idempotencyKey,
     }),
@@ -96,7 +97,8 @@ Future<Group> updateGroup(int groupId, {String? name, String? currency}) async {
         body: jsonEncode({
           'group_id': groupId,
           if (name != null) 'name': name,
-          if (currency != null) 'currency': currency,
+          // The backend needs both together, and trusts the decimals.
+          if (currency != null) ...currencyFor(currency).toApiFields(),
         }),
       )
       .timeout(writeTimeout);
