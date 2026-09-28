@@ -12,15 +12,15 @@ class Expenditure {
     required this.expenseCount,
   });
 
-  /// Sum of every expense in the period, in paise.
+  /// Sum of every expense in the period, in minor units.
   final int total;
 
   /// Cost incurred per user id: their share of each expense's split, in
-  /// paise. This is what a member actually consumed, so it is the same
+  /// minor units. This is what a member actually consumed, so it is the same
   /// whether or not settle-up payments have been made yet.
   final Map<int, int> shares;
 
-  /// Amount each user id paid up front for the group's expenses, in paise.
+  /// Amount each user id paid up front for the group's expenses, in minor units.
   final Map<int, int> paid;
 
   final int expenseCount;

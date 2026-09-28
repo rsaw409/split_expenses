@@ -17,7 +17,7 @@ Expense _expense({
   required String title,
   required int payerId,
   required String payerName,
-  required int amount, // paise
+  required int amount, // minor units
   required List<int> distributedTo,
   String? category,
 }) =>

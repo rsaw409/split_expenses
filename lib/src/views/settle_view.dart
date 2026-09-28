@@ -10,7 +10,7 @@ import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/idempotency.dart';
 import '../utils/settlement.dart';
 
@@ -216,7 +216,7 @@ class _SummaryHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '${formatPaise(total)} in total. Select the ones that '
+                    '${context.groupCurrency.format(total)} in total. Select the ones that '
                     'have been paid to record them.',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSecondaryContainer,
@@ -268,7 +268,7 @@ class _PaymentTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       secondary: Text(
-        formatPaise(payment.amount),
+        context.groupCurrency.format(payment.amount),
         style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
@@ -292,8 +292,8 @@ class _RecordBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = switch (count) {
       0 => 'Select payments to record',
-      1 => 'Record 1 payment · ${formatPaise(total)}',
-      _ => 'Record $count payments · ${formatPaise(total)}',
+      1 => 'Record 1 payment · ${context.groupCurrency.format(total)}',
+      _ => 'Record $count payments · ${context.groupCurrency.format(total)}',
     };
 
     return SafeArea(
@@ -365,7 +365,7 @@ Future<bool> showRecordPaymentsDialog(
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      Text(formatPaise(p.amount)),
+                      Text(context.groupCurrency.format(p.amount)),
                     ],
                   ),
                 ),
@@ -374,7 +374,7 @@ Future<bool> showRecordPaymentsDialog(
                 Row(
                   children: [
                     Expanded(child: Text('Total', style: textTheme.titleSmall)),
-                    Text(formatPaise(total), style: textTheme.titleSmall),
+                    Text(context.groupCurrency.format(total), style: textTheme.titleSmall),
                   ],
                 ),
               ],

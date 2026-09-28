@@ -7,10 +7,10 @@ import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 import 'package:split_expense/src/utils/settlement.dart';
 import 'package:split_expense/src/views/settle_view.dart';
 
-UserBalance balance(int id, String name, int paise) => UserBalance(
+UserBalance balance(int id, String name, int amount) => UserBalance(
       name: name,
       userId: id,
-      balances: paise,
+      balances: amount,
       numberOfTransactions: 0,
       numberOfBenefits: 0,
       numberOfPayments: 0,

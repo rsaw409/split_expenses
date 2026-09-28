@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/expense/expense.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/expense_filters.dart';
 import '../views/single_expense_view.dart';
 
@@ -36,7 +36,7 @@ class ExpenseTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(
-        formatPaise(expense.transactionAmount),
+        context.groupCurrency.format(expense.transactionAmount),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.titleMedium,

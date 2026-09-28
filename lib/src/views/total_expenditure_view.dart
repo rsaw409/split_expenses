@@ -10,7 +10,7 @@ import '../models/user_balance.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/expenditure.dart';
 
 enum _Period { allTime, thisMonth, lastMonth, last30Days, custom }
@@ -337,7 +337,7 @@ class _BreakdownState extends State<_Breakdown> {
               'of the total',
             ),
             trailing: Text(
-              formatPaise(expenditure.shareOf(id)),
+              context.groupCurrency.format(expenditure.shareOf(id)),
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -490,7 +490,7 @@ class _DonutChart extends StatelessWidget {
                     ),
                     FittedBox(
                       child: Text(
-                        formatPaise(amount),
+                        context.groupCurrency.format(amount),
                         style: textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),

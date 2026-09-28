@@ -10,7 +10,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/members.dart';
 
 class NewPayment extends StatefulWidget {
@@ -27,7 +27,7 @@ class _NewPaymentState extends State<NewPayment> {
   List<User> userOptions = [];
   int? from;
   int? to;
-  int? amountPaise;
+  int? amount;
   bool _isSaving = false;
 
   Future<void> _submit() async {
@@ -38,7 +38,7 @@ class _NewPaymentState extends State<NewPayment> {
     }
 
     Map<String, dynamic> payment = {
-      "amount": amountPaise,
+      "amount": amount,
       "from": from,
       "to": to,
     };
@@ -111,6 +111,7 @@ class _NewPaymentState extends State<NewPayment> {
 
   @override
   Widget build(BuildContext context) {
+    final currency = context.groupCurrency;
     final members = membersFromBalances(
       context.watch<UserBalanceController>().userBalances,
     );
@@ -141,26 +142,24 @@ class _NewPaymentState extends State<NewPayment> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               TextFormField(
-                onChanged: (value) => setState(() {
-                  final rupees = double.tryParse(value);
-                  amountPaise = rupees == null ? null : rupeesToPaise(rupees);
-                }),
+                onChanged: (value) =>
+                    setState(() => amount = currency.parse(value)),
                 autofocus: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Amount',
-                  prefixText: '₹ ',
+                  prefixText: '${currency.symbol.trim()} ',
                 ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d+\.?\d{0,2}')),
+                  FilteringTextInputFormatter.allow(currency.inputPattern),
                 ],
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.numberWithOptions(
+                  decimal: currency.decimals > 0,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter amount.';
                   }
-                  if (double.tryParse(value) == null ||
-                      double.parse(value) <= 0) {
+                  if ((currency.parse(value) ?? 0) <= 0) {
                     return 'Enter a valid amount.';
                   }
                   return null;
