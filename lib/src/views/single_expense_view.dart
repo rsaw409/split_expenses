@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../components/detail_row.dart';
 import '../models/expense/expense.dart';
 import '../theme/app_theme.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 import '../utils/initials.dart';
 
 class SingleExpense extends StatelessWidget {
@@ -52,7 +52,7 @@ class SingleExpense extends StatelessWidget {
               children: [
                 DetailRow(
                   label: 'Amount',
-                  value: formatPaise(expense.transactionAmount),
+                  value: context.groupCurrency.format(expense.transactionAmount),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 DetailRow(
@@ -122,7 +122,7 @@ class SingleExpense extends StatelessWidget {
                   ),
                 ),
                 trailing: Text(
-                  formatPaise(each.amount ?? 0),
+                  context.groupCurrency.format(each.amount ?? 0),
                   style: textTheme.titleMedium,
                 ),
               );

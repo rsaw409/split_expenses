@@ -16,7 +16,7 @@ class Expense extends Equatable {
   /// The authoritative discriminator — see `isPayment` in
   /// `utils/expense_filters.dart`.
   final String? transactionCategory;
-  /// In paise.
+  /// In the group currency's minor units (paise for INR).
   final int transactionAmount;
   final DateTime transactionDate;
   final List<Distribution> distributions;

@@ -4,7 +4,7 @@ import 'package:split_expense/src/views/expenses_view.dart';
 
 import '../components/detail_row.dart';
 import '../theme/app_theme.dart';
-import '../utils/currency.dart';
+import '../utils/group_currency.dart';
 
 class UserView extends StatelessWidget {
   const UserView({super.key, required this.userBalance});
@@ -54,7 +54,7 @@ class UserView extends StatelessWidget {
               isSettled ? 'Settled up' : (isOwed ? 'Gets back' : 'Owes'),
             ),
             trailing: Text(
-              formatPaise(userBalance.balances.abs()),
+              context.groupCurrency.format(userBalance.balances.abs()),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: amountColor,
                     fontWeight: FontWeight.w600,

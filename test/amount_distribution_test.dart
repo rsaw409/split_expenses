@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:split_expense/src/components/amount_distribution.dart';
 import 'package:split_expense/src/models/user.dart';
+import 'package:split_expense/src/utils/currency.dart';
 
 void main() {
   const users = [
@@ -15,7 +16,8 @@ void main() {
   // Reopens the sheet with a selection saved by an earlier open: those maps
   // are not the objects the sheet builds its chips from this time.
   Future<void> openWith(
-      WidgetTester tester, List<Map<String, dynamic>> selected) async {
+      WidgetTester tester, List<Map<String, dynamic>> selected,
+      {int total = 10000, Currency? currency}) async {
     tester.view.physicalSize = const Size(1080, 2280);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -26,7 +28,8 @@ void main() {
         body: Builder(
           builder: (context) => TextButton(
             onPressed: () => showAmountDistributionModal(
-                context, 10000, users, selected, (val) => submitted = val),
+                context, total, users, selected, (val) => submitted = val,
+                currency: currency),
             child: const Text('open'),
           ),
         ),
@@ -95,5 +98,24 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(submitted!.map((u) => u['amount']), [3333, 6667]);
+  });
+
+  testWidgets('in yen, an equal split hands out whole yen that add up',
+      (tester) async {
+    // ¥1000 has no minor unit: stored as 1000, and three ways it cannot
+    // split evenly, so one person carries the extra yen.
+    await openWith(tester, previous,
+        total: 1000, currency: currencyFor('JPY'));
+
+    await tester.tap(find.text('CD'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextFormField, '334'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '333'), findsNWidgets(2));
+    expect(find.text('¥ '), findsNWidgets(3));
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(submitted!.map((u) => u['amount']), [334, 333, 333]);
   });
 }

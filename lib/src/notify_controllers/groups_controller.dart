@@ -8,6 +8,7 @@ import '../models/group.dart';
 import '../services/cache_service.dart';
 import '../services/group_service.dart' as group_service;
 import '../services/push_registration.dart';
+import '../utils/currency.dart';
 
 const _groupsKey = 'groups';
 const _selectedGroupIdKey = 'selectedGroupId';
@@ -53,6 +54,10 @@ class GroupsController extends ChangeNotifier {
       _groups.where((g) => g['id'] == _selectedGroupId).firstOrNull ??
       _groups.firstOrNull ??
       const {};
+
+  /// The selected group's currency, which every amount on screen is in.
+  Currency get selectedCurrency =>
+      currencyFor(selectedGroup['currency'] as String?);
 
   set selectedGroup(Map<String, dynamic> group) {
     _selectedGroupId = group['id'] as int?;

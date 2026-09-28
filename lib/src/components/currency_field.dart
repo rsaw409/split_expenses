@@ -9,12 +9,17 @@ class CurrencyField extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.enabled = true,
+    this.helperText,
   });
 
   /// The selected currency's code.
   final String value;
   final ValueChanged<String> onChanged;
   final bool enabled;
+
+  /// Shown under the field, e.g. why it is locked. Defaults to a note that
+  /// more currencies are coming while there is only one.
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +29,11 @@ class CurrencyField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Currency',
         prefixIcon: const Icon(Icons.payments_outlined),
-        helperText: supportedCurrencies.length < 2
-            ? 'More currencies coming soon.'
-            : null,
+        helperMaxLines: 2,
+        helperText: helperText ??
+            (supportedCurrencies.length < 2
+                ? 'More currencies coming soon.'
+                : null),
       ),
       items: [
         for (final c in supportedCurrencies)

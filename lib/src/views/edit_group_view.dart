@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../components/currency_field.dart';
 import '../models/group.dart';
+import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
@@ -15,6 +16,12 @@ const maxGroupNameLength = 50;
 
 /// Renames a group or changes its currency. Other members' apps pick the
 /// change up the next time they start.
+///
+/// The currency can change only while the group has no transactions: amounts
+/// are stored as a count of the currency's smallest unit, so switching would
+/// silently relabel every existing amount (₹100.00, stored as 10000, would
+/// read as ¥10,000). The backend has the final say, since only it knows for
+/// sure; this just avoids offering a change it would refuse.
 class EditGroupView extends StatefulWidget {
   const EditGroupView({super.key, required this.group});
 
@@ -83,9 +90,21 @@ class _EditGroupViewState extends State<EditGroupView> {
     }
   }
 
+  /// Whether this group is known to have no transactions (expenses or
+  /// payments): its list has loaded, without error, and is empty. Anything
+  /// less certain — still loading, failed, or a list for another group —
+  /// counts as having some.
+  bool _knownToHaveNoTransactions(AllExpenseController expenses) =>
+      expenses.groupId == widget.group.id &&
+      !expenses.isLoading &&
+      !expenses.isError &&
+      expenses.expenses.isEmpty;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final currencyEditable =
+        _knownToHaveNoTransactions(context.watch<AllExpenseController>());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit group')),
@@ -123,7 +142,11 @@ class _EditGroupViewState extends State<EditGroupView> {
             const SizedBox(height: AppSpacing.md),
             CurrencyField(
               value: _currency,
-              enabled: !_isSaving,
+              enabled: !_isSaving && currencyEditable,
+              helperText: currencyEditable
+                  ? null
+                  : "Can't be changed once the group has expenses or "
+                      'payments.',
               onChanged: (code) => setState(() => _currency = code),
             ),
           ],

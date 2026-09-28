@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/notify_controllers/groups_controller.dart';
+import 'package:split_expense/src/utils/currency.dart';
 import 'package:split_expense/src/views/create_group_view.dart';
 
 void main() {
@@ -67,7 +68,7 @@ void main() {
     expect(find.byType(InputChip), findsNothing);
   });
 
-  testWidgets('currency offers rupees, the only option for now',
+  testWidgets('currency defaults to rupees and offers every supported one',
       (tester) async {
     await pumpForm(tester);
 
@@ -76,6 +77,8 @@ void main() {
       find.byType(DropdownButton<String>),
     );
     expect(dropdown.onChanged, isNotNull);
-    expect(dropdown.items!.map((i) => i.value), ['INR']);
+    expect(dropdown.value, 'INR');
+    expect(dropdown.items!.map((i) => i.value),
+        supportedCurrencies.map((c) => c.code));
   });
 }

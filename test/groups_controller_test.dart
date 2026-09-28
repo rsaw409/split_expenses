@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:split_expense/src/models/group.dart';
 import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 import 'package:split_expense/src/services/push_registration.dart';
+import 'package:split_expense/src/utils/currency.dart';
 
 /// Records registrations instead of calling OneSignal and the backend.
 class FakePushRegistration implements PushRegistration {
@@ -262,7 +263,7 @@ void main() {
     test('does not notify listeners when nothing changed', () async {
       SharedPreferences.setMockInitialValues({
         'groups': jsonEncode([
-          {...goa, 'currency': 'INR'}
+          {...goa, 'currency': 'INR', 'currency_decimals': 2}
         ]),
         'selectedGroupId': 1,
       });
@@ -290,6 +291,22 @@ void main() {
       expect(c.groups.map((g) => g['id']), [1]);
     });
 
+    test('fills in currency_decimals for groups saved before it existed',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        'groups': jsonEncode([goa]),
+        'selectedGroupId': 1,
+      });
+      final c = controller();
+      serverGroups = [Group.fromMap(goa)];
+      await c.loadGroups();
+      await pumpEventQueue();
+
+      final saved = jsonDecode((await prefs()).getString('groups')!) as List;
+      expect(saved.single['currency_decimals'], 2);
+      expect(c.selectedGroup['currency_decimals'], 2);
+    });
+
     test('with no groups, asks the server nothing', () async {
       SharedPreferences.setMockInitialValues({});
       final c = controller();
@@ -300,8 +317,34 @@ void main() {
     });
   });
 
-  test('a group saved before currencies existed reads as INR', () {
-    expect(Group.fromMap(goa).currency, 'INR');
+  group('Group currency fields', () {
+    test('a group saved before currencies existed reads as INR, 2 decimals',
+        () {
+      final g = Group.fromMap(goa);
+      expect(g.currency, 'INR');
+      expect(g.currencyDecimals, 2);
+    });
+
+    test('reads and writes currency_decimals as the API names it', () {
+      final g = Group.fromMap(
+          {...goa, 'currency': 'JPY', 'currency_decimals': 0});
+      expect(g.currencyDecimals, 0);
+      expect(g.toMap()['currency_decimals'], 0);
+      expect(Group.fromMap(g.toMap()), g);
+    });
+
+    test('without currency_decimals, takes the currency\'s own', () {
+      expect(Group.fromMap({...goa, 'currency': 'KWD'}).currencyDecimals, 3);
+    });
+  });
+
+  test('the API gets each currency with its decimals', () {
+    expect(currencyFor('INR').toApiFields(),
+        {'currency': 'INR', 'currency_decimals': 2});
+    expect(currencyFor('JPY').toApiFields(),
+        {'currency': 'JPY', 'currency_decimals': 0});
+    expect(currencyFor('KWD').toApiFields(),
+        {'currency': 'KWD', 'currency_decimals': 3});
   });
 
   test('a stale selected id falls back to the first group', () async {
