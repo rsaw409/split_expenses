@@ -57,3 +57,31 @@ String? inviteIdFromInstallReferrer(String? referrer) {
   final inviteId = params['invite'];
   return inviteId == null || inviteId.isEmpty ? null : inviteId;
 }
+
+/// The invite id in whatever someone pasted into the join form: a bare id,
+/// the shared link, or a message with the link somewhere inside it. Null if
+/// there is nothing to join with.
+///
+/// The link is decoded rather than taken as text: a shared link carries the
+/// id's `/` as `%2F`, and sending that to the server verbatim would fail.
+String? inviteIdFromInput(String input) {
+  final text = input.trim();
+  if (text.isEmpty) return null;
+
+  final link = RegExp(
+    // `*`, not `+`: a link with the id missing must not be taken as an id.
+    'https?://${RegExp.escape(inviteLinkHost)}/joinGroup/?\\S*',
+  ).firstMatch(text);
+  if (link == null) return text;
+
+  final Uri uri;
+  try {
+    uri = Uri.parse(link.group(0)!);
+  } on FormatException {
+    return null;
+  }
+  // As in [inviteIdFromRoute]: everything after `joinGroup`, since an id
+  // can start with `/` and older links left it unencoded.
+  final inviteId = uri.pathSegments.skip(1).join('/');
+  return inviteId.isEmpty ? null : inviteId;
+}

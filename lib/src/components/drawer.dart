@@ -9,7 +9,8 @@ import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/settings_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/initials.dart';
-import '../views/new_form.dart';
+import '../views/create_group_view.dart';
+import '../views/join_group_view.dart';
 
 const _themeLabels = {
   ThemeMode.system: 'System default',
@@ -153,20 +154,48 @@ class MyDrawer extends StatelessWidget {
     );
   }
 
-  void _openGroupForm(
-    BuildContext context, {
-    required String saveButtonText,
-    required String textFieldLabel,
-  }) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => NewForm(
-          saveButtonText: saveButtonText,
-          textFieldLabel: textFieldLabel,
+  /// Asks whether to create or join, then opens that form. Neither option is
+  /// gated on reachability: each form checks on submit and keeps what was
+  /// typed, so it can be retried once Split is reachable again.
+  Future<void> _showAddGroupDialog(BuildContext context) async {
+    final choice = await showDialog<Widget>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Add a group'),
+        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _AddGroupOption(
+              icon: Icons.group_add_outlined,
+              title: 'New group',
+              subtitle: 'Start a group and add people to it',
+              onTap: () =>
+                  Navigator.pop(dialogContext, const CreateGroupView()),
+            ),
+            _AddGroupOption(
+              icon: Icons.qr_code_outlined,
+              title: 'Join group',
+              subtitle: 'Use an invite link or code someone shared',
+              onTap: () =>
+                  Navigator.pop(dialogContext, const JoinGroupView()),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
+    if (choice == null || !context.mounted) return;
+
+    // Close the drawer first: the form's result snackbar is shown on the
+    // home screen, and Scaffold paints an open drawer over snackbars.
+    final navigator = Navigator.of(context)..pop();
+    navigator.push(MaterialPageRoute(builder: (_) => choice));
   }
 
   @override
@@ -236,8 +265,7 @@ class MyDrawer extends StatelessWidget {
                             AppSpacing.lg,
                             AppSpacing.sm,
                           ),
-                          child:
-                              Text('Join or create one below to get started.'),
+                          child: Text('Tap + below to create or join one.'),
                         ),
                       ],
                     );
@@ -271,36 +299,40 @@ class MyDrawer extends StatelessWidget {
                 },
               ),
             ),
-            const Divider(height: 1),
+            // The add button sits on the right end of the divider between
+            // the groups and the footer, so it reads as belonging to the list
+            // above without taking a row of its own.
+            SizedBox(
+              // Tall enough for the 56dp button, so it straddles the line
+              // without crowding the Theme row below.
+              height: 68,
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.md),
+                    child: IconButton.filledTonal(
+                      tooltip: 'Add group',
+                      iconSize: 30,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size.square(56),
+                      ),
+                      icon: const Icon(Icons.add),
+                      onPressed: () => _showAddGroupDialog(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Every footer item is a compact ListTile sharing the same icon
-            // column, so the actions, theme and links read as one menu.
+            // column, so the theme and links read as one menu.
             _DrawerAction(
-              icon: Icons.qr_code_outlined,
-              label: 'Join group',
-              onTap: () => _openGroupForm(
+              icon: Icons.palette_outlined,
+              label: 'Theme',
+              onTap: () => _showThemeDialog(
                 context,
-                saveButtonText: 'Join Group',
-                textFieldLabel: 'Invite Id',
-              ),
-            ),
-            _DrawerAction(
-              icon: Icons.group_add_outlined,
-              label: 'Create group',
-              onTap: () => _openGroupForm(
-                context,
-                saveButtonText: 'Create Group',
-                textFieldLabel: 'Group Name',
-              ),
-            ),
-            const Divider(height: 1),
-            Selector<SettingsController, ThemeMode>(
-              selector: (_, SettingsController settingController) =>
-                  settingController.themeMode,
-              builder: (_, ThemeMode themeMode, __) => _DrawerAction(
-                icon: Icons.palette_outlined,
-                label: 'Theme',
-                value: _themeLabels[themeMode],
-                onTap: () => _showThemeDialog(context, themeMode),
+                context.read<SettingsController>().themeMode,
               ),
             ),
             if (Platform.isAndroid)
@@ -333,15 +365,11 @@ class _DrawerAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.value,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  /// Current setting, shown muted at the trailing edge (e.g. the theme).
-  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -350,14 +378,6 @@ class _DrawerAction extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       leading: Icon(icon),
       title: Text(label),
-      trailing: value == null
-          ? null
-          : Text(
-              value!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
       onTap: onTap,
     );
   }
@@ -435,6 +455,36 @@ class _GroupTile extends StatelessWidget {
         context.read<GroupsController>().selectedGroup = group;
         Navigator.pop(context);
       },
+    );
+  }
+}
+
+class _AddGroupOption extends StatelessWidget {
+  const _AddGroupOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      leading: CircleAvatar(
+        backgroundColor: colorScheme.secondaryContainer,
+        foregroundColor: colorScheme.onSecondaryContainer,
+        child: Icon(icon),
+      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: onTap,
     );
   }
 }

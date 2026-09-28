@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:split_expense/src/components/drawer.dart';
 import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 import 'package:split_expense/src/notify_controllers/settings_controller.dart';
+import 'package:split_expense/src/views/create_group_view.dart';
+import 'package:split_expense/src/views/join_group_view.dart';
 
 void main() {
   final groups = [
@@ -80,16 +82,41 @@ void main() {
     await tester.pumpAndSettle();
 
     final tileBottom = tester.getBottomLeft(find.text('Group 29')).dy;
-    final footerTop = tester.getTopLeft(find.text('Join group')).dy;
+    final footerTop = tester.getTopLeft(find.byTooltip('Add group')).dy;
     expect(tileBottom, lessThan(footerTop));
     expect(isHittable(tester, find.text('Group 29')), isTrue);
   });
 
-  testWidgets('theme is chosen from a dialog and shown on its row',
+  testWidgets('the + on the divider offers new or join, and opens that form',
       (tester) async {
     await pumpDrawer(tester, selected: 0);
 
-    expect(find.text('System default'), findsOneWidget);
+    await tester.tap(find.byTooltip('Add group'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a group'), findsOneWidget);
+
+    await tester.tap(find.text('New group'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CreateGroupView), findsOneWidget);
+
+    // Choosing closed the drawer, so the form returns to the home screen.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Add group'), findsNothing);
+    tester.state<ScaffoldState>(find.byType(Scaffold)).openDrawer();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add group'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Join group'));
+    await tester.pumpAndSettle();
+    expect(find.byType(JoinGroupView), findsOneWidget);
+  });
+
+  testWidgets('theme is chosen from a dialog, not shown on its row',
+      (tester) async {
+    await pumpDrawer(tester, selected: 0);
+
+    expect(find.text('System default'), findsNothing);
 
     await tester.tap(find.text('Theme'));
     await tester.pumpAndSettle();
@@ -100,6 +127,6 @@ void main() {
 
     expect(settings.themeMode, ThemeMode.dark);
     expect(find.byType(AlertDialog), findsNothing);
-    expect(find.text('Dark'), findsOneWidget);
+    expect(find.text('Dark'), findsNothing);
   });
 }

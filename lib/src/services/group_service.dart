@@ -33,7 +33,17 @@ Future<Group> joinGroupFromInviteId(String inviteId) async {
   }
 }
 
-Future<Group> createGroup(String groupName) async {
+/// Creates a group with its first [members] in one atomic request.
+///
+/// [idempotencyKey] makes a retry return the group already created rather
+/// than a second one; the server dedupes on the key alone, so a changed
+/// payload must come with a new key (see `IdempotencyKey`).
+Future<Group> createGroup({
+  required String name,
+  required String currency,
+  required List<String> members,
+  required String idempotencyKey,
+}) async {
   var url = '$server/createGroup';
 
   final response = await http.post(
@@ -41,8 +51,11 @@ Future<Group> createGroup(String groupName) async {
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
-    body: jsonEncode(<String, String>{
-      'name': groupName,
+    body: jsonEncode({
+      'name': name,
+      'currency': currency,
+      'members': members,
+      'idempotency_key': idempotencyKey,
     }),
   ).timeout(writeTimeout);
 

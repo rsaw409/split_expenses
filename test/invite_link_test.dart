@@ -50,6 +50,36 @@ void main() {
     expect(inviteIdFromRoute(routeNameFor(inviteLink(plain))), plain);
   });
 
+  group('pasted into the join form', () {
+    const leading = '/y4YidFAs84c69RQ:EZQ=:OSTPPuiui0kx+B7ABPUurA==';
+
+    test('a bare id is used as typed, minus surrounding space', () {
+      expect(inviteIdFromInput('  $inviteId \n'), inviteId);
+    });
+
+    test('the shared link yields the decoded id', () {
+      expect(inviteIdFromInput(inviteLink(inviteId).toString()), inviteId);
+      expect(inviteIdFromInput(inviteLink(leading).toString()), leading);
+    });
+
+    test('a link inside a longer message is found', () {
+      final message = 'Join my group on Split!\n${inviteLink(inviteId)}';
+      expect(inviteIdFromInput(message), inviteId);
+    });
+
+    test('an old unencoded link still parses', () {
+      expect(
+        inviteIdFromInput('https://$inviteLinkHost/joinGroup/$inviteId'),
+        inviteId,
+      );
+    });
+
+    test('nothing to join with is null', () {
+      expect(inviteIdFromInput('   '), isNull);
+      expect(inviteIdFromInput('https://$inviteLinkHost/joinGroup/'), isNull);
+    });
+  });
+
   group('install referrer', () {
     /// What the app receives after the web page builds the Play URL with
     /// `referrer=encodeURIComponent("invite=" + encodeURIComponent(id))` and

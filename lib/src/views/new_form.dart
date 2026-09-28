@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
-import '../models/group.dart';
 import '../services/api_exception.dart';
 import '../services/backend.dart';
-import '../services/group_service.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
@@ -47,8 +45,6 @@ class _NewFormState extends State<NewForm> {
   }
 
   IconData get _icon => switch (widget.saveButtonText) {
-        'Join Group' => Icons.qr_code_outlined,
-        'Create Group' => Icons.group_add_outlined,
         _ => Icons.person_add_alt_outlined,
       };
 
@@ -68,20 +64,6 @@ class _NewFormState extends State<NewForm> {
         userBalanceController.refresh();
         snackBar = SnackBar(
           content: Text('$name added in group.'),
-        );
-      } else if (widget.saveButtonText == 'Join Group') {
-        Group group = await joinGroupFromInviteId(myController.text.trim());
-        await groupsController.saveGroups(group);
-        snackBar = SnackBar(
-          content: Text(
-              'Successfully joined ${groupsController.selectedGroup["name"]}.'),
-        );
-      } else if (widget.saveButtonText == 'Create Group') {
-        Group group = await createGroup(myController.text.trim());
-        await groupsController.saveGroups(group);
-        snackBar = SnackBar(
-          content: Text(
-              'Successfully create group: ${groupsController.selectedGroup["name"]}.'),
         );
       }
 
