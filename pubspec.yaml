@@ -25,7 +25,6 @@ dependencies:
   shared_preferences: ^2.2.3
   url_launcher: ^6.3.0
   onesignal_flutter: ^5.6.11
-  firebase_core: ^4.15.0
   qr_flutter: ^4.1.0
   play_install_referrer: ^0.5.0
 

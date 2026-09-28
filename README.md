@@ -22,7 +22,7 @@ Built with Flutter **3.44.9** (the version CI pins); Dart SDK `>=3.4.4 <4.0.0`.
 |---|---|
 | **Android** | Supported, and the only platform verified end to end. |
 | iOS | Untested — no known blocker, just never exercised. |
-| Web | **Broken.** Firebase has no web config, so `DefaultFirebaseOptions.currentPlatform` throws on the `chrome`/`web-server` devices. |
+| Web | Untested. |
 | macOS | **Broken.** `macos/Runner.xcodeproj`'s `MACOSX_DEPLOYMENT_TARGET` (10.14, in all three build configs) predates what current Xcode/CocoaPods require (12.0+); bump it project-wide to fix. |
 | Linux / Windows | Scaffolding only, never tried. |
 

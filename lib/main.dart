@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
 import 'src/app.dart';
 import 'src/services/cache_service.dart';
@@ -12,13 +10,11 @@ import 'src/notify_controllers/settings_controller.dart';
 import 'src/notify_controllers/userbalances_controller.dart';
 import 'src/notify_controllers/allexpense_controller.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  // OneSignal sets up its own Firebase app for FCM from the credentials in
+  // its dashboard, so the app needs no Firebase SDK or config of its own.
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("e6cdb8fb-192b-4a0e-81e1-5762f7e0b630");
   OneSignal.Notifications.requestPermission(true);

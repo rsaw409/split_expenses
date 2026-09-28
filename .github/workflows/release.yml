@@ -90,9 +90,12 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # Obfuscated, with Dart symbols split out: needed to read the bundle's
+      # stack traces with `flutter symbolize -i crash.txt -d app.android-arm64.symbols`.
       - name: Build app bundle
         run: >-
           flutter build appbundle --release
+          --obfuscate --split-debug-info=build/symbols
           --build-name=${{ needs.check.outputs.version_name }}
           --build-number=${{ needs.check.outputs.build_number }}
 
@@ -115,6 +118,15 @@ jobs:
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # To read an obfuscated stack trace from a Play build, unzip that
+      # release's symbols and run:
+      #   flutter symbolize -i crash.txt -d app.android-arm64.symbols
+      - name: Upload Dart symbols
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-symbols
+          path: build/symbols
 
   build-ios:
     name: Build iOS (unsigned)
@@ -203,6 +215,8 @@ jobs:
           mv dist/app-release.apk "dist/${base}.apk"
           mv dist/app-release.aab "dist/${base}.aab"
           mv dist/app-release-unsigned.ipa "dist/${base}-unsigned.ipa"
+          # Workflow artifacts expire, so the release keeps the AAB's symbols.
+          (cd dist && zip -qm "${base}-aab-symbols.zip" *.symbols)
 
       - name: Create release
         uses: softprops/action-gh-release@v3
