@@ -21,14 +21,15 @@ class SuggestedPayment {
   /// In paise.
   final int amount;
 
-  /// The wire shape `savePayments` expects, minus the idempotency key.
-  Map<String, dynamic> toMap({required String? groupName}) => {
+  /// The wire shape `savePayments` expects, minus the idempotency key. No
+  /// group name: the backend reads it from the database, so a renamed group
+  /// is never notified under a stale name.
+  Map<String, dynamic> toMap() => {
         'from': from,
         'fromName': fromName,
         'to': to,
         'toName': toName,
         'amount': amount,
-        'groupName': groupName,
       };
 }
 

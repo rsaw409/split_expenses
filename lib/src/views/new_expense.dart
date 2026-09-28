@@ -6,7 +6,6 @@ import '../components/amount_distribution.dart';
 import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
-import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
@@ -75,8 +74,6 @@ class _NewExpenseState extends State<NewExpense> {
     }
 
     Map<String, dynamic> transaction = {};
-    transaction['groupName'] =
-        context.read<GroupsController>().selectedGroup["name"];
     transaction['by'] = by;
     transaction['title'] = title;
     transaction['totalAmount'] = totalPaise;

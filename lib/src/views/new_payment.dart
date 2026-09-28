@@ -6,7 +6,6 @@ import 'package:split_expense/src/models/user.dart';
 import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/allexpense_controller.dart';
-import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
@@ -42,7 +41,6 @@ class _NewPaymentState extends State<NewPayment> {
       "amount": amountPaise,
       "from": from,
       "to": to,
-      "groupName": context.read<GroupsController>().selectedGroup["name"]
     };
 
     setState(() => _isSaving = true);

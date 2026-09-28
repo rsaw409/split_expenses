@@ -73,15 +73,13 @@ class _SettleViewState extends State<SettleView> {
   void _savePayments(BuildContext context) {
     if (!requireReachable(context, message: _unreachableMessage)) return;
 
-    final groupName = context.read<GroupsController>().selectedGroup['name'];
-
     // A key per payment, identified by who pays whom and how much, so a retry
     // after a partial failure re-applies only what did not land. The
     // settlement walk never pays the same creditor twice from one debtor, so
     // these identities cannot collide within a batch.
     final selected = _selectedPayments
         .map((payment) => {
-              ...payment.toMap(groupName: groupName),
+              ...payment.toMap(),
               'idempotency_key': _idempotency.forPayload({
                 'from': payment.from,
                 'to': payment.to,

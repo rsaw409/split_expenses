@@ -8,8 +8,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:split_expense/src/components/drawer.dart';
 import 'package:split_expense/src/notify_controllers/groups_controller.dart';
 import 'package:split_expense/src/notify_controllers/settings_controller.dart';
+import 'package:split_expense/src/services/push_registration.dart';
 import 'package:split_expense/src/views/create_group_view.dart';
 import 'package:split_expense/src/views/join_group_view.dart';
+
+/// OneSignal and the backend have no implementation in tests.
+class FakePushRegistration implements PushRegistration {
+  @override
+  Future<String?> subscriptionId() async => null;
+  @override
+  void Function() onSubscriptionChanged(void Function() onChanged) => () {};
+  @override
+  Future<void> register(String subscriptionId, List<int> groupIds) async {}
+  @override
+  Future<void> removeGroupTags() async {}
+}
 
 void main() {
   final groups = [
@@ -26,10 +39,10 @@ void main() {
 
     SharedPreferences.setMockInitialValues({
       'groups': jsonEncode(groups),
-      'selectedGroup': jsonEncode(groups[selected]),
+      'selectedGroupId': selected,
     });
     settings = SettingsController();
-    final groupsController = GroupsController();
+    final groupsController = GroupsController(push: FakePushRegistration());
     await groupsController.loadGroups();
 
     await tester.pumpWidget(
