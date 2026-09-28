@@ -9,6 +9,7 @@ import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/settings_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/initials.dart';
+import '../views/create_group_view.dart';
 import '../views/new_form.dart';
 
 const _themeLabels = {
@@ -286,10 +287,9 @@ class MyDrawer extends StatelessWidget {
             _DrawerAction(
               icon: Icons.group_add_outlined,
               label: 'Create group',
-              onTap: () => _openGroupForm(
+              onTap: () => Navigator.push(
                 context,
-                saveButtonText: 'Create Group',
-                textFieldLabel: 'Group Name',
+                MaterialPageRoute(builder: (_) => const CreateGroupView()),
               ),
             ),
             const Divider(height: 1),

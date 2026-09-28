@@ -48,7 +48,6 @@ class _NewFormState extends State<NewForm> {
 
   IconData get _icon => switch (widget.saveButtonText) {
         'Join Group' => Icons.qr_code_outlined,
-        'Create Group' => Icons.group_add_outlined,
         _ => Icons.person_add_alt_outlined,
       };
 
@@ -75,13 +74,6 @@ class _NewFormState extends State<NewForm> {
         snackBar = SnackBar(
           content: Text(
               'Successfully joined ${groupsController.selectedGroup["name"]}.'),
-        );
-      } else if (widget.saveButtonText == 'Create Group') {
-        Group group = await createGroup(myController.text.trim());
-        await groupsController.saveGroups(group);
-        snackBar = SnackBar(
-          content: Text(
-              'Successfully create group: ${groupsController.selectedGroup["name"]}.'),
         );
       }
 
