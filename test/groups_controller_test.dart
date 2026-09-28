@@ -70,9 +70,24 @@ void main() {
 
   late FakePushRegistration push;
 
+  /// What the fake `getGroups` returns, and the ids it was asked for.
+  late List<Group> serverGroups;
+  late List<List<int>> fetched;
+
   GroupsController controller({String? subscriptionId = 'sub-1'}) {
     push = FakePushRegistration(id: subscriptionId);
-    return GroupsController(push: push);
+    serverGroups = [];
+    fetched = [];
+    return GroupsController(
+      push: push,
+      fetchGroups: (ids) async {
+        fetched.add(ids);
+        return [
+          for (final g in serverGroups)
+            if (ids.contains(g.id)) g,
+        ];
+      },
+    );
   }
 
   Future<SharedPreferences> prefs() => SharedPreferences.getInstance();
@@ -203,6 +218,90 @@ void main() {
 
       expect(push.registrations, isEmpty);
     });
+  });
+
+  group('refreshing groups from the server on launch', () {
+    test('picks up a name and currency changed elsewhere, and saves them',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        'groups': jsonEncode([goa, flat]),
+        'selectedGroupId': 1,
+      });
+      final c = controller();
+      serverGroups = [
+        const Group(id: 1, name: 'Goa 2026', inviteId: 'goa-invite'),
+        const Group(id: 2, name: 'Flat', inviteId: 'flat-invite'),
+      ];
+      await c.loadGroups();
+      await pumpEventQueue();
+
+      expect(fetched, [
+        [1, 2]
+      ]);
+      expect(c.selectedGroup['name'], 'Goa 2026');
+      final saved = jsonDecode((await prefs()).getString('groups')!) as List;
+      expect(saved.first['name'], 'Goa 2026');
+      expect(saved.first['currency'], 'INR');
+    });
+
+    test('keeps groups the server does not return', () async {
+      SharedPreferences.setMockInitialValues({
+        'groups': jsonEncode([goa, flat]),
+        'selectedGroupId': 1,
+      });
+      final c = controller();
+      serverGroups = [
+        const Group(id: 1, name: 'Goa 2026', inviteId: 'goa-invite'),
+      ];
+      await c.loadGroups();
+      await pumpEventQueue();
+
+      expect(c.groups.map((g) => g['name']), ['Goa 2026', 'Flat']);
+    });
+
+    test('does not notify listeners when nothing changed', () async {
+      SharedPreferences.setMockInitialValues({
+        'groups': jsonEncode([
+          {...goa, 'currency': 'INR'}
+        ]),
+        'selectedGroupId': 1,
+      });
+      final c = controller();
+      serverGroups = [Group.fromMap(goa)];
+      await c.loadGroups();
+      var notified = 0;
+      c.addListener(() => notified++);
+      await pumpEventQueue();
+
+      expect(notified, 0);
+    });
+
+    test('never re-adds a group left before the response arrived', () async {
+      SharedPreferences.setMockInitialValues({
+        'groups': jsonEncode([goa, flat]),
+        'selectedGroupId': 2,
+      });
+      final c = controller();
+      serverGroups = [Group.fromMap(goa), Group.fromMap(flat)];
+      await c.loadGroups();
+      await c.removeCurrentGroup();
+      await pumpEventQueue();
+
+      expect(c.groups.map((g) => g['id']), [1]);
+    });
+
+    test('with no groups, asks the server nothing', () async {
+      SharedPreferences.setMockInitialValues({});
+      final c = controller();
+      await c.loadGroups();
+      await pumpEventQueue();
+
+      expect(fetched, isEmpty);
+    });
+  });
+
+  test('a group saved before currencies existed reads as INR', () {
+    expect(Group.fromMap(goa).currency, 'INR');
   });
 
   test('a stale selected id falls back to the first group', () async {

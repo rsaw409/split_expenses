@@ -42,7 +42,10 @@ void main() {
       'selectedGroupId': selected,
     });
     settings = SettingsController();
-    final groupsController = GroupsController(push: FakePushRegistration());
+    final groupsController = GroupsController(
+      push: FakePushRegistration(),
+      fetchGroups: (_) async => [],
+    );
     await groupsController.loadGroups();
 
     await tester.pumpWidget(

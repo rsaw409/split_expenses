@@ -18,6 +18,7 @@ import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import 'overview_view.dart';
+import 'edit_group_view.dart';
 import 'total_expenditure_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -157,6 +158,15 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                         builder: (_) => const TotalExpenditureView(),
                       ),
                     );
+                  } else if (item == 3) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditGroupView(
+                          group: Group.fromMap(groupsController.selectedGroup),
+                        ),
+                      ),
+                    );
                   } else if (item == 0) {
                     showInviteDialog(
                       context,
@@ -185,6 +195,8 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
                 itemBuilder: (context) => [
                   const PopupMenuItem<int>(
                       value: 2, child: Text('Total expenditure')),
+                  const PopupMenuItem<int>(
+                      value: 3, child: Text('Edit group')),
                   const PopupMenuItem<int>(value: 0, child: Text('Invite')),
                   const PopupMenuItem<int>(
                       value: 1, child: Text('Leave group')),

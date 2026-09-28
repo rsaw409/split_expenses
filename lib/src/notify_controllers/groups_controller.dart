@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/group.dart';
 import '../services/cache_service.dart';
+import '../services/group_service.dart' as group_service;
 import '../services/push_registration.dart';
 
 const _groupsKey = 'groups';
@@ -20,8 +20,12 @@ const _selectedGroupIdKey = 'selectedGroupId';
 /// is updated (a rejoin used to refresh the copy's invite id but not the
 /// list's).
 class GroupsController extends ChangeNotifier {
-  GroupsController({PushRegistration push = const PushRegistration()})
-      : _push = push {
+  GroupsController({
+    PushRegistration push = const PushRegistration(),
+    Future<List<Group>> Function(List<int> groupIds) fetchGroups =
+        group_service.fetchGroups,
+  })  : _push = push,
+        _fetchGroups = fetchGroups {
     // A new install gets its subscription id only after launch; register
     // as soon as it arrives rather than waiting for the next launch.
     _stopWatchingSubscription =
@@ -29,6 +33,7 @@ class GroupsController extends ChangeNotifier {
   }
 
   final PushRegistration _push;
+  final Future<List<Group>> Function(List<int> groupIds) _fetchGroups;
   late final void Function() _stopWatchingSubscription;
 
   /// The last registration queued; see [registerDevice].
@@ -69,6 +74,7 @@ class GroupsController extends ChangeNotifier {
     notifyListeners();
 
     // Not awaited: the groups must show without waiting on the network.
+    unawaited(refreshGroups());
     unawaited(registerDevice());
     unawaited(_quietly('Removing old notification tags',
         _push.removeGroupTags));
@@ -103,6 +109,37 @@ class GroupsController extends ChangeNotifier {
     notifyListeners();
     await _persist();
     unawaited(registerDevice());
+  }
+
+  /// Fetches the saved groups' current details, so a name or currency
+  /// changed on another device shows up here. Silent on failure: the saved
+  /// details stay until the next launch.
+  Future<void> refreshGroups() async {
+    final ids = [
+      for (final g in _groups)
+        if (g['id'] is int) g['id'] as int,
+    ];
+    if (ids.isEmpty) return;
+    await _quietly('Refreshing groups', () async {
+      applyServerGroups(await _fetchGroups(ids));
+    });
+  }
+
+  /// Updates saved groups from what the server returned, matched by id.
+  /// Groups the server did not return, and groups left meanwhile, are left
+  /// as they are; nothing is added.
+  void applyServerGroups(List<Group> fromServer) {
+    final byId = {for (final g in fromServer) g.id: g.toMap()};
+    final updated = [for (final g in _groups) byId[g['id']] ?? g];
+    final changed = [
+      for (var i = 0; i < updated.length; i++)
+        !mapEquals(updated[i], _groups[i]),
+    ].any((c) => c);
+    if (!changed) return;
+
+    _groups = updated;
+    notifyListeners();
+    unawaited(_persist());
   }
 
   /// Tells the backend this device's full list of groups, so it sends each

@@ -67,13 +67,15 @@ void main() {
     expect(find.byType(InputChip), findsNothing);
   });
 
-  testWidgets('currency is fixed to rupees for now', (tester) async {
+  testWidgets('currency offers rupees, the only option for now',
+      (tester) async {
     await pumpForm(tester);
 
     expect(find.text('Indian Rupee (₹)'), findsOneWidget);
     final dropdown = tester.widget<DropdownButton<String>>(
       find.byType(DropdownButton<String>),
     );
-    expect(dropdown.onChanged, isNull);
+    expect(dropdown.onChanged, isNotNull);
+    expect(dropdown.items!.map((i) => i.value), ['INR']);
   });
 }

@@ -5,15 +5,12 @@ import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/userbalances_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
+import '../components/currency_field.dart';
 import '../theme/app_theme.dart';
+import '../utils/currency.dart';
 import '../utils/idempotency.dart';
 import '../utils/initials.dart';
 import '../utils/reachability.dart';
-
-/// Currencies a group can be created in. Only rupees for now: every amount
-/// in the app is paise, and formatting assumes ₹. The backend accepts any
-/// three-letter code, so this list is what actually restricts the choice.
-const _currencies = [(code: 'INR', label: 'Indian Rupee (₹)')];
 
 /// A split needs someone to split with.
 const minimumPeople = 2;
@@ -36,7 +33,7 @@ class _CreateGroupViewState extends State<CreateGroupView> {
   final _personFocus = FocusNode();
 
   final List<String> _people = [];
-  String _currency = _currencies.first.code;
+  String _currency = supportedCurrencies.first.code;
   String? _peopleError;
   bool _isSaving = false;
   final _idempotency = IdempotencyKey();
@@ -172,24 +169,9 @@ class _CreateGroupViewState extends State<CreateGroupView> {
                   : null,
             ),
             const SizedBox(height: AppSpacing.md),
-            DropdownButtonFormField<String>(
-              initialValue: _currency,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Currency',
-                prefixIcon: Icon(Icons.currency_rupee),
-                helperText: 'More currencies coming soon.',
-              ),
-              items: [
-                for (final c in _currencies)
-                  DropdownMenuItem(
-                    value: c.code,
-                    child: Text(c.label, overflow: TextOverflow.ellipsis),
-                  ),
-              ],
-              onChanged: _currencies.length < 2
-                  ? null
-                  : (value) => setState(() => _currency = value!),
+            CurrencyField(
+              value: _currency,
+              onChanged: (code) => setState(() => _currency = code),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text('People', style: textTheme.titleSmall),

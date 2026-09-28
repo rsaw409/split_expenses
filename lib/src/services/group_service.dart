@@ -65,3 +65,44 @@ Future<Group> createGroup({
     throw apiExceptionFrom(response, 'Failed to create group.');
   }
 }
+
+/// The current details of [groupIds], so names and currencies changed on
+/// another device show up here. Ids the server does not know are left out.
+Future<List<Group>> fetchGroups(List<int> groupIds) async {
+  final response = await http
+      .post(
+        Uri.parse('$server/getGroups'),
+        headers: const {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({'group_ids': groupIds}),
+      )
+      .timeout(readTimeout);
+
+  if (response.statusCode == 200) {
+    return [
+      for (final g in jsonDecode(response.body) as List)
+        Group.fromMap(g as Map<String, dynamic>),
+    ];
+  }
+  throw apiExceptionFrom(response, 'Failed to load groups.');
+}
+
+/// Renames [groupId] and/or changes its currency; pass only what changed.
+/// Needs no idempotency key: setting the same values twice is harmless.
+Future<Group> updateGroup(int groupId, {String? name, String? currency}) async {
+  final response = await http
+      .post(
+        Uri.parse('$server/updateGroup'),
+        headers: const {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'group_id': groupId,
+          if (name != null) 'name': name,
+          if (currency != null) 'currency': currency,
+        }),
+      )
+      .timeout(writeTimeout);
+
+  if (response.statusCode == 200) {
+    return Group.fromJson(jsonDecode(response.body));
+  }
+  throw apiExceptionFrom(response, 'Failed to update group.');
+}
