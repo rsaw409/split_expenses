@@ -1,4 +1,4 @@
-var server = 'https://backend.portfolio.rsaw409.me/split';
+var server = 'https://portfolio-backend-app-267y.onrender.com/split';
 // var server = 'http://localhost:3000';
 
 /// Reads fail benignly — cache-first paint keeps whatever is already on screen
