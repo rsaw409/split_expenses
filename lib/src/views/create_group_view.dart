@@ -6,10 +6,13 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
 import '../components/currency_field.dart';
+import '../components/group_icon.dart';
+import '../components/member_avatar.dart';
 import '../theme/app_theme.dart';
 import '../utils/currency.dart';
+import '../utils/avatar.dart';
+import '../utils/group_icon.dart';
 import '../utils/idempotency.dart';
-import '../utils/initials.dart';
 import '../utils/reachability.dart';
 
 /// A split needs someone to split with.
@@ -32,8 +35,11 @@ class _CreateGroupViewState extends State<CreateGroupView> {
   final _personController = TextEditingController();
   final _personFocus = FocusNode();
 
-  final List<String> _people = [];
+  /// Each person's avatar is picked here, reshuffled by tapping their chip,
+  /// and saved with them.
+  final List<({String name, String avatar})> _people = [];
   String _currency = supportedCurrencies.first.code;
+  GroupIcon _icon = randomGroupIcon();
   String? _peopleError;
   bool _isSaving = false;
   final _idempotency = IdempotencyKey();
@@ -51,12 +57,12 @@ class _CreateGroupViewState extends State<CreateGroupView> {
     if (name.isEmpty) return;
 
     final duplicate =
-        _people.any((p) => p.toLowerCase() == name.toLowerCase());
+        _people.any((p) => p.name.toLowerCase() == name.toLowerCase());
     setState(() {
       if (duplicate) {
         _peopleError = '$name is already in the list.';
       } else {
-        _people.add(name);
+        _people.add((name: name, avatar: newAvatarSeed()));
         _peopleError = null;
         _personController.clear();
       }
@@ -66,7 +72,14 @@ class _CreateGroupViewState extends State<CreateGroupView> {
   }
 
   void _removePerson(String name) {
-    setState(() => _people.remove(name));
+    setState(() => _people.removeWhere((p) => p.name == name));
+  }
+
+  void _shufflePerson(String name) {
+    setState(() {
+      final i = _people.indexWhere((p) => p.name == name);
+      _people[i] = (name: name, avatar: newAvatarSeed());
+    });
   }
 
   bool _validate() {
@@ -102,8 +115,16 @@ class _CreateGroupViewState extends State<CreateGroupView> {
         name: name,
         currency: _currency,
         members: members,
+        icon: _icon,
         idempotencyKey: _idempotency.forPayload(
-          {'name': name, 'currency': _currency, 'members': members},
+          {
+            'name': name,
+            'currency': _currency,
+            'icon': [_icon.emoji, _icon.color],
+            'members': [
+              for (final m in members) {'name': m.name, 'avatar': m.avatar},
+            ],
+          },
         ),
       );
       _idempotency.reset();
@@ -145,15 +166,13 @@ class _CreateGroupViewState extends State<CreateGroupView> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Center(
-              child: CircleAvatar(
-                radius: 32,
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.group_add_outlined, size: 32),
-              ),
+            GroupIconField(
+              name: _nameController.text,
+              icon: _icon,
+              enabled: !_isSaving,
+              onChanged: (icon) => setState(() => _icon = icon),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
             TextFormField(
               controller: _nameController,
               autofocus: true,
@@ -177,7 +196,10 @@ class _CreateGroupViewState extends State<CreateGroupView> {
             Text('People', style: textTheme.titleSmall),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Everyone who will share costs, including you.',
+              _people.isEmpty
+                  ? 'Everyone who will share costs, including you.'
+                  : 'Everyone who will share costs, including you. Tap a '
+                      'person to change their avatar.',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -208,18 +230,16 @@ class _CreateGroupViewState extends State<CreateGroupView> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                for (final name in _people)
+                for (final person in _people)
                   InputChip(
-                    avatar: CircleAvatar(
-                      backgroundColor: colorScheme.secondaryContainer,
-                      foregroundColor: colorScheme.onSecondaryContainer,
-                      child: Text(
-                        initialsOf(name),
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                    ),
-                    label: Text(name),
-                    onDeleted: _isSaving ? null : () => _removePerson(name),
+                    avatar: SeedAvatar(seed: person.avatar, radius: 12),
+                    label: Text(person.name),
+                    tooltip: 'Change avatar',
+                    onPressed: _isSaving
+                        ? null
+                        : () => _shufflePerson(person.name),
+                    onDeleted:
+                        _isSaving ? null : () => _removePerson(person.name),
                   ),
               ],
             ),

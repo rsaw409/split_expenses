@@ -8,7 +8,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/settings_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/initials.dart';
+import '../utils/group_icon.dart';
+import 'group_icon.dart';
 import '../views/create_group_view.dart';
 import '../views/join_group_view.dart';
 
@@ -431,13 +432,14 @@ class _GroupTile extends StatelessWidget {
     return ListTile(
       selected: isSelected,
       selectedTileColor: colorScheme.secondaryContainer,
-      leading: CircleAvatar(
-        backgroundColor: isSelected
+      leading: GroupIconAvatar(
+        name: group['name'],
+        icon: groupIconFromMap(group),
+        initialsBackground: isSelected
             ? colorScheme.primary
             : colorScheme.surfaceContainerHighest,
-        foregroundColor:
+        initialsForeground:
             isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-        child: Text(initialsOf(group['name'])),
       ),
       title: Text(
         group['name'],

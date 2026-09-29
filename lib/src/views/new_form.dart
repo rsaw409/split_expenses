@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
+import '../components/member_avatar.dart';
 import '../services/api_exception.dart';
 import '../services/backend.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/avatar.dart';
 import '../utils/reachability.dart';
 
 class NewForm extends StatefulWidget {
@@ -32,6 +34,10 @@ class _NewFormState extends State<NewForm> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
+  /// The face the new person gets. Shuffled freely until saved; the backend
+  /// has no way to change it after that.
+  String _avatar = newAvatarSeed();
+
   @override
   void initState() {
     super.initState();
@@ -44,10 +50,6 @@ class _NewFormState extends State<NewForm> {
     super.dispose();
   }
 
-  IconData get _icon => switch (widget.saveButtonText) {
-        _ => Icons.person_add_alt_outlined,
-      };
-
   Future<bool> _saveTextFieldValue(
     BuildContext context,
     GroupsController groupsController,
@@ -59,7 +61,7 @@ class _NewFormState extends State<NewForm> {
       if (widget.saveButtonText == 'Save person') {
         final groupId = groupsController.selectedGroup['id'];
         final name = myController.text.trim();
-        await addUserInGroup(groupId, name);
+        await addUserInGroup(groupId, name, avatar: _avatar);
 
         userBalanceController.refresh();
         snackBar = SnackBar(
@@ -143,17 +145,18 @@ class _NewFormState extends State<NewForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(child: SeedAvatar(seed: _avatar, radius: 48)),
+                const SizedBox(height: AppSpacing.sm),
                 Center(
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor:
-                        Theme.of(context).colorScheme.onPrimaryContainer,
-                    child: Icon(_icon, size: 32),
+                  child: TextButton.icon(
+                    onPressed: _isSaving
+                        ? null
+                        : () => setState(() => _avatar = newAvatarSeed()),
+                    icon: const Icon(Icons.autorenew),
+                    label: const Text('Change avatar'),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: myController,
                   autofocus: true,

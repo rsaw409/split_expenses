@@ -301,10 +301,13 @@ class _AmountDistributionModalState extends State<AmountDistributionModal> {
                     source: widget.users,
                     value: (i, v) => v['id'] as int,
                     label: (i, v) => v['name'],
+                    meta: (i, v) => v,
                   ),
                   choiceBuilder: (item, i) {
+                    final user = item.meta as Map<String, dynamic>;
                     return CustomChip(
                       label: item.label,
+                      avatar: user['avatar'] as String?,
                       radius: 35,
                       selected: item.selected,
                       onSelect: item.select!,

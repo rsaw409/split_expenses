@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:split_expense/src/notify_controllers/userbalances_controller.dart';
 
 import '../components/async_state.dart';
+import '../components/member_avatar.dart';
 import '../models/user_balance.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
 import '../utils/group_currency.dart';
-import '../utils/initials.dart';
 import 'settle_view.dart';
 import 'user_view.dart';
 
@@ -111,10 +111,9 @@ class _BalanceTile extends StatelessWidget {
             : colorScheme.error;
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: colorScheme.secondaryContainer,
-        foregroundColor: colorScheme.onSecondaryContainer,
-        child: Text(initialsOf(balance.name)),
+      leading: MemberAvatar(
+        name: balance.name,
+        avatar: balance.avatar,
       ),
       title: Text(
         balance.name,

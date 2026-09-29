@@ -10,5 +10,9 @@ import '../models/user_balance.dart';
 /// is what makes it a safe substitute — otherwise a newly added member would
 /// silently be missing from the pickers used to record expenses.
 List<User> membersFromBalances(List<UserBalance> balances) => balances
-    .map((balance) => User(name: balance.name, id: balance.userId))
+    .map((balance) => User(
+          name: balance.name,
+          id: balance.userId,
+          avatar: balance.avatar,
+        ))
     .toList();

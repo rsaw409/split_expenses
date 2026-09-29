@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import '../models/group.dart';
 import '../utils/currency.dart';
+import '../utils/group_icon.dart';
 import './api_exception.dart';
 import "./server.dart";
 
@@ -36,13 +37,17 @@ Future<Group> joinGroupFromInviteId(String inviteId) async {
 
 /// Creates a group with its first [members] in one atomic request.
 ///
+/// Each member carries the avatar seed shown on the form; the server saves it
+/// with them.
+///
 /// [idempotencyKey] makes a retry return the group already created rather
 /// than a second one; the server dedupes on the key alone, so a changed
 /// payload must come with a new key (see `IdempotencyKey`).
 Future<Group> createGroup({
   required String name,
   required String currency,
-  required List<String> members,
+  required List<({String name, String avatar})> members,
+  required GroupIcon icon,
   required String idempotencyKey,
 }) async {
   var url = '$server/createGroup';
@@ -55,7 +60,11 @@ Future<Group> createGroup({
     body: jsonEncode({
       'name': name,
       ...currencyFor(currency).toApiFields(),
-      'members': members,
+      'members': [
+        for (final m in members) {'name': m.name, 'avatar': m.avatar},
+      ],
+      'icon': icon.emoji,
+      'icon_color': icon.color,
       'idempotency_key': idempotencyKey,
     }),
   ).timeout(writeTimeout);
@@ -87,9 +96,15 @@ Future<List<Group>> fetchGroups(List<int> groupIds) async {
   throw apiExceptionFrom(response, 'Failed to load groups.');
 }
 
-/// Renames [groupId] and/or changes its currency; pass only what changed.
-/// Needs no idempotency key: setting the same values twice is harmless.
-Future<Group> updateGroup(int groupId, {String? name, String? currency}) async {
+/// Renames [groupId], changes its currency and/or its icon; pass only what
+/// changed. Needs no idempotency key: setting the same values twice is
+/// harmless.
+Future<Group> updateGroup(
+  int groupId, {
+  String? name,
+  String? currency,
+  GroupIcon? icon,
+}) async {
   final response = await http
       .post(
         Uri.parse('$server/updateGroup'),
@@ -99,6 +114,8 @@ Future<Group> updateGroup(int groupId, {String? name, String? currency}) async {
           if (name != null) 'name': name,
           // The backend needs both together, and trusts the decimals.
           if (currency != null) ...currencyFor(currency).toApiFields(),
+          // Also only together: the backend refuses one without the other.
+          if (icon != null) ...{'icon': icon.emoji, 'icon_color': icon.color},
         }),
       )
       .timeout(writeTimeout);

@@ -65,7 +65,13 @@ Future<List<UserBalance>> fetchUserBalances(int? groupId) async {
   }
 }
 
-Future<String> addUserInGroup(int? groupId, String userName) async {
+/// [avatar] is the seed shown when the person was added; the backend saves it
+/// and it cannot be changed afterwards.
+Future<String> addUserInGroup(
+  int? groupId,
+  String userName, {
+  required String avatar,
+}) async {
   var url = '$server/createUser';
   final response = await http.post(
     Uri.parse(url),
@@ -75,6 +81,7 @@ Future<String> addUserInGroup(int? groupId, String userName) async {
     body: jsonEncode(<String, String>{
       'group_id': '$groupId',
       'name': userName,
+      'avatar': avatar,
     }),
   ).timeout(writeTimeout);
 

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../utils/initials.dart';
+import 'member_avatar.dart';
 
 class CustomChip extends StatelessWidget {
   const CustomChip({
     super.key,
     required this.label,
+    this.avatar,
     required this.radius,
     required this.selected,
     required this.onSelect,
@@ -13,6 +14,7 @@ class CustomChip extends StatelessWidget {
   });
 
   final String label;
+  final String? avatar;
   final double radius;
   final bool selected;
   final Function onSelect;
@@ -38,22 +40,24 @@ class CustomChip extends StatelessWidget {
                     ? Border.all(color: colorScheme.primary, width: 2.5)
                     : null,
               ),
-              child: CircleAvatar(
-                radius: radius,
-                backgroundColor: selected
-                    ? colorScheme.primaryContainer
-                    : colorScheme.surfaceContainerHighest,
-                child: Text(
-                  initialsOf(label),
-                  style: TextStyle(
+              // Unselected faces are faded so the selection reads at a
+              // glance; initials show it with their colours instead.
+              child: Opacity(
+                opacity: selected || avatar == null ? 1 : 0.45,
+                child: MemberAvatar(
+                  name: label,
+                  avatar: avatar,
+                  radius: radius,
+                  backgroundColor: selected
+                      ? colorScheme.primaryContainer
+                      : colorScheme.surfaceContainerHighest,
+                  initialsStyle: TextStyle(
                     fontSize: radius * 0.6,
                     fontWeight: FontWeight.bold,
                     color: selected
                         ? colorScheme.onPrimaryContainer
                         : colorScheme.onSurfaceVariant,
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

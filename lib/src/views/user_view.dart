@@ -3,6 +3,7 @@ import 'package:split_expense/src/models/user_balance.dart';
 import 'package:split_expense/src/views/expenses_view.dart';
 
 import '../components/detail_row.dart';
+import '../components/member_avatar.dart';
 import '../theme/app_theme.dart';
 import '../utils/group_currency.dart';
 
@@ -39,11 +40,16 @@ class UserView extends StatelessWidget {
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: CircleAvatar(
-              backgroundColor: colorScheme.secondaryContainer,
-              foregroundColor: colorScheme.onSecondaryContainer,
-              child: const Icon(Icons.person_2_outlined),
-            ),
+            leading: userBalance.avatar == null
+                ? CircleAvatar(
+                    backgroundColor: colorScheme.secondaryContainer,
+                    foregroundColor: colorScheme.onSecondaryContainer,
+                    child: const Icon(Icons.person_2_outlined),
+                  )
+                : MemberAvatar(
+                    name: userBalance.name,
+                    avatar: userBalance.avatar,
+                  ),
             title: Text(
               userBalance.name,
               style: Theme.of(context).textTheme.titleLarge,

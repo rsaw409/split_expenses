@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../components/currency_field.dart';
+import '../components/group_icon.dart';
 import '../models/group.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/group_icon.dart';
 import '../utils/reachability.dart';
 
 /// Longest group name the form accepts. The backend sets no limit, but a
 /// name longer than this no longer fits in the app bar or the drawer.
 const maxGroupNameLength = 50;
 
-/// Renames a group or changes its currency. Other members' apps pick the
+/// Renames a group, changes its icon, or changes its currency. Other members' apps pick the
 /// change up the next time they start.
 ///
 /// The currency can change only while the group has no transactions: amounts
@@ -35,6 +37,7 @@ class _EditGroupViewState extends State<EditGroupView> {
   final _formKey = GlobalKey<FormState>();
   late final _nameController = TextEditingController(text: widget.group.name);
   late String _currency = widget.group.currency;
+  late GroupIcon? _icon = widget.group.icon;
   bool _isSaving = false;
 
   @override
@@ -53,7 +56,8 @@ class _EditGroupViewState extends State<EditGroupView> {
   String get _name => _nameController.text.trim();
   bool get _nameChanged => _name != widget.group.name;
   bool get _currencyChanged => _currency != widget.group.currency;
-  bool get _hasChanges => _nameChanged || _currencyChanged;
+  bool get _iconChanged => _icon != widget.group.icon;
+  bool get _hasChanges => _nameChanged || _currencyChanged || _iconChanged;
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -68,6 +72,7 @@ class _EditGroupViewState extends State<EditGroupView> {
         widget.group.id,
         name: _nameChanged ? _name : null,
         currency: _currencyChanged ? _currency : null,
+        icon: _iconChanged ? _icon : null,
       );
       groupsController.applyServerGroups([updated]);
       if (!mounted) return;
@@ -102,7 +107,6 @@ class _EditGroupViewState extends State<EditGroupView> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final currencyEditable =
         _knownToHaveNoTransactions(context.watch<AllExpenseController>());
 
@@ -113,15 +117,13 @@ class _EditGroupViewState extends State<EditGroupView> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Center(
-              child: CircleAvatar(
-                radius: 32,
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.edit_outlined, size: 32),
-              ),
+            GroupIconField(
+              name: _name.isEmpty ? widget.group.name : _name,
+              icon: _icon,
+              enabled: !_isSaving,
+              onChanged: (icon) => setState(() => _icon = icon),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
             TextFormField(
               controller: _nameController,
               enabled: !_isSaving,

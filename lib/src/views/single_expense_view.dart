@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../components/detail_row.dart';
+import '../components/member_avatar.dart';
 import '../models/expense/expense.dart';
+import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/currency.dart';
 import '../utils/group_currency.dart';
-import '../utils/initials.dart';
 
 class SingleExpense extends StatelessWidget {
   const SingleExpense(
@@ -92,6 +94,11 @@ class SingleExpense extends StatelessWidget {
   void _showDistributionDialog(BuildContext context, Currency currency) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    // Expenses don't carry avatars; the member list does.
+    final avatars = {
+      for (final b in context.read<UserBalanceController>().userBalances)
+        b.userId: b.avatar,
+    };
 
     showDialog<void>(
       context: context,
@@ -109,11 +116,10 @@ class SingleExpense extends StatelessWidget {
 
               return ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
+                leading: MemberAvatar(
+                  name: name,
+                  avatar: avatars[each.userId],
                   radius: 18,
-                  backgroundColor: colorScheme.secondaryContainer,
-                  foregroundColor: colorScheme.onSecondaryContainer,
-                  child: Text(initialsOf(name)),
                 ),
                 title: Text(
                   name,

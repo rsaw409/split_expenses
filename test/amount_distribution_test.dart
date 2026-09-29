@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:split_expense/src/components/amount_distribution.dart';
+import 'package:split_expense/src/components/customchip.dart';
 import 'package:split_expense/src/models/user.dart';
 import 'package:split_expense/src/utils/currency.dart';
 
@@ -60,20 +61,20 @@ void main() {
       (tester) async {
     await openWith(tester, previous);
 
-    await tester.tap(find.text('AB'));
+    await tester.tap(_chip('Alice Brown'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
 
     expect(submitted, [
-      {'id': 2, 'name': 'Bob Stone', 'amount': 10000},
+      {'id': 2, 'name': 'Bob Stone', 'avatar': null, 'amount': 10000},
     ]);
   });
 
   testWidgets('adding a member after reopening adds them once', (tester) async {
     await openWith(tester, previous);
 
-    await tester.tap(find.text('CD'));
+    await tester.tap(_chip('Carol Doe'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
@@ -107,7 +108,7 @@ void main() {
     await openWith(tester, previous,
         total: 1000, currency: currencyFor('JPY'));
 
-    await tester.tap(find.text('CD'));
+    await tester.tap(_chip('Carol Doe'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextFormField, '334'), findsOneWidget);
@@ -119,3 +120,10 @@ void main() {
     expect(submitted!.map((u) => u['amount']), [334, 333, 333]);
   });
 }
+
+/// A member's chip in the split sheet. The name also labels their amount
+/// field once selected, so match the chip itself.
+Finder _chip(String name) => find.descendant(
+      of: find.byType(CustomChip),
+      matching: find.text(name),
+    );

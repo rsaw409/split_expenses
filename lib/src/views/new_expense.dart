@@ -12,6 +12,8 @@ import '../utils/reachability.dart';
 import '../utils/idempotency.dart';
 import '../utils/group_currency.dart';
 import '../utils/members.dart';
+import '../components/member_avatar.dart';
+import '../models/user.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key});
@@ -209,7 +211,7 @@ class _NewExpenseState extends State<NewExpense> {
                   items: userOptions.map((user) {
                     return DropdownMenuItem(
                       value: "${user.id}",
-                      child: Text(user.name, overflow: TextOverflow.ellipsis),
+                      child: _MemberOption(user: user),
                     );
                   }).toList(),
                   validator: (_) =>
@@ -238,6 +240,28 @@ class _NewExpenseState extends State<NewExpense> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A member in a dropdown: their avatar, then their name.
+class _MemberOption extends StatelessWidget {
+  const _MemberOption({required this.user});
+
+  final User user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        MemberAvatar(
+          name: user.name,
+          avatar: user.avatar,
+          radius: 12,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: Text(user.name, overflow: TextOverflow.ellipsis)),
+      ],
     );
   }
 }
