@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -40,9 +41,12 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _notificationClickListener = (event) => _refreshCurrentGroupData();
     _notificationWillDisplayListener = (event) => _refreshCurrentGroupData();
-    OneSignal.Notifications.addClickListener(_notificationClickListener);
-    OneSignal.Notifications
-        .addForegroundWillDisplayListener(_notificationWillDisplayListener);
+    // The OneSignal plugin has no web implementation.
+    if (!kIsWeb) {
+      OneSignal.Notifications.addClickListener(_notificationClickListener);
+      OneSignal.Notifications
+          .addForegroundWillDisplayListener(_notificationWillDisplayListener);
+    }
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _joinFromInstallReferrer());
   }
@@ -57,9 +61,11 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    OneSignal.Notifications.removeClickListener(_notificationClickListener);
-    OneSignal.Notifications
-        .removeForegroundWillDisplayListener(_notificationWillDisplayListener);
+    if (!kIsWeb) {
+      OneSignal.Notifications.removeClickListener(_notificationClickListener);
+      OneSignal.Notifications
+          .removeForegroundWillDisplayListener(_notificationWillDisplayListener);
+    }
     super.dispose();
   }
 

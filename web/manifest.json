@@ -1,13 +1,22 @@
 {
-    "name": "split_expense",
-    "short_name": "split_expense",
+    "id": "/",
+    "name": "Split — group expenses",
+    "short_name": "Split",
+    "description": "Managing group expenses made easy.",
     "start_url": ".",
+    "scope": ".",
     "display": "standalone",
-    "background_color": "#hexcode",
-    "theme_color": "#hexcode",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#fef7ff",
+    "theme_color": "#fef7ff",
+    "categories": ["finance", "productivity"],
     "prefer_related_applications": false,
+    "related_applications": [
+        {
+            "platform": "play",
+            "url": "https://play.google.com/store/apps/details?id=developer.rohitsaw.split",
+            "id": "developer.rohitsaw.split"
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

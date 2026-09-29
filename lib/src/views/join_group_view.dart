@@ -33,7 +33,22 @@ class _JoinGroupViewState extends State<JoinGroupView> {
   }
 
   Future<void> _paste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final ClipboardData? data;
+    try {
+      data = await Clipboard.getData(Clipboard.kTextPlain);
+    } catch (_) {
+      // Browsers can refuse to let a page read the clipboard (Firefox always
+      // does, others when permission is denied), but the field still accepts
+      // a normal paste.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+          content: Text("Couldn't read the clipboard — paste into the field "
+              'instead.'),
+        ));
+      return;
+    }
     final text = data?.text?.trim();
     if (text == null || text.isEmpty || !mounted) return;
     _controller.text = text;

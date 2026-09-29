@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
@@ -37,6 +38,9 @@ Future<void> registerDevice({
 
 /// This device's push identity and registration. An interface so tests can
 /// stand in for OneSignal, which has no implementation off-device.
+///
+/// On web every member is a no-op: the plugin has no web implementation, so
+/// there is never a subscription id and nothing is registered.
 class PushRegistration {
   const PushRegistration();
 
@@ -48,6 +52,7 @@ class PushRegistration {
   /// null even on a device registered long ago. A brand-new install gets
   /// its id later still, and [onSubscriptionChanged] covers that.
   Future<String?> subscriptionId() async {
+    if (kIsWeb) return null;
     for (var attempt = 0; attempt < 10; attempt++) {
       final id = OneSignal.User.pushSubscription.id;
       if (id != null && id.isNotEmpty) return id;
@@ -59,6 +64,7 @@ class PushRegistration {
   /// Calls [onChanged] whenever this install's subscription id changes (it
   /// is first issued, or reissued). Returns a function that stops watching.
   void Function() onSubscriptionChanged(void Function() onChanged) {
+    if (kIsWeb) return () {};
     void observer(OSPushSubscriptionChangedState state) {
       if (state.current.id != state.previous.id) onChanged();
     }
@@ -74,6 +80,7 @@ class PushRegistration {
   /// then by id). Nothing reads them any more, and they count toward the
   /// plan's small per-device tag limit.
   Future<void> removeGroupTags() async {
+    if (kIsWeb) return;
     final stale = (await OneSignal.User.getTags())
         .keys
         .where((key) => key.startsWith('group'))

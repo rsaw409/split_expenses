@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -15,9 +16,12 @@ void main() {
 
   // OneSignal sets up its own Firebase app for FCM from the credentials in
   // its dashboard, so the app needs no Firebase SDK or config of its own.
-  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-  OneSignal.initialize("e6cdb8fb-192b-4a0e-81e1-5762f7e0b630");
-  OneSignal.Notifications.requestPermission(true);
+  // The plugin has no web implementation, so the web build has no push.
+  if (!kIsWeb) {
+    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    OneSignal.initialize("e6cdb8fb-192b-4a0e-81e1-5762f7e0b630");
+    OneSignal.Notifications.requestPermission(true);
+  }
 
   // Unawaited: the current cache never reads the old entries, so this only
   // reclaims space.

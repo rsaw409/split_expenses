@@ -1,6 +1,6 @@
 name: Release
 
-# Stages: check -> build (android, ios) -> publish (android, ios) and GitHub release, in parallel.
+# Stages: check -> build (android, ios, web) -> publish (android, ios, web) and GitHub release, in parallel.
 # Publishing and the GitHub release only run on pushes to main.
 
 # Play's version code is the run number plus this offset. The run number
@@ -39,6 +39,16 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+
+      # The web build compiles code that imports dart:io, but `Platform` throws
+      # there at runtime (that crashed the drawer), so this has to be caught
+      # here. Use kIsWeb / defaultTargetPlatform from flutter/foundation.dart.
+      - name: Check lib/ is web-safe
+        run: |
+          if grep -rn "import 'dart:io'" lib/; then
+            echo "::error::lib/ imports dart:io, whose Platform throws on web. Use kIsWeb / defaultTargetPlatform (flutter/foundation.dart) instead."
+            exit 1
+          fi
 
       - name: Run tests
         run: flutter test
@@ -163,6 +173,52 @@ jobs:
           name: ios-ipa
           path: app-release-unsigned.ipa
 
+  build-web:
+    name: Build Web
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # Served from the root of its own origin (base href "/"); a subpath
+      # needs --base-href=/path/ here. The version lands in version.json,
+      # which the About dialog reads on web.
+      - name: Build web app
+        run: >-
+          flutter build web --release --no-wasm-dry-run
+          --build-name=${{ needs.check.outputs.version_name }}
+          --build-number=${{ needs.check.outputs.build_number }}
+
+      # Changing sw.js on every deploy makes browsers install the new worker,
+      # which refreshes its precached files (see web/sw.js). Fails rather than
+      # skips if the placeholder is gone, which would silently stop that.
+      - name: Stamp service worker
+        run: |
+          stamp="${{ needs.check.outputs.version_name }}+${{ needs.check.outputs.build_number }}"
+          if ! grep -q "^const BUILD = 'dev';$" build/web/sw.js; then
+            echo "::error::web/sw.js no longer has the line \"const BUILD = 'dev';\" for CI to stamp."
+            exit 1
+          fi
+          sed -i "s/^const BUILD = 'dev';$/const BUILD = '${stamp}';/" build/web/sw.js
+          grep -n "^const BUILD" build/web/sw.js
+
+      - name: Package web app
+        run: cd build/web && zip -qr "$GITHUB_WORKSPACE/split-web.zip" .
+
+      - name: Upload web app
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-zip
+          path: split-web.zip
+
   publish-android:
     name: Publish Android (Play Store)
     needs: build-android
@@ -195,9 +251,69 @@ jobs:
       - name: Skip
         run: echo "::notice::iOS publishing is not supported yet; the unsigned IPA is attached to the GitHub release only."
 
+  # Render serves the web app (split.rsaw409.me) as a static site from the
+  # web-release branch, publish directory "public", and redeploys on every push
+  # to it. Each deploy force-pushes one commit holding only the latest build,
+  # so the branch never accumulates build history; every build stays attached
+  # to its GitHub release. Render's side (rewrite, headers, domain) is set in
+  # its dashboard, see CLAUDE.md.
+  publish-web:
+    name: Publish Web (Render)
+    needs: [check, build-web]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-web
+      cancel-in-progress: false
+    steps:
+      - name: Download web app
+        uses: actions/download-artifact@v8
+        with:
+          name: web-zip
+
+      # Builds from consecutive pushes run in parallel, so an older run can
+      # reach this step last; it must not replace a newer deploy. To roll back,
+      # revert on main and let the fix roll forward.
+      - name: Push build to web-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ needs.check.outputs.version_name }}
+          BUILD_NUMBER: ${{ needs.check.outputs.build_number }}
+        run: |
+          mkdir deploy && cd deploy
+          git init -q
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git fetch -q --depth=1 origin web-release 2>/dev/null; then
+            deployed=$(git show FETCH_HEAD:public/version.json 2>/dev/null | jq -r '.build_number // 0' || echo 0)
+            if [ "${deployed:-0}" -ge "$BUILD_NUMBER" ]; then
+              echo "::notice::web-release already has build ${deployed}; not replacing it with build ${BUILD_NUMBER}."
+              exit 0
+            fi
+          fi
+
+          git checkout -q --orphan web-release
+          unzip -q ../split-web.zip -d public
+          cat > README.md <<EOF
+          # web-release
+
+          Generated by the Release workflow; do not edit. Render serves \`public/\`
+          at https://split.rsaw409.me, and each push to this branch redeploys it.
+
+          Build ${VERSION_NAME}+${BUILD_NUMBER}, from ${GITHUB_SHA}.
+          EOF
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Web build ${VERSION_NAME}+${BUILD_NUMBER} from ${GITHUB_SHA}"
+          git push -q --force origin web-release
+          echo "::notice::Deployed web build ${VERSION_NAME}+${BUILD_NUMBER} to web-release."
+
   github-release:
     name: GitHub Release
-    needs: [check, build-android, build-ios]
+    needs: [check, build-android, build-ios, build-web]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -215,6 +331,7 @@ jobs:
           mv dist/app-release.apk "dist/${base}.apk"
           mv dist/app-release.aab "dist/${base}.aab"
           mv dist/app-release-unsigned.ipa "dist/${base}-unsigned.ipa"
+          mv dist/split-web.zip "dist/${base}-web.zip"
           # Workflow artifacts expire, so the release keeps the AAB's symbols.
           (cd dist && zip -qm "${base}-aab-symbols.zip" *.symbols)
 

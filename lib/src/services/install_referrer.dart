@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:play_install_referrer/play_install_referrer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,7 +17,7 @@ const _handledKey = 'installReferrerHandled';
 /// reached (sideloaded or debug build, Play services missing, a timeout, or a
 /// transient error) nothing is marked, and the next launch simply asks again.
 Future<String?> takeInstallReferrerInvite() async {
-  if (!Platform.isAndroid) return null;
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return null;
 
   final prefs = await SharedPreferences.getInstance();
   if (prefs.getBool(_handledKey) ?? false) return null;

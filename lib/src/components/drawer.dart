@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -178,8 +177,7 @@ class MyDrawer extends StatelessWidget {
               icon: Icons.qr_code_outlined,
               title: 'Join group',
               subtitle: 'Use an invite link or code someone shared',
-              onTap: () =>
-                  Navigator.pop(dialogContext, const JoinGroupView()),
+              onTap: () => Navigator.pop(dialogContext, const JoinGroupView()),
             ),
           ],
         ),
@@ -336,14 +334,18 @@ class MyDrawer extends StatelessWidget {
                 context.read<SettingsController>().themeMode,
               ),
             ),
-            if (Platform.isAndroid)
+            // Opens the Play listing: the Play Store app on Android, its web
+            // page in a browser. Hidden on iPhone and iPad, native or web,
+            // where there is no listing to review.
+            if (defaultTargetPlatform == TargetPlatform.android ||
+                (kIsWeb && defaultTargetPlatform != TargetPlatform.iOS))
               _DrawerAction(
                 icon: Icons.feedback_outlined,
                 label: 'Feedback',
                 onTap: () {
-                  final url = Uri.parse(
-                    'market://details?id=developer.rohitsaw.split',
-                  );
+                  final url = Uri.parse(kIsWeb
+                      ? 'https://play.google.com/store/apps/details?id=developer.rohitsaw.split'
+                      : 'market://details?id=developer.rohitsaw.split');
                   launchUrl(url, mode: LaunchMode.externalApplication);
                 },
               ),
