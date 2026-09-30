@@ -101,9 +101,12 @@ class _TotalExpenditureViewState extends State<TotalExpenditureView> {
   ) {
     if (controller.isLoading) return const LoadingView();
     if (controller.isError) {
-      return ErrorView(
-        message: controller.errorMessage ?? 'Something went wrong.',
-        onRetry: controller.refresh,
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: ErrorView(
+          message: controller.errorMessage ?? 'Something went wrong.',
+          onRetry: () => refreshGroupData(context),
+        ),
       );
     }
 

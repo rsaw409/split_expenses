@@ -103,3 +103,35 @@ class EmptyStateView extends StatelessWidget {
     );
   }
 }
+
+/// Lets a whole-screen state (an empty list, or a failed load) be pulled to
+/// refresh like the list it stands in for: an empty or failed list is exactly
+/// when someone wants to check again, say for a group whose data the app
+/// missed. Fills the viewport so [child] stays centred, and always scrolls,
+/// since a pull needs a scrollable even with nothing to scroll.
+class PullToRefreshState extends StatelessWidget {
+  const PullToRefreshState({
+    super.key,
+    required this.onRefresh,
+    required this.child,
+  });
+
+  final RefreshCallback onRefresh;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}

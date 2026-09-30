@@ -127,8 +127,8 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final groupsController = context.read<GroupsController>();
 
+    // Opens on Overview, the first tab.
     return DefaultTabController(
-      initialIndex: 1,
       length: 2,
       child: Scaffold(
         appBar: AppBar(

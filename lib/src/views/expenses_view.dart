@@ -34,9 +34,13 @@ class ExpensesView extends StatelessWidget {
     }
 
     if (allExpenseController.isError) {
-      return ErrorView(
-        message: allExpenseController.errorMessage ?? 'Something went wrong.',
-        onRetry: allExpenseController.refresh,
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: ErrorView(
+          message:
+              allExpenseController.errorMessage ?? 'Something went wrong.',
+          onRetry: () => refreshGroupData(context),
+        ),
       );
     }
 
@@ -48,9 +52,12 @@ class ExpensesView extends StatelessWidget {
     );
 
     if (expenses.isEmpty) {
-      return const EmptyStateView(
-        icon: Icons.receipt_long_outlined,
-        title: 'No expenses yet',
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: const EmptyStateView(
+          icon: Icons.receipt_long_outlined,
+          title: 'No expenses yet',
+        ),
       );
     }
 

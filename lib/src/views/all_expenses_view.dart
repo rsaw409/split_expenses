@@ -29,20 +29,26 @@ class AllExpensesView extends StatelessWidget {
     }
 
     if (allExpenseController.isError) {
-      return ErrorView(
-        message:
-            allExpenseController.errorMessage ?? 'Something went wrong.',
-        onRetry: allExpenseController.refresh,
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: ErrorView(
+          message:
+              allExpenseController.errorMessage ?? 'Something went wrong.',
+          onRetry: () => refreshGroupData(context),
+        ),
       );
     }
 
     final List<Expense> expenses = allExpenseController.expenses;
 
     if (expenses.isEmpty) {
-      return const EmptyStateView(
-        icon: Icons.receipt_long_outlined,
-        title: 'No expenses yet',
-        subtitle: 'Expenses and payments you record will show up here.',
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: const EmptyStateView(
+          icon: Icons.receipt_long_outlined,
+          title: 'No expenses yet',
+          subtitle: 'Expenses and payments you record will show up here.',
+        ),
       );
     }
 

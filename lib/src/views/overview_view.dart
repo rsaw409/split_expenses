@@ -33,20 +33,26 @@ class OverviewView extends StatelessWidget {
     }
 
     if (userBalancesController.isError) {
-      return ErrorView(
-        message:
-            userBalancesController.errorMessage ?? 'Something went wrong.',
-        onRetry: userBalancesController.refresh,
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: ErrorView(
+          message:
+              userBalancesController.errorMessage ?? 'Something went wrong.',
+          onRetry: () => refreshGroupData(context),
+        ),
       );
     }
 
     final List<UserBalance> userBalances = userBalancesController.userBalances;
 
     if (userBalances.isEmpty) {
-      return const EmptyStateView(
-        icon: Icons.groups_outlined,
-        title: 'No balances yet',
-        subtitle: 'Add an expense or payment to see who owes what.',
+      return PullToRefreshState(
+        onRefresh: () => refreshGroupData(context),
+        child: const EmptyStateView(
+          icon: Icons.groups_outlined,
+          title: 'No balances yet',
+          subtitle: 'Add an expense or payment to see who owes what.',
+        ),
       );
     }
 
