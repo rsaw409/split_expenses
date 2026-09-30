@@ -6,6 +6,7 @@ import '../components/expense_tile.dart';
 import '../models/expense/expense.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../utils/expense_filters.dart';
+import '../utils/refresh_group.dart';
 
 /// A per-user slice of the group's transactions, filtered from the cached list
 /// the group already loaded — no request of its own, so it works offline.
@@ -54,7 +55,7 @@ class ExpensesView extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: allExpenseController.refresh,
+      onRefresh: () => refreshGroupData(context),
       child: ListView.separated(
         itemCount: expenses.length,
         itemBuilder: (context, index) => ExpenseTile(expense: expenses[index]),

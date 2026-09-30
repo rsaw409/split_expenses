@@ -6,6 +6,7 @@ import '../components/expense_tile.dart';
 import '../models/expense/expense.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/refresh_group.dart';
 
 class AllExpensesView extends StatelessWidget {
   const AllExpensesView({super.key});
@@ -46,7 +47,7 @@ class AllExpensesView extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: allExpenseController.refresh,
+      onRefresh: () => refreshGroupData(context),
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: AppSpacing.fabClearance),
         itemCount: expenses.length,

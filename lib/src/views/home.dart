@@ -10,7 +10,6 @@ import '../components/notifications_prompt.dart';
 import '../models/group.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/backend_reachability.dart';
-import '../notify_controllers/userbalances_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
 import '../services/install_referrer.dart';
@@ -18,6 +17,7 @@ import '../services/push.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
+import '../utils/refresh_group.dart';
 import 'overview_view.dart';
 import 'edit_group_view.dart';
 import 'total_expenditure_view.dart';
@@ -74,8 +74,7 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   void _refreshCurrentGroupData() {
     if (!mounted) return;
     if (context.read<GroupsController>().selectedGroup['id'] == null) return;
-    context.read<AllExpenseController>().refresh();
-    context.read<UserBalanceController>().refresh();
+    refreshGroupData(context);
   }
 
   /// Joins the group behind a `/joinGroup` deep link.

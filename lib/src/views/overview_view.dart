@@ -7,6 +7,7 @@ import '../components/member_avatar.dart';
 import '../models/user_balance.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
+import '../utils/refresh_group.dart';
 import '../utils/group_currency.dart';
 import 'settle_view.dart';
 import 'user_view.dart';
@@ -50,7 +51,7 @@ class OverviewView extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: userBalancesController.refresh,
+      onRefresh: () => refreshGroupData(context),
       child: ListView.separated(
         padding: const EdgeInsets.only(
           top: AppSpacing.sm,

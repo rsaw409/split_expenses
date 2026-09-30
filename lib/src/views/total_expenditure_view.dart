@@ -12,6 +12,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/group_currency.dart';
 import '../utils/expenditure.dart';
+import '../utils/refresh_group.dart';
 
 enum _Period { allTime, thisMonth, lastMonth, last30Days, custom }
 
@@ -120,7 +121,7 @@ class _TotalExpenditureViewState extends State<TotalExpenditureView> {
     );
 
     return RefreshIndicator(
-      onRefresh: controller.refresh,
+      onRefresh: () => refreshGroupData(context),
       child: ListView(
         padding: const EdgeInsets.only(bottom: AppSpacing.lg),
         children: [
