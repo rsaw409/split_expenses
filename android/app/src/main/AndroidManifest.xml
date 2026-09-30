@@ -28,16 +28,27 @@
             </intent-filter>
 
             <meta-data android:name="flutter_deeplinking_enabled" android:value="true" />
+            <!-- Invite links (https://split.rsaw409.me/joinGroup/<id>) open
+                 this app directly, ahead of an installed web app: App Links,
+                 verified through the web app's own
+                 web/.well-known/assetlinks.json. Flutter routes the path,
+                 /joinGroup/<id>. Where a link still lands in a browser tab,
+                 web/index.html hands it here with an intent:// URL addressed
+                 to this package. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="portfolio.rsaw409.me"
-                    android:pathPrefix="/joinGroup/" />
-                <data android:scheme="https" android:host="portfolio.rsaw409.me"
+                <data android:scheme="https" android:host="split.rsaw409.me"
                     android:pathPrefix="/joinGroup/" />
             </intent-filter>
         </activity>
+        <!-- Declares split.rsaw409.me as this app's site, so the web app's
+             page can ask Chrome (navigator.getInstalledRelatedApps, with the
+             "play" entry in web/manifest.json) whether this app is installed,
+             and hand invites to it ahead of the web app. -->
+        <meta-data android:name="asset_statements"
+            android:resource="@string/asset_statements" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

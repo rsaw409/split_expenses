@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import 'api_exception.dart';
+import 'push.dart';
 import 'server.dart';
 
 /// Tells the backend which groups this device belongs to, so it can send a
@@ -36,55 +35,24 @@ Future<void> registerDevice({
   }
 }
 
-/// This device's push identity and registration. An interface so tests can
-/// stand in for OneSignal, which has no implementation off-device.
-///
-/// On web every member is a no-op: the plugin has no web implementation, so
-/// there is never a subscription id and nothing is registered.
+/// This device's push identity and registration: OneSignal's native SDK in
+/// the apps, its Web SDK in the browser (see push.dart). An interface so
+/// tests can stand in for OneSignal, which has no implementation in tests.
 class PushRegistration {
   const PushRegistration();
 
-  /// This install's OneSignal push subscription id, or null if OneSignal has
-  /// none yet.
-  ///
-  /// Polled briefly: the SDK loads an existing id in the background after
-  /// `initialize` without notifying observers, so right at launch it reads
-  /// null even on a device registered long ago. A brand-new install gets
-  /// its id later still, and [onSubscriptionChanged] covers that.
-  Future<String?> subscriptionId() async {
-    if (kIsWeb) return null;
-    for (var attempt = 0; attempt < 10; attempt++) {
-      final id = OneSignal.User.pushSubscription.id;
-      if (id != null && id.isNotEmpty) return id;
-      await Future.delayed(const Duration(seconds: 1));
-    }
-    return null;
-  }
+  /// This install's OneSignal push subscription id, or null if it has none
+  /// yet (on web, until the user turns notifications on).
+  Future<String?> subscriptionId() => pushSubscriptionId();
 
   /// Calls [onChanged] whenever this install's subscription id changes (it
   /// is first issued, or reissued). Returns a function that stops watching.
-  void Function() onSubscriptionChanged(void Function() onChanged) {
-    if (kIsWeb) return () {};
-    void observer(OSPushSubscriptionChangedState state) {
-      if (state.current.id != state.previous.id) onChanged();
-    }
-
-    OneSignal.User.pushSubscription.addObserver(observer);
-    return () => OneSignal.User.pushSubscription.removeObserver(observer);
-  }
+  void Function() onSubscriptionChanged(void Function() onChanged) =>
+      onPushSubscriptionChanged(onChanged);
 
   Future<void> register(String subscriptionId, List<int> groupIds) =>
       registerDevice(subscriptionId: subscriptionId, groupIds: groupIds);
 
-  /// Removes the `group…` tags earlier builds used for targeting (by name,
-  /// then by id). Nothing reads them any more, and they count toward the
-  /// plan's small per-device tag limit.
-  Future<void> removeGroupTags() async {
-    if (kIsWeb) return;
-    final stale = (await OneSignal.User.getTags())
-        .keys
-        .where((key) => key.startsWith('group'))
-        .toList();
-    if (stale.isNotEmpty) await OneSignal.User.removeTags(stale);
-  }
+  /// Removes the `group…` tags earlier builds used for targeting.
+  Future<void> removeGroupTags() => removeLegacyGroupTags();
 }

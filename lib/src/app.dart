@@ -6,6 +6,7 @@ import 'notify_controllers/settings_controller.dart';
 import 'theme/app_scroll_behavior.dart';
 import 'theme/app_theme.dart';
 import 'utils/invite_link.dart';
+import 'views/install_gate_view.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({
@@ -15,12 +16,29 @@ class MyApp extends StatelessWidget {
   final GlobalKey<HomeViewState> homeStateGlobalKey =
       GlobalKey<HomeViewState>();
 
-  Widget _buildHome(BuildContext context) => HomeView(key: homeStateGlobalKey);
+  /// The invite a blocked browser tab was opened with, for the install gate.
+  final _tabInvite = ValueNotifier<String?>(null);
+
+  /// A browser tab gets the install gate instead of the app; see
+  /// [blockedInBrowserTab].
+  Widget _buildHome(BuildContext context) => blockedInBrowserTab
+      ? ValueListenableBuilder<String?>(
+          valueListenable: _tabInvite,
+          builder: (context, inviteId, _) => InstallGateView(
+            method: browserInstallMethod(),
+            inviteId: inviteId,
+          ),
+        )
+      : HomeView(key: homeStateGlobalKey);
 
   void _handleDeepLink(String routeName) {
     if (!isJoinGroupRoute(routeName)) return;
 
     final inviteId = inviteIdFromRoute(routeName);
+    if (blockedInBrowserTab) {
+      _tabInvite.value = inviteId;
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       homeStateGlobalKey.currentState?.handleInvite(inviteId);
     });

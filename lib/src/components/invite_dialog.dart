@@ -11,15 +11,14 @@ void showInviteDialog(
   String groupName,
   String inviteId,
 ) {
-  // One link covers everyone: it opens Split if installed, and otherwise the
-  // web page sends them to the Play Store with the invite attached, so their
-  // first launch joins the group automatically.
+  // One link covers everyone (see inviteLinkHost): it opens the installed
+  // web app or the Android app, and otherwise helps them get Split, with the
+  // Android app joining the group on its first launch.
   final userJoinLink = inviteLink(inviteId).toString();
 
   final msg = 'Join our group "$groupName" on Split: $userJoinLink\n\n'
-      "Tap the link to open it in Split. Don't have Split yet? The link "
-      "takes you to Google Play, and you'll join the group when you first "
-      'open the app.\n';
+      "Tap the link to open the group in Split, or to get Split if you don't "
+      'have it yet.\n';
 
   showDialog<String>(
     context: context,

@@ -1,13 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:split_expense/src/views/all_expenses_view.dart';
 import 'package:split_expense/src/components/drawer.dart';
 
 import '../components/floating_action_button.dart';
 import '../components/invite_dialog.dart';
 import '../components/leave_group_dialog.dart';
+import '../components/notifications_prompt.dart';
 import '../models/group.dart';
 import '../notify_controllers/allexpense_controller.dart';
 import '../notify_controllers/backend_reachability.dart';
@@ -15,6 +14,7 @@ import '../notify_controllers/userbalances_controller.dart';
 import '../services/api_exception.dart';
 import '../services/group_service.dart';
 import '../services/install_referrer.dart';
+import '../services/push.dart';
 import '../notify_controllers/groups_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/reachability.dart';
@@ -32,23 +32,20 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
-  late final OnNotificationClickListener _notificationClickListener;
-  late final OnNotificationWillDisplayListener _notificationWillDisplayListener;
+  late final void Function() _stopWatchingNotifications;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _notificationClickListener = (event) => _refreshCurrentGroupData();
-    _notificationWillDisplayListener = (event) => _refreshCurrentGroupData();
-    // The OneSignal plugin has no web implementation.
-    if (!kIsWeb) {
-      OneSignal.Notifications.addClickListener(_notificationClickListener);
-      OneSignal.Notifications
-          .addForegroundWillDisplayListener(_notificationWillDisplayListener);
-    }
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _joinFromInstallReferrer());
+    _stopWatchingNotifications =
+        onNotificationReceived(_refreshCurrentGroupData);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _joinFromInstallReferrer();
+      // Browser tabs never get here (see InstallGateView), so on web this is
+      // the installed app, which asks once to turn on notifications.
+      askForNotificationsOnce(context);
+    });
   }
 
   /// First launch after installing from an invite link: join that group.
@@ -61,11 +58,7 @@ class HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (!kIsWeb) {
-      OneSignal.Notifications.removeClickListener(_notificationClickListener);
-      OneSignal.Notifications
-          .removeForegroundWillDisplayListener(_notificationWillDisplayListener);
-    }
+    _stopWatchingNotifications();
     super.dispose();
   }
 

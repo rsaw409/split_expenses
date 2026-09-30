@@ -12,6 +12,10 @@
     "prefer_related_applications": false,
     "related_applications": [
         {
+            "platform": "webapp",
+            "url": "https://split.rsaw409.me/manifest.json"
+        },
+        {
             "platform": "play",
             "url": "https://play.google.com/store/apps/details?id=developer.rohitsaw.split",
             "id": "developer.rohitsaw.split"

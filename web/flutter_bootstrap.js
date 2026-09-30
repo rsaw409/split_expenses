@@ -1,13 +1,23 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-// Custom bootstrap. It differs from Flutter's default in three ways:
+// Custom bootstrap. It differs from Flutter's default in four ways:
 //
 // - No `serviceWorkerSettings`. Flutter's own service worker is deprecated and
 //   now only unregisters itself, and its loader re-registers it whenever *any*
 //   worker is registered, which would replace sw.js and then delete it.
 // - It registers sw.js instead, except in debug builds.
 // - It removes index.html's splash once the app has painted.
+// - It keeps the browser's install prompt for the app's own Install button.
+
+// Chromium browsers fire this once the app is installable, often before
+// Flutter has started, so it is kept for lib/src/services/web_app_web.dart.
+// preventDefault() stops Chrome's own install banner on Android: the app asks
+// in its own dialog instead.
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  window.splitInstallPrompt = event;
+});
 
 // Debug builds (`flutter run`, compiled by dartdevc) get no worker: it would
 // cache every dev module and stay registered on localhost:<port> for whatever

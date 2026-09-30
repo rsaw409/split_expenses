@@ -1,6 +1,10 @@
-/// Host serving the invite links; Android verifies it for App Links through
-/// its `/.well-known/assetlinks.json`, so the app opens them directly.
-const inviteLinkHost = 'portfolio.rsaw409.me';
+/// Host of the invite links, the web app's own site. On Android the Android
+/// app opens them directly where installed (App Links, verified by
+/// web/.well-known/assetlinks.json), and Chrome's installed web app
+/// otherwise; a link that still lands in a browser tab is handed on by
+/// web/index.html in the same order, then to Google Play with the invite
+/// attached. Elsewhere the tab's install screen carries it into the app.
+const inviteLinkHost = 'split.rsaw409.me';
 
 /// The link that joins [inviteId]'s group, shared as text and as a QR code.
 ///
@@ -33,11 +37,20 @@ bool isJoinGroupRoute(String routeName) {
   return segments.isNotEmpty && segments.first == 'joinGroup';
 }
 
+/// The Android app's Play Store listing. With [inviteId], the app joins that
+/// group on its first launch, through the install referrer that
+/// [inviteIdFromInstallReferrer] reads, encoded the same way as
+/// web/index.html's hand-off.
+Uri playStoreLink({String? inviteId}) => Uri.parse(
+      'https://play.google.com/store/apps/details?id=developer.rohitsaw.split'
+      '${inviteId == null ? '' : '&referrer=${Uri.encodeComponent('invite=${Uri.encodeComponent(inviteId)}')}'}',
+    );
+
 /// The invite id carried by a Google Play install referrer, or null.
 ///
-/// The web fallback page (the portfolio repo's `public/split-join.html`)
-/// sends people without the app to the Play Store with
-/// `&referrer=<encoded "invite=<encoded id>">`. Play decodes the outer layer
+/// Invite links send Android users without the app to the Play Store with
+/// `&referrer=<encoded "invite=<encoded id>">` (web/index.html's hand-off,
+/// and [playStoreLink] on the install screen). Play decodes the outer layer
 /// and hands the app `invite=<encoded id>`, a query string, so the id still
 /// arrives intact even though it contains `/`, `+` and `=`. Installs that did
 /// not come from an invite get Play's own value, such as

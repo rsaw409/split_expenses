@@ -19,7 +19,8 @@ void main() {
   test('the link keeps an id containing "/" as one encoded segment', () {
     final link = inviteLink(inviteId);
 
-    expect(link.host, inviteLinkHost);
+    // The web app's site, so an installed web app opens it.
+    expect(link.host, 'split.rsaw409.me');
     expect(link.pathSegments, ['joinGroup', inviteId]);
     expect(link.toString(), contains('%2F'));
   });
@@ -94,8 +95,9 @@ void main() {
       expect(inviteIdFromInstallReferrer(referrerFor(leading)), leading);
     });
 
-    test("parses the web fallback page's actual Play link", () {
-      // Output of the portfolio's split-join.html for this id (node, 2026-09-24).
+    test("parses the web hand-off's actual Play link", () {
+      // Output of web/index.html's encoding for this id (node, 2026-09-30;
+      // first captured from the former portfolio join page on 2026-09-24).
       const fromWebPage = 'https://play.google.com/store/apps/details'
           '?id=developer.rohitsaw.split&referrer=invite%3D%252Fy4YidFAs84c69RQ'
           '%253AEZQ%253D%253AOSTPPuiui0kx%252BB7ABPUurA%253D%253D';
@@ -104,6 +106,22 @@ void main() {
       // Play hands the app the referrer parameter decoded once.
       final referrer = Uri.parse(fromWebPage).queryParameters['referrer'];
       expect(inviteIdFromInstallReferrer(referrer), id);
+    });
+
+    test("builds the web hand-off's exact Play link", () {
+      const fromWebPage = 'https://play.google.com/store/apps/details'
+          '?id=developer.rohitsaw.split&referrer=invite%3D%252Fy4YidFAs84c69RQ'
+          '%253AEZQ%253D%253AOSTPPuiui0kx%252BB7ABPUurA%253D%253D';
+      const id = '/y4YidFAs84c69RQ:EZQ=:OSTPPuiui0kx+B7ABPUurA==';
+
+      expect(playStoreLink(inviteId: id).toString(), fromWebPage);
+      final referrer =
+          playStoreLink(inviteId: id).queryParameters['referrer'];
+      expect(inviteIdFromInstallReferrer(referrer), id);
+      expect(
+        playStoreLink().toString(),
+        'https://play.google.com/store/apps/details?id=developer.rohitsaw.split',
+      );
     });
 
     test('organic installs have no invite', () {
