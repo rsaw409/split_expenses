@@ -33,6 +33,15 @@ bool isJoinGroupRoute(String routeName) {
   return segments.isNotEmpty && segments.first == 'joinGroup';
 }
 
+/// The Android app's Play Store listing. With [inviteId], the app joins that
+/// group on its first launch, through the install referrer that
+/// [inviteIdFromInstallReferrer] reads, encoded the same way as the web
+/// fallback page's links.
+Uri playStoreLink({String? inviteId}) => Uri.parse(
+      'https://play.google.com/store/apps/details?id=developer.rohitsaw.split'
+      '${inviteId == null ? '' : '&referrer=${Uri.encodeComponent('invite=${Uri.encodeComponent(inviteId)}')}'}',
+    );
+
 /// The invite id carried by a Google Play install referrer, or null.
 ///
 /// The web fallback page (the portfolio repo's `public/split-join.html`)

@@ -6,6 +6,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../notify_controllers/groups_controller.dart';
 import '../notify_controllers/settings_controller.dart';
+import '../services/push.dart';
+import 'notifications_prompt.dart';
 import '../theme/app_theme.dart';
 import '../utils/group_icon.dart';
 import 'group_icon.dart';
@@ -303,7 +305,7 @@ class MyDrawer extends StatelessWidget {
             // above without taking a row of its own.
             SizedBox(
               // Tall enough for the 56dp button, so it straddles the line
-              // without crowding the Theme row below.
+              // without crowding the footer row below.
               height: 68,
               child: Stack(
                 alignment: Alignment.centerRight,
@@ -326,6 +328,7 @@ class MyDrawer extends StatelessWidget {
             ),
             // Every footer item is a compact ListTile sharing the same icon
             // column, so the theme and links read as one menu.
+            const NotificationsAction(),
             _DrawerAction(
               icon: Icons.palette_outlined,
               label: 'Theme',
@@ -359,6 +362,64 @@ class MyDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Turns notifications on in the installed web app after the startup prompt
+/// ([askForNotificationsOnce]) was answered NOT NOW or its browser prompt
+/// dismissed, since that prompt only asks once. Shows nothing once they are
+/// on, in a browser tab (which asks to install instead), or in the native
+/// apps, which ask at launch.
+class NotificationsAction extends StatefulWidget {
+  const NotificationsAction({
+    super.key,
+    this.permission = pushPermission,
+    this.requestPermission = requestPushPermission,
+  });
+
+  final Future<PushPermission> Function() permission;
+  final Future<void> Function() requestPermission;
+
+  @override
+  State<NotificationsAction> createState() => _NotificationsActionState();
+}
+
+class _NotificationsActionState extends State<NotificationsAction> {
+  PushPermission _permission = PushPermission.unavailable;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final permission = await widget.permission();
+    if (mounted) setState(() => _permission = permission);
+  }
+
+  Future<void> _turnOn() async {
+    await widget.requestPermission();
+    await _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (_permission) {
+      PushPermission.unavailable ||
+      PushPermission.granted =>
+        const SizedBox.shrink(),
+      PushPermission.canRequest => _DrawerAction(
+          icon: Icons.notifications_outlined,
+          label: 'Turn on notifications',
+          onTap: _turnOn,
+        ),
+      PushPermission.denied => _DrawerAction(
+          icon: Icons.notifications_off_outlined,
+          label: 'Notifications blocked',
+          onTap: () => showBlockedHelp(context),
+        ),
+    };
   }
 }
 

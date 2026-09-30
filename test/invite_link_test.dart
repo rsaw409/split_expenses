@@ -106,6 +106,22 @@ void main() {
       expect(inviteIdFromInstallReferrer(referrer), id);
     });
 
+    test("builds the web fallback page's exact Play link", () {
+      const fromWebPage = 'https://play.google.com/store/apps/details'
+          '?id=developer.rohitsaw.split&referrer=invite%3D%252Fy4YidFAs84c69RQ'
+          '%253AEZQ%253D%253AOSTPPuiui0kx%252BB7ABPUurA%253D%253D';
+      const id = '/y4YidFAs84c69RQ:EZQ=:OSTPPuiui0kx+B7ABPUurA==';
+
+      expect(playStoreLink(inviteId: id).toString(), fromWebPage);
+      final referrer =
+          playStoreLink(inviteId: id).queryParameters['referrer'];
+      expect(inviteIdFromInstallReferrer(referrer), id);
+      expect(
+        playStoreLink().toString(),
+        'https://play.google.com/store/apps/details?id=developer.rohitsaw.split',
+      );
+    });
+
     test('organic installs have no invite', () {
       expect(
         inviteIdFromInstallReferrer(

@@ -6,7 +6,7 @@ publish_to: "none"
 
 # Only bump the name part (eg: 1.2.0) before a release.
 # The version code (the +N suffix) is overwritten automatically by CI.
-version: 1.2.4+34
+version: 1.2.5+34
 
 environment:
   sdk: ">=3.4.4 <4.0.0"
@@ -27,6 +27,7 @@ dependencies:
   qr_flutter: ^4.1.0
   play_install_referrer: ^0.5.0
   random_avatar: 0.0.8 # pinned: saved avatars are seeds, so a new drawing algorithm would change every face
+  web: ^1.1.1 # OneSignal's Web SDK, which onesignal_flutter doesn't cover (services/push_web.dart)
 
 dev_dependencies:
   flutter_test:
