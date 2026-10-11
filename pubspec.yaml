@@ -30,6 +30,7 @@ dependencies:
   play_install_referrer: ^0.5.0
   random_avatar: 0.0.8 # pinned: saved avatars are seeds, so a new drawing algorithm would change every face
   web: ^1.1.1 # OneSignal's Web SDK, which onesignal_flutter doesn't cover (services/push_web.dart)
+  pdf: ^3.13.1 # member statements as PDF (services/statement_pdf.dart); pure Dart, so it builds for web
 
 dev_dependencies:
   flutter_test:
@@ -54,3 +55,7 @@ flutter:
   assets:
     # Add assets from the images directory to the application.
     - assets/images/
+    # Noto Sans, subset to Latin, punctuation and currency symbols, for PDF
+    # statements: the PDF's built-in Helvetica has no ₹. A plain asset rather
+    # than a `fonts:` family, so web doesn't download it on every startup.
+    - assets/fonts/

@@ -30,9 +30,9 @@ const scope = new URL(self.registration.scope);
 // Precached on install, relative to the scope. Beyond the startup files, it
 // lists what Flutter only fetches on first use, which would otherwise be
 // missing offline if the user had never triggered it online: the ink ripple
-// and overscroll shaders, the asset manifest, and the drawer's logo image.
-// A path missing from a build is skipped, not fatal. Keep in step with
-// pubspec.yaml's assets.
+// and overscroll shaders, the asset manifest, the drawer's logo image, and
+// the fonts a PDF statement is drawn with. A path missing from a build is
+// skipped, not fatal. Keep in step with pubspec.yaml's assets.
 const PRECACHE = [
   '',
   'flutter_bootstrap.js',
@@ -52,6 +52,8 @@ const PRECACHE = [
   'assets/shaders/ink_sparkle.frag',
   'assets/shaders/stretch_effect.frag',
   'assets/assets/images/split.webp',
+  'assets/assets/fonts/NotoSans-Regular.ttf',
+  'assets/assets/fonts/NotoSans-Bold.ttf',
 ];
 
 function isAppFile(url) {

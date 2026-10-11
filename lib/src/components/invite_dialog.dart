@@ -116,25 +116,35 @@ void showInviteDialog(
             onPressed: () => Navigator.pop(context, 'OK'),
             child: const Text('LATER'),
           ),
-          FilledButton.icon(
-            onPressed: () async {
-              final result = await SharePlus.instance.share(
-                ShareParams(text: msg, subject: 'Join "$groupName" on Split'),
-              );
-              if (result.status == ShareResultStatus.success) {
-                var snackBar = SnackBar(
-                  content: Text('Invite to $groupName shared.'),
+          // Its own context, so the share sheet can anchor to the button
+          // (iPad requires an origin).
+          Builder(
+            builder: (buttonContext) => FilledButton.icon(
+              onPressed: () async {
+                final box = buttonContext.findRenderObject() as RenderBox;
+                final result = await SharePlus.instance.share(
+                  ShareParams(
+                    text: msg,
+                    subject: 'Join "$groupName" on Split',
+                    sharePositionOrigin:
+                        box.localToGlobal(Offset.zero) & box.size,
+                  ),
                 );
-                if (!context.mounted) return;
+                if (result.status == ShareResultStatus.success) {
+                  var snackBar = SnackBar(
+                    content: Text('Invite to $groupName shared.'),
+                  );
+                  if (!context.mounted) return;
 
-                ScaffoldMessenger.of(context)
-                  ..removeCurrentSnackBar()
-                  ..showSnackBar(snackBar);
-                Navigator.pop(context, 'OK');
-              }
-            },
-            icon: const Icon(Icons.ios_share),
-            label: const Text('SHARE'),
+                  ScaffoldMessenger.of(context)
+                    ..removeCurrentSnackBar()
+                    ..showSnackBar(snackBar);
+                  Navigator.pop(context, 'OK');
+                }
+              },
+              icon: const Icon(Icons.ios_share),
+              label: const Text('SHARE'),
+            ),
           ),
         ],
       );
