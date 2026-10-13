@@ -65,8 +65,8 @@ Future<List<UserBalance>> fetchUserBalances(int? groupId) async {
   }
 }
 
-/// [avatar] is the seed shown when the person was added; the backend saves it
-/// and it cannot be changed afterwards.
+/// [avatar] is the seed shown when the person was added; the backend saves it,
+/// and [updateUser] can change it later.
 Future<String> addUserInGroup(
   int? groupId,
   String userName, {
@@ -89,6 +89,28 @@ Future<String> addUserInGroup(
     return 'Success';
   } else {
     throw apiExceptionFrom(response, 'Failed to add person to group.');
+  }
+}
+
+/// Renames [userId] and/or changes their avatar seed; pass only what changed
+/// (the backend refuses a request with neither, and a name another member of
+/// the group already has, in any case). Needs no idempotency key: setting the
+/// same values twice is harmless.
+Future<void> updateUser(int userId, {String? name, String? avatar}) async {
+  final response = await http
+      .post(
+        Uri.parse('$server/updateUser'),
+        headers: _jsonHeaders,
+        body: jsonEncode({
+          'user_id': userId,
+          if (name != null) 'name': name,
+          if (avatar != null) 'avatar': avatar,
+        }),
+      )
+      .timeout(writeTimeout);
+
+  if (response.statusCode != 200) {
+    throw apiExceptionFrom(response, 'Failed to update person.');
   }
 }
 

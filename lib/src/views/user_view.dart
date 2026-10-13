@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:split_expense/src/models/user_balance.dart';
 import 'package:split_expense/src/views/expenses_view.dart';
 
 import '../components/detail_row.dart';
 import '../components/member_avatar.dart';
 import '../components/share_statement_button.dart';
+import '../notify_controllers/userbalances_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/group_currency.dart';
+import 'edit_member_view.dart';
 
 class UserView extends StatelessWidget {
   const UserView({super.key, required this.userBalance});
@@ -15,6 +18,15 @@ class UserView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The page was opened with a snapshot; follow what the overview now says,
+    // so an edit made from here shows up.
+    final userBalance = context.select<UserBalanceController, UserBalance>(
+      (c) =>
+          c.userBalances
+              .where((b) => b.userId == this.userBalance.userId)
+              .firstOrNull ??
+          this.userBalance,
+    );
     final colorScheme = Theme.of(context).colorScheme;
     final isSettled = userBalance.balances == 0;
     final isOwed = userBalance.balances > 0;
@@ -35,6 +47,18 @@ class UserView extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Edit person',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (ctx) => EditMemberView(member: userBalance),
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -78,6 +102,7 @@ class UserView extends StatelessWidget {
                   onTap: transactions > 0
                       ? () => _openExpenses(
                             context,
+                            userBalance.name,
                             ExpensesView(
                               byId: userBalance.userId,
                               isPayments: false,
@@ -92,6 +117,7 @@ class UserView extends StatelessWidget {
                   onTap: payments > 0
                       ? () => _openExpenses(
                             context,
+                            userBalance.name,
                             ExpensesView(
                               byId: userBalance.userId,
                               isPayments: true,
@@ -106,6 +132,7 @@ class UserView extends StatelessWidget {
                   onTap: benefits > 0
                       ? () => _openExpenses(
                             context,
+                            userBalance.name,
                             ExpensesView(userId: userBalance.userId),
                           )
                       : null,
@@ -120,14 +147,14 @@ class UserView extends StatelessWidget {
     );
   }
 
-  void _openExpenses(BuildContext context, Widget expensesView) {
+  void _openExpenses(BuildContext context, String name, Widget expensesView) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (ctx) => Scaffold(
           appBar: AppBar(
             title: Text(
-              userBalance.name,
+              name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

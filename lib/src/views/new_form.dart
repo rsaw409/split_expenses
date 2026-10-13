@@ -34,8 +34,8 @@ class _NewFormState extends State<NewForm> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
-  /// The face the new person gets. Shuffled freely until saved; the backend
-  /// has no way to change it after that.
+  /// The face the new person gets. Shuffled freely until saved, and
+  /// changeable afterwards from their page.
   String _avatar = newAvatarSeed();
 
   @override

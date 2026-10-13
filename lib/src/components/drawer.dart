@@ -46,7 +46,7 @@ class MyDrawer extends StatelessWidget {
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(packageInfo.appName),
+            const Text('Split Expense'),
             Text(
               'Version ${packageInfo.version}',
               style: textTheme.bodySmall?.copyWith(
