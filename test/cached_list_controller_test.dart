@@ -9,6 +9,7 @@ class _FakeController extends CachedListController<String> {
     super.groupId, {
     this.cached,
     required this.onFetch,
+    super.onFetched,
   });
 
   final List<String>? cached;
@@ -224,6 +225,26 @@ void main() {
       await pumpEventQueue();
       expect(controller.fetchCount, 1,
           reason: 'retrying with no backend just burns battery');
+    });
+
+    test('reports each successful fetch, so reachability can clear',
+        () async {
+      var fetched = 0;
+      var fail = false;
+      final controller = _FakeController(
+        1,
+        onFetch: (_) =>
+            fail ? Future.error(Exception('offline')) : Future.value(['a']),
+        onFetched: () => fetched++,
+      );
+
+      await pumpEventQueue();
+      expect(fetched, 1);
+
+      fail = true;
+      await controller.refresh();
+      expect(fetched, 1, reason: 'a failed fetch proves nothing');
+      controller.dispose();
     });
 
     test('treats having no group as empty, not as an error', () async {

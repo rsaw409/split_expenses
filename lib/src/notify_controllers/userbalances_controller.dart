@@ -4,7 +4,7 @@ import '../services/cache_service.dart';
 import 'cached_list_controller.dart';
 
 class UserBalanceController extends CachedListController<UserBalance> {
-  UserBalanceController(super.groupId);
+  UserBalanceController(super.groupId, {super.onFetched});
 
   List<UserBalance> get userBalances => items;
 

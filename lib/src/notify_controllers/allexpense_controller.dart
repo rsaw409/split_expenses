@@ -5,7 +5,7 @@ import '../services/cache_service.dart';
 import 'cached_list_controller.dart';
 
 class AllExpenseController extends CachedListController<Expense> {
-  AllExpenseController(super.groupId);
+  AllExpenseController(super.groupId, {super.onFetched});
 
   List<Expense> get expenses => items;
 

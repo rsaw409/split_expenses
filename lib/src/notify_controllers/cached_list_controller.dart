@@ -11,11 +11,15 @@ import '../services/api_exception.dart';
 /// instead of [isError], so losing the backend degrades to last-known data
 /// rather than an error screen.
 abstract class CachedListController<T> extends ChangeNotifier {
-  CachedListController(this.groupId) {
+  CachedListController(this.groupId, {this.onFetched}) {
     _load();
   }
 
   final int? groupId;
+
+  /// Called whenever a fetch succeeds, which proves the backend reachable
+  /// (see [BackendReachability.reportReachable]).
+  final VoidCallback? onFetched;
 
   @protected
   Future<List<T>> fetchFromNetwork(int id);
@@ -130,6 +134,8 @@ abstract class CachedListController<T> extends ChangeNotifier {
 
     try {
       final fetched = await fetchFromNetwork(id);
+      // Even a superseded or disposed load heard from the backend.
+      onFetched?.call();
       if (_isSuperseded(requestId)) return;
 
       _items = fetched;

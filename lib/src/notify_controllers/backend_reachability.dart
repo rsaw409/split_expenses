@@ -18,10 +18,29 @@ class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
   bool? _isReachable;
   bool get isReachable => _isReachable ?? true;
   Timer? _probeTimer;
+  Timer? _confirmTimer;
   final Duration checkInterval;
 
-  BackendReachability(
-      {this.checkInterval = const Duration(seconds: 10)}) {
+  /// How soon a first failed probe is checked again before it is reported.
+  final Duration confirmDelay;
+
+  final Future<bool> Function() _probe;
+
+  /// Failed probes in a row since the last success or resume.
+  int _failures = 0;
+
+  /// Only the most recently started probe may publish its result. A probe left
+  /// in flight while the app was suspended resolves on resume, usually as a
+  /// failure, and must not count against the fresh one.
+  int _probeId = 0;
+
+  bool _disposed = false;
+
+  BackendReachability({
+    this.checkInterval = const Duration(seconds: 10),
+    this.confirmDelay = const Duration(seconds: 2),
+    @visibleForTesting Future<bool> Function()? probe,
+  }) : _probe = probe ?? _canReachBackend {
     WidgetsBinding.instance.addObserver(this);
     _startChecking();
   }
@@ -32,11 +51,15 @@ class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
       _startChecking();
     } else {
       _probeTimer?.cancel();
+      _confirmTimer?.cancel();
     }
   }
 
   void _startChecking() {
     _probeTimer?.cancel();
+    _confirmTimer?.cancel();
+    // A failure from before the app was suspended says nothing about now.
+    _failures = 0;
     _probeTimer = Timer.periodic(checkInterval, (timer) {
       _refreshReachability();
     });
@@ -44,11 +67,41 @@ class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _refreshReachability() async {
-    final reachable = await _canReachBackend();
-    if (_isReachable != reachable) {
-      _isReachable = reachable;
-      notifyListeners();
+    final probeId = ++_probeId;
+    final reachable = await _probe();
+    if (_disposed || probeId != _probeId) return;
+
+    if (reachable) {
+      reportReachable();
+    } else if (_isReachable == false || ++_failures >= 2) {
+      _confirmTimer?.cancel();
+      _setReachable(false);
+    } else {
+      // One failure isn't enough to say so. In the web app the first request
+      // after a launch or resume can go out on a connection the browser kept
+      // pooled while suspended, which is dead: it fails, or stalls past the
+      // timeout, and the next request works. Reported at once, that showed
+      // the banner for a full [checkInterval] on most web launches. So check
+      // again shortly first.
+      _confirmTimer?.cancel();
+      _confirmTimer = Timer(confirmDelay, _refreshReachability);
     }
+  }
+
+  /// Records that the backend just answered. A list fetch succeeding counts
+  /// as much as a probe, and clears the banner straight away rather than at
+  /// the next probe.
+  void reportReachable() {
+    if (_disposed) return;
+    _failures = 0;
+    _confirmTimer?.cancel();
+    _setReachable(true);
+  }
+
+  void _setReachable(bool reachable) {
+    if (_isReachable == reachable) return;
+    _isReachable = reachable;
+    notifyListeners();
   }
 
   /// Probes the app's own backend rather than a third party: what governs
@@ -58,7 +111,7 @@ class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
   ///
   /// Any HTTP response counts, including the 404 the base URL returns: the
   /// status doesn't matter, only that something answered.
-  Future<bool> _canReachBackend() async {
+  static Future<bool> _canReachBackend() async {
     try {
       await http.head(Uri.parse(server)).timeout(const Duration(seconds: 5));
       return true;
@@ -69,8 +122,10 @@ class BackendReachability extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _probeTimer?.cancel();
+    _confirmTimer?.cancel();
     super.dispose();
   }
 }

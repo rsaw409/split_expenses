@@ -48,6 +48,7 @@ void main() {
             BackendReachability, AllExpenseController>(
           create: (context) => AllExpenseController(
             context.read<GroupsController>().selectedGroup["id"],
+            onFetched: context.read<BackendReachability>().reportReachable,
           ),
           update: (context, groupsController, reachability, previous) {
             final int? groupId =
@@ -56,13 +57,15 @@ void main() {
               previous.onReachabilityChanged(reachability.isReachable);
               return previous;
             }
-            return AllExpenseController(groupId);
+            return AllExpenseController(groupId,
+                onFetched: reachability.reportReachable);
           },
         ),
         ChangeNotifierProxyProvider2<GroupsController,
             BackendReachability, UserBalanceController>(
           create: (context) => UserBalanceController(
             context.read<GroupsController>().selectedGroup["id"],
+            onFetched: context.read<BackendReachability>().reportReachable,
           ),
           update: (context, groupsController, reachability, previous) {
             final int? groupId =
@@ -71,7 +74,8 @@ void main() {
               previous.onReachabilityChanged(reachability.isReachable);
               return previous;
             }
-            return UserBalanceController(groupId);
+            return UserBalanceController(groupId,
+                onFetched: reachability.reportReachable);
           },
         ),
       ],
