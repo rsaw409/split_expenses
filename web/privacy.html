@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Split Privacy Policy</title>
+  <meta name="description" content="What Split Expense stores, who can see it, and how to have it deleted.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root {
+      --bg: #fef7ff;
+      --surface: #f3edf7;
+      --text: #1d1b20;
+      --muted: #49454f;
+      --primary: #6750a4;
+      --border: #cac4d0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #141218;
+        --surface: #211f26;
+        --text: #e6e0e9;
+        --muted: #cac4d0;
+        --primary: #d0bcff;
+        --border: #49454f;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #141218;
+      --surface: #211f26;
+      --text: #e6e0e9;
+      --muted: #cac4d0;
+      --primary: #d0bcff;
+      --border: #49454f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    header img {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      flex-shrink: 0;
+    }
+    h1 { font-size: 1.75rem; line-height: 1.2; margin: 0; }
+    h2 { font-size: 1.2rem; margin: 40px 0 8px; }
+    .updated { color: var(--muted); margin: 0 0 24px; }
+    .summary {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 8px 20px;
+    }
+    .summary h2 { margin-top: 16px; }
+    ul { padding-left: 1.25em; }
+    li + li { margin-top: 6px; }
+    a { color: var(--primary); overflow-wrap: anywhere; }
+    .providers { list-style: none; padding: 0; }
+    .providers li {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .providers strong { display: block; }
+    footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icons/Icon-192.png" alt="">
+    <h1>Split Privacy Policy</h1>
+  </header>
+  <p class="updated">Last updated: 13 October 2026</p>
+
+  <p>
+    This policy covers Split Expense ("Split"): the Android and iPhone apps and
+    the web app at <a href="https://split.rsaw409.me/">split.rsaw409.me</a>.
+    It explains what Split stores, who can see it, and how to have it deleted.
+  </p>
+
+  <section class="summary">
+    <h2>The short version</h2>
+    <ul>
+      <li>Split has <strong>no accounts</strong>. We never ask for your email, phone number or a password.</li>
+      <li>What you enter in a group (its name, the names of its members, and its expenses and payments) is stored on our server so everyone in the group can see it.</li>
+      <li>Anyone with a group's invite link can join it and see everything in it.</li>
+      <li>We use OneSignal to send notifications about activity in your groups.</li>
+      <li>No ads, no analytics, no tracking across apps, and we never sell your data.</li>
+      <li>Email <a href="mailto:developer.rohitsaw@gmail.com">developer.rohitsaw@gmail.com</a> to have anything deleted.</li>
+    </ul>
+  </section>
+
+  <h2>Who we are</h2>
+  <p>
+    Split is built and run by Rohit Saw (rsaw409), an independent developer
+    in West Bengal, India. "We" and "us" in this policy mean him. You can reach
+    us at <a href="mailto:developer.rohitsaw@gmail.com">developer.rohitsaw@gmail.com</a>.
+  </p>
+
+  <h2>What you put into Split</h2>
+  <p>When you use Split, our server stores what you and the other members enter:</p>
+  <ul>
+    <li><strong>Groups</strong>: the name, currency and icon.</li>
+    <li><strong>Members</strong>: the name typed for each person, and the code their cartoon avatar is drawn from. Avatars are generated, never photos.</li>
+    <li><strong>Expenses and payments</strong>: the title, the amount, who paid, how it was split or who was paid, and when it was recorded.</li>
+  </ul>
+  <p>
+    Member names are often other people's names, typed by whoever adds them.
+    Only add people who are happy to be in the group, and use a nickname if
+    they prefer.
+  </p>
+
+  <h2>Who can see your group</h2>
+  <p>
+    Everyone in a group can see everything in it: its members, every expense
+    and payment, and everyone's balances. Anyone who has the group's invite
+    link or invite code can join, so treat a group as shared with everyone you
+    send its link to, and anyone they forward it to.
+  </p>
+  <p>
+    Because Split has no accounts or passwords, we can't guarantee that only a
+    group's members can see its data. Don't record anything in Split you'd mind
+    becoming public, such as card or bank details in an expense title.
+  </p>
+
+  <h2>Notifications</h2>
+  <p>
+    Split notifies the members of a group when something happens in it, such
+    as a new expense or payment. To do that:
+  </p>
+  <ul>
+    <li>
+      The app gets an ID for your device from <strong>OneSignal</strong>, our
+      notification provider, and sends it to our server with the list of groups
+      on your device. That's how we know which devices to notify about which
+      group. The list is updated each time you open the app, so leaving a group
+      stops its notifications.
+    </li>
+    <li>
+      Each notification's text passes through OneSignal. It can include the
+      group's name, an expense's title, a payment's amount, or a member's old
+      and new name.
+    </li>
+    <li>
+      OneSignal's software in the app also collects technical details about
+      your device, such as its model, operating system, language, time zone,
+      app version and IP address. OneSignal handles these under
+      <a href="https://onesignal.com/privacy_policy">its own privacy policy</a>.
+    </li>
+    <li>
+      Notifications are delivered by your device's push service: Google's on
+      Android, Apple's on iPhone and iPad, or your browser's for the web app.
+    </li>
+  </ul>
+  <p>
+    You can turn notifications off at any time in your device's or browser's
+    settings. The web app only offers notifications once it has been installed,
+    never in a browser tab.
+  </p>
+
+  <h2>When you install from an invite link</h2>
+  <p>
+    On Android, if you install Split from Google Play by following an invite
+    link, Google Play passes the link's invite code to the app. The app reads
+    it once, the first time it opens, so it can join you to that group. It
+    contains nothing but the invite code.
+  </p>
+
+  <h2>What stays on your device</h2>
+  <ul>
+    <li>
+      The app saves your groups, a copy of their expenses and balances (so they
+      show offline), and your settings, such as the theme. This stays on your
+      device and is removed when you uninstall the app or clear its data.
+    </li>
+    <li>
+      Member statements are made as PDFs on your device. They are only shared
+      where you choose to send them.
+    </li>
+    <li>
+      The app only reads your clipboard when you tap <em>Paste</em> on the
+      Join group screen.
+    </li>
+  </ul>
+
+  <h2>Technical information</h2>
+  <ul>
+    <li>
+      Our server logs each request's type, result and how long it took, and
+      any errors, to keep the service working. It does not log your IP address
+      or the content you send.
+    </li>
+    <li>
+      To stop any one address overloading the service, our server holds IP
+      addresses in memory for up to 10 minutes. They aren't saved anywhere.
+    </li>
+    <li>
+      Our hosting provider sees your IP address when your device connects, as
+      every web host does.
+    </li>
+    <li>
+      The web app loads its rendering engine and fonts from Google
+      (<em>gstatic.com</em>), so Google sees your IP address when they load.
+    </li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>No ads, and no advertising IDs.</li>
+    <li>No analytics, crash reporting or tracking across apps and websites.</li>
+    <li>No access to your location, contacts, camera, photos or files.</li>
+    <li>We never sell or rent your data, or share it with anyone except the providers below, who use it only to run Split.</li>
+  </ul>
+
+  <h2>Service providers</h2>
+  <ul class="providers">
+    <li>
+      <strong>Supabase</strong>
+      Hosts our database, in Mumbai, India.
+      <a href="https://supabase.com/privacy">Privacy policy</a>
+    </li>
+    <li>
+      <strong>Render</strong>
+      Hosts our server and the web app.
+      <a href="https://render.com/privacy">Privacy policy</a>
+    </li>
+    <li>
+      <strong>OneSignal</strong>
+      Sends notifications.
+      <a href="https://onesignal.com/privacy_policy">Privacy policy</a>
+    </li>
+    <li>
+      <strong>Google</strong>
+      Google Play (installs and invite codes), Android notification delivery,
+      and the web app's engine and fonts.
+      <a href="https://policies.google.com/privacy">Privacy policy</a>
+    </li>
+    <li>
+      <strong>Apple</strong>
+      iPhone and iPad notification delivery.
+      <a href="https://www.apple.com/legal/privacy/">Privacy policy</a>
+    </li>
+  </ul>
+  <p>
+    Some of these providers process data outside India, including in the
+    United States.
+  </p>
+  <p>
+    We may also disclose data if the law requires it.
+  </p>
+
+  <h2>How long we keep it</h2>
+  <ul>
+    <li>
+      Group data (members, expenses and payments) is kept until you ask us to
+      delete it. Leaving a group only removes it from your device: the group
+      is shared, so its data stays for the other members.
+    </li>
+    <li>
+      Your device's notification ID stays linked to your groups until the app
+      updates the list, or you ask us to remove it.
+    </li>
+    <li>
+      Server logs are kept by our hosting provider for a limited time, then
+      deleted.
+    </li>
+  </ul>
+
+  <h2>Changing or deleting your data</h2>
+  <p>
+    In the app you can rename members, change their avatars, and edit a
+    group's name, currency and icon. Expenses and payments can't be edited or
+    deleted in the app.
+  </p>
+  <p>
+    To have a group, a member, an expense or a payment deleted, or to ask what
+    we hold, email
+    <a href="mailto:developer.rohitsaw@gmail.com">developer.rohitsaw@gmail.com</a>
+    with the group's invite link and what you'd like done. We may ask you to
+    show you're in the group, and we'll reply within 30 days.
+  </p>
+
+  <h2>Security</h2>
+  <p>
+    Everything Split sends goes over encrypted connections (HTTPS). As
+    explained above, group data isn't protected by accounts or passwords, so
+    please keep sensitive information out of Split.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    Split isn't directed at children under 13, and we don't knowingly collect
+    their information. If you think a child has used Split, email us and we'll
+    delete what they entered.
+  </p>
+
+  <h2>Changes to this policy</h2>
+  <p>
+    If this policy changes, we'll update it on this page and change the date at
+    the top.
+  </p>
+
+  <footer>
+    Questions? Email
+    <a href="mailto:developer.rohitsaw@gmail.com">developer.rohitsaw@gmail.com</a>.
+  </footer>
+</main>
+</body>
+</html>
