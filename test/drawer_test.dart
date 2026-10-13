@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:split_expense/src/components/drawer.dart';
@@ -144,5 +145,31 @@ void main() {
     expect(settings.themeMode, ThemeMode.dark);
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Dark'), findsNothing);
+  });
+
+  testWidgets('About shows the licenses, and Back returns to About',
+      (tester) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'Split Expense',
+      packageName: 'developer.rohitsaw.split',
+      version: '1.2.3',
+      buildNumber: '1',
+      buildSignature: '',
+    );
+    await pumpDrawer(tester, selected: 0);
+
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+    expect(find.text('KEY FEATURES'), findsOneWidget);
+    expect(find.text('Version 1.2.3'), findsOneWidget);
+
+    await tester.tap(find.text('View licenses'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsNothing);
+    expect(find.text('KEY FEATURES'), findsOneWidget);
   });
 }

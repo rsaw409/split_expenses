@@ -31,18 +31,23 @@ class MyDrawer extends StatelessWidget {
 
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final logo = ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Image.asset(
+        'assets/images/split.webp',
+        width: 56,
+        height: 56,
+      ),
+    );
 
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Image.asset(
-            'assets/images/split.webp',
-            width: 56,
-            height: 56,
-          ),
-        ),
+        // Looks the same whenever it fits. On a narrow phone with large text
+        // the two buttons stack, and then the rest scrolls instead of
+        // overflowing.
+        scrollable: true,
+        icon: logo,
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -112,6 +117,20 @@ class MyDrawer extends StatelessWidget {
           ),
         ),
         actions: <Widget>[
+          // What Flutter's own AboutDialog offers: the licenses of every
+          // package in the build. The dialog stays open underneath, so Back
+          // returns to it.
+          TextButton(
+            onPressed: () => showLicensePage(
+              context: context,
+              applicationName: 'Split Expense',
+              applicationVersion: packageInfo.version,
+              applicationIcon: logo,
+            ),
+            child: Text(
+              MaterialLocalizations.of(context).viewLicensesButtonLabel,
+            ),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +27,16 @@ void main() {
   // Unawaited: the current cache never reads the old entries, so this only
   // reclaims space.
   dropStaleCaches();
+
+  // The PDF statement's Noto Sans is a plain asset, not a package, so the
+  // licenses page (About → View licenses) only lists it if added here. Read
+  // when that page opens, never at startup.
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      ['Noto Sans'],
+      await rootBundle.loadString('assets/fonts/OFL.txt'),
+    );
+  });
 
   runApp(
     MultiProvider(
