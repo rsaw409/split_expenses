@@ -72,15 +72,21 @@ const pathChannel = MethodChannel('plugins.flutter.io/path_provider');
 
 void main() {
   late List<Map<Object?, Object?>> shared;
+  late int attempts;
+  late bool failShare;
   late Directory temp;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     shared = [];
+    attempts = 0;
+    failShare = false;
     temp = Directory.systemTemp.createTempSync('statement_test');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(shareChannel, (call) async {
+      attempts++;
+      if (failShare) throw PlatformException(code: 'error');
       shared.add(call.arguments as Map<Object?, Object?>);
       return 'com.whatsapp';
     });
@@ -122,66 +128,39 @@ void main() {
   }
 
   Finder shareButton() => find.widgetWithText(FilledButton, 'Share statement');
-  Finder shareIcon() => find.byTooltip('Share statement');
 
-  Future<void> openSheet(WidgetTester tester) async {
-    await tester.tap(shareButton());
-    await tester.pumpAndSettle();
-  }
-
-  testWidgets('waits for the transactions to load', (tester) async {
-    await pumpUserView(tester, expenses: _Expenses(pending: true));
-
-    expect(tester.widget<FilledButton>(shareButton()).onPressed, isNull);
-    expect(
-      tester
-          .widget<IconButton>(
-              find.ancestor(of: shareIcon(), matching: find.byType(IconButton)))
-          .onPressed,
-      isNull,
-    );
-  });
-
-  testWidgets('shares the statement as text', (tester) async {
-    await pumpUserView(tester);
-    await openSheet(tester);
-
-    expect(find.text("Asha's balance and all 4 transactions in Goa Trip."),
-        findsOneWidget);
-    expect(find.text('This may not include the latest transactions.'),
-        findsNothing);
-
-    await tester.tap(find.text('Text'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Share'));
-    await tester.pumpAndSettle();
-
-    expect(shared, hasLength(1));
-    expect(shared.single['text'],
-        startsWith('*Split statement: Asha*\nGoa Trip · '));
-    expect(shared.single['subject'], 'Split statement: Asha (Goa Trip)');
-    // Anchored to the button, which iPad requires.
-    expect(shared.single['originWidth'] as double, greaterThan(0));
-
-    expect(find.text('Share statement'), findsOneWidget); // the sheet closed
-    expect(find.text("Asha's statement shared."), findsOneWidget);
-  });
-
-  testWidgets('shares the statement as a PDF file', (tester) async {
-    await pumpUserView(tester);
-    await openSheet(tester);
-
-    // PDF is the default. Building it and writing the file are real work.
+  /// Taps Share statement and waits for the share call: building the PDF and
+  /// writing its file are real work, which fake async would never finish.
+  Future<void> tapShare(WidgetTester tester) async {
     await tester.runAsync(() async {
-      await tester.tap(find.widgetWithText(FilledButton, 'Share'));
-      for (var i = 0; i < 200 && shared.isEmpty; i++) {
+      await tester.tap(shareButton());
+      for (var i = 0; i < 200 && attempts == 0; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
     });
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('offers one Share statement button, once transactions load',
+      (tester) async {
+    await pumpUserView(tester, expenses: _Expenses(pending: true));
+
+    expect(shareButton(), findsOneWidget);
+    expect(tester.widget<FilledButton>(shareButton()).onPressed, isNull);
+    // No second way in from the app bar.
+    expect(find.byTooltip('Share statement'), findsNothing);
+    expect(find.byIcon(Icons.ios_share), findsOneWidget);
+  });
+
+  testWidgets('goes straight to the share sheet with the PDF', (tester) async {
+    await pumpUserView(tester);
+    await tapShare(tester);
 
     expect(shared, hasLength(1));
     expect(shared.single['mimeTypes'], ['application/pdf']);
+    expect(shared.single['subject'], 'Split statement: Asha (Goa Trip)');
+    // Anchored to the button, which iPad requires.
+    expect(shared.single['originWidth'] as double, greaterThan(0));
     final path = (shared.single['paths'] as List).single as String;
     expect(
         path,
@@ -191,15 +170,15 @@ void main() {
     expect(find.text("Asha's statement shared."), findsOneWidget);
   });
 
-  testWidgets('warns when the balances disagree with the transactions',
-      (tester) async {
-    // The overview says Asha gets back more than her transactions add up to:
-    // one of the two lists is behind.
-    await pumpUserView(tester, serverBalance: 12000);
-    await openSheet(tester);
+  testWidgets('says so when the share sheet fails to open', (tester) async {
+    failShare = true;
+    await pumpUserView(tester);
+    await tapShare(tester);
 
-    expect(find.text('This may not include the latest transactions.'),
-        findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Refresh'), findsOneWidget);
+    expect(shared, isEmpty);
+    expect(
+        find.text("Couldn't create the statement. Try again."), findsOneWidget);
+    // Ready to try again.
+    expect(tester.widget<FilledButton>(shareButton()).onPressed, isNotNull);
   });
 }

@@ -7,7 +7,7 @@ import 'package:split_expense/src/models/expense/expense.dart';
 import 'package:split_expense/src/services/statement_pdf.dart';
 import 'package:split_expense/src/utils/currency.dart';
 import 'package:split_expense/src/utils/statement.dart';
-import 'package:split_expense/src/utils/statement_text.dart';
+import 'package:split_expense/src/utils/statement_wording.dart';
 
 const names = {1: 'Asha', 2: 'Ben', 3: 'Chen'};
 
@@ -169,89 +169,52 @@ void main() {
     });
   });
 
-  group('statementText', () {
-    test('reads as a third-person statement', () {
-      final text = statementText(statementFor(1), inr);
+  group('statement wording', () {
+    test('is in the third person', () {
+      final asha = statementFor(1);
 
-      expect(text,
-          startsWith('*Split statement: Asha*\nGoa Trip · 11 Oct 2026\n'));
-      expect(text, contains('*Asha gets back ₹89.75*'));
-      expect(text, contains('Paid for expenses: ₹340'));
-      expect(text, contains('Payments received: ₹100'));
-      expect(text, contains('• Chen pays Asha ₹60\n• Ben pays Asha ₹29.75'));
-      expect(text, contains('*Transactions (4)*'));
-      expect(
-          text,
-          contains('10 Aug 2026 · Dinner\n'
-              "Asha paid ₹300 · Asha's share ₹100\n"
-              'Balance: gets back ₹200\n'));
-      expect(
-          text,
-          contains('2 Sep 2026 · Payment from Chen\n'
-              'Asha received ₹100\n'
-              'Balance: gets back ₹49.75\n'));
-      expect(text, endsWith('_Shared from Split_'));
-      expect(text, isNot(matches(RegExp(r'\byou\b', caseSensitive: false))));
+      expect(statementHeadline(asha, inr), 'Asha gets back ₹89.75');
+      expect(statementHeadline(statementFor(3), inr), 'Chen owes ₹60');
+      expect(statementHeadline(statementFor(1, expenses: []), inr),
+          'Asha is settled up');
+      expect(asha.settleUp.map((p) => settleUpWords(p, inr)),
+          ['Chen pays Asha ₹60', 'Ben pays Asha ₹29.75']);
     });
 
-    test('says who owes and who is settled up', () {
-      expect(statementText(statementFor(3), inr), contains('*Chen owes ₹60*'));
-      expect(statementText(statementFor(3), inr),
-          contains('Payment to Asha\nChen paid ₹100\n'));
-      final empty = statementText(statementFor(1, expenses: []), inr);
-      expect(empty, contains('*Asha is settled up*'));
-      expect(empty, contains('*Transactions (0)*\nNone yet.'));
-      expect(empty, isNot(contains('To settle up')));
-    });
+    test("describes each transaction from the member's side", () {
+      String describe(StatementLine line, String name) =>
+          '${statementLineTitle(line)} | '
+          '${statementLineDetail(line, name, inr)}';
 
-    test('shows only the most recent transactions of a long history', () {
-      final many = [
-        for (var i = 1; i <= statementTextLineLimit + 2; i++)
-          expense(i,
-              paidBy: 1,
-              amount: 100,
-              date: DateTime(2026, 1, 1).add(Duration(hours: i)),
-              split: {1: 50, 2: 50},
-              title: 'Item $i'),
-      ];
-      final text = statementText(statementFor(1, expenses: many), inr);
-
-      expect(text, contains('*Transactions (52)*'));
-      expect(
-          text,
-          contains(
-              '2 earlier transactions not shown. Share as PDF for the full list.'));
-      expect(text, isNot(contains('Item 2\n')));
-      expect(text, contains('Item 3\n'));
-      expect(text, contains('Item 52\n'));
-      // The balances still count the hidden ones.
-      expect(text, contains('Balance: gets back ₹26\n\n_Shared'));
+      expect(statementFor(1).lines.map((l) => describe(l, 'Asha')), [
+        "Dinner | Asha paid ₹300 · Asha's share ₹100",
+        "Snacks | Ben paid ₹100.50 · Asha's share ₹50.25",
+        'Payment from Chen | Asha received ₹100',
+        "Taxi | Asha paid ₹40 · Asha's share ₹0",
+      ]);
+      expect(describe(statementFor(3).lines[1], 'Chen'),
+          'Payment to Asha | Chen paid ₹100');
     });
 
     test('formats amounts in the group currency, whatever its decimals', () {
-      final yen = statementText(
-        statementFor(1, expenses: [
-          expense(1,
-              paidBy: 1,
-              amount: 1500,
-              date: DateTime(2026, 9, 1),
-              split: {1: 750, 2: 750}),
-        ]),
-        currencyFor('JPY'),
-      );
-      expect(yen, contains('*Asha gets back ¥750*'));
+      final yen = statementFor(1, expenses: [
+        expense(1,
+            paidBy: 1,
+            amount: 1500,
+            date: DateTime(2026, 9, 1),
+            split: {1: 750, 2: 750}),
+      ]);
+      expect(statementHeadline(yen, currencyFor('JPY')), 'Asha gets back ¥750');
 
-      final dinar = statementText(
-        statementFor(1, expenses: [
-          expense(1,
-              paidBy: 2,
-              amount: 2500,
-              date: DateTime(2026, 9, 1),
-              split: {1: 1250, 2: 1250}),
-        ]),
-        currencyFor('KWD'),
-      );
-      expect(dinar, contains('*Asha owes KWD 1.250*'));
+      final dinar = statementFor(1, expenses: [
+        expense(1,
+            paidBy: 2,
+            amount: 2500,
+            date: DateTime(2026, 9, 1),
+            split: {1: 1250, 2: 1250}),
+      ]);
+      expect(
+          statementHeadline(dinar, currencyFor('KWD')), 'Asha owes KWD 1.250');
     });
   });
 
@@ -269,9 +232,8 @@ void main() {
     });
 
     test('draws a long statement over several pages', () async {
-      int pages(List<int> pdf) => int.parse(RegExp(r'/Count (\d+)')
-          .firstMatch(latin1.decode(pdf))!
-          .group(1)!);
+      int pages(List<int> pdf) => int.parse(
+          RegExp(r'/Count (\d+)').firstMatch(latin1.decode(pdf))!.group(1)!);
 
       final many = [
         for (var i = 1; i <= 150; i++)
