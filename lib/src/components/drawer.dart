@@ -14,6 +14,10 @@ import 'group_icon.dart';
 import '../views/create_group_view.dart';
 import '../views/join_group_view.dart';
 
+/// web/privacy.html, deployed with the web app. Play's listing links to it
+/// too, so keep the path if the page ever moves.
+const privacyPolicyUrl = 'https://split.rsaw409.me/privacy.html';
+
 const _themeLabels = {
   ThemeMode.system: 'System default',
   ThemeMode.light: 'Light',
@@ -111,6 +115,17 @@ class MyDrawer extends StatelessWidget {
                       const TextSpan(text: ' by rsaw409'),
                     ],
                   ),
+                ),
+              ),
+              // In the content, not beside View licenses and Close: three
+              // buttons don't fit on one line on a phone, so they'd stack.
+              Center(
+                child: TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse(privacyPolicyUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: const Text('Privacy policy'),
                 ),
               ),
             ],

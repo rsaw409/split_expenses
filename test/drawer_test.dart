@@ -12,6 +12,8 @@ import 'package:split_expense/src/notify_controllers/settings_controller.dart';
 import 'package:split_expense/src/services/push_registration.dart';
 import 'package:split_expense/src/views/create_group_view.dart';
 import 'package:split_expense/src/views/join_group_view.dart';
+import 'package:url_launcher_platform_interface/link.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 /// OneSignal and the backend have no implementation in tests.
 class FakePushRegistration implements PushRegistration {
@@ -23,6 +25,20 @@ class FakePushRegistration implements PushRegistration {
   Future<void> register(String subscriptionId, List<int> groupIds) async {}
   @override
   Future<void> removeGroupTags() async {}
+}
+
+/// Records the links the app opens instead of opening them.
+class FakeUrlLauncher extends UrlLauncherPlatform {
+  final launched = <String>[];
+
+  @override
+  LinkDelegate? get linkDelegate => null;
+
+  @override
+  Future<bool> launchUrl(String url, LaunchOptions options) async {
+    launched.add(url);
+    return true;
+  }
 }
 
 void main() {
@@ -171,5 +187,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(LicensePage), findsNothing);
     expect(find.text('KEY FEATURES'), findsOneWidget);
+  });
+
+  testWidgets('About links to the privacy policy', (tester) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'Split Expense',
+      packageName: 'developer.rohitsaw.split',
+      version: '1.2.3',
+      buildNumber: '1',
+      buildSignature: '',
+    );
+    final launcher = FakeUrlLauncher();
+    UrlLauncherPlatform.instance = launcher;
+    await pumpDrawer(tester, selected: 0);
+
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+    // The test font's wide glyphs push the link below the fold.
+    await tester.ensureVisible(find.text('Privacy policy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Privacy policy'));
+    await tester.pumpAndSettle();
+
+    expect(launcher.launched, [privacyPolicyUrl]);
+    expect(privacyPolicyUrl, 'https://split.rsaw409.me/privacy.html');
   });
 }
