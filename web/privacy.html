@@ -77,8 +77,6 @@
       padding: 12px 16px;
     }
     .providers strong { display: block; }
-    .back { margin-bottom: 24px; }
-    .back a { font-weight: 600; text-decoration: none; }
     footer {
       margin-top: 48px;
       padding-top: 16px;
@@ -90,7 +88,6 @@
 </head>
 <body>
 <main>
-  <nav class="back" hidden><a href="/">← Back to Split</a></nav>
   <header>
     <img src="icons/Icon-192.png" alt="">
     <h1>Split Privacy Policy</h1>
@@ -334,29 +331,5 @@
     <a href="mailto:developer.rohitsaw@gmail.com">developer.rohitsaw@gmail.com</a>.
   </footer>
 </main>
-<script>
-  // The installed app opens this page in its own window, and a Home Screen
-  // app on iPhone or iPad has no back button, so offer a way back there. In a
-  // browser tab (e.g. from Play's listing) the browser's own Back is enough.
-  if (matchMedia('(display-mode: standalone)').matches) {
-    const back = document.querySelector('.back');
-    back.hidden = false;
-    back.querySelector('a').addEventListener('click', (event) => {
-      event.preventDefault();
-      // Back to the app's page rather than loading it again on top, so Back
-      // from the app doesn't return here. Without history, open the app.
-      // canGoBack only counts this site's pages; history.length is the
-      // fallback where the Navigation API is missing (older Safari).
-      const canGoBack = window.navigation
-        ? navigation.canGoBack
-        : history.length > 1;
-      if (canGoBack) {
-        history.back();
-      } else {
-        location.replace('/');
-      }
-    });
-  }
-</script>
 </body>
 </html>

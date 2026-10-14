@@ -117,20 +117,40 @@ class MyDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-              // In the content, not beside View licenses and Close: three
-              // buttons don't fit on one line on a phone, so they'd stack.
+              // A link rather than a button: in the content, not beside View
+              // licenses and Close, where three buttons stack on a phone.
               Center(
-                child: TextButton(
-                  onPressed: () => launchUrl(
-                    Uri.parse(privacyPolicyUrl),
-                    mode: LaunchMode.externalApplication,
-                    // Web only. The page is within the installed web app's
-                    // scope, so a new window became a separate app window
-                    // with no history, where Back closed it. In the app's own
-                    // window, Back returns to Split.
-                    webOnlyWindowName: '_self',
+                child: Semantics(
+                  link: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => launchUrl(
+                      Uri.parse(privacyPolicyUrl),
+                      mode: LaunchMode.externalApplication,
+                      // Web only. The page is within the installed web app's
+                      // scope, so a new window became a separate app window
+                      // with no history, where Back closed it. In the app's
+                      // own window, Back returns to Split.
+                      webOnlyWindowName: '_self',
+                    ),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Padding(
+                        // A taller target than the text alone.
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: Text(
+                          'Privacy policy',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                            decorationColor: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  child: const Text('Privacy policy'),
                 ),
               ),
             ],
