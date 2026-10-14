@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Managing group expenses made easy.">
+
+  <!-- Link previews (WhatsApp, Telegram, Messages...), mostly for shared
+       invite links, which open this page (lib/src/utils/invite_link.dart). -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Split">
+  <meta property="og:title" content="Split: shared expenses, sorted">
+  <meta property="og:description" content="Join your group on Split to track shared expenses and who owes whom.">
+  <meta property="og:image" content="https://split.rsaw409.me/split-og.png">
+  <meta name="twitter:card" content="summary">
+
+  <!-- Browser UI colour: AppTheme's surface in each brightness. -->
+  <meta name="theme-color" content="#fef7ff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151218" media="(prefers-color-scheme: dark)">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Split">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png"/>
+
+  <title>Split</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Shown until Flutter paints its first frame (flutter_bootstrap.js
+       removes it), so a cold load isn't a blank page while the engine
+       downloads. Colours match AppTheme's surface. */
+    html, body { margin: 0; height: 100%; background: #fef7ff; }
+    #splash {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #fef7ff;
+      transition: opacity 200ms ease-out;
+    }
+    #splash img { width: 96px; height: 96px; border-radius: 22px; }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    @media (prefers-color-scheme: dark) {
+      html, body, #splash { background: #151218; }
+    }
+  </style>
+</head>
+<body>
+  <div id="splash" aria-label="Loading Split">
+    <img src="icons/Icon-192.png" alt="">
+  </div>
+  <script>
+    // Invite links (/joinGroup/<id>) on Android, in a browser tab. Android
+    // normally opens them before any page loads: in the Android app where
+    // installed (App Links, via .well-known/assetlinks.json), otherwise in
+    // Chrome's installed web app, which opens links to its own site. Landing
+    // in a tab means neither happened (say, a link followed inside Chrome
+    // itself, or nothing installed), so apply the same order here: the
+    // Android app, then the web app, then Google Play with the invite
+    // attached. Everywhere else the page shows the install screen (a tab
+    // never runs the app), which carries the invite into the installed app.
+    // The page keeps loading meanwhile, so coming back to this tab finds it.
+
+    (function () {
+      var PREFIX = '/joinGroup/';
+      var path = location.pathname;
+      if (path.indexOf(PREFIX) !== 0 || !/Android/i.test(navigator.userAgent)) {
+        return;
+      }
+      // Already inside the installed web app: it joins the group itself.
+      if (matchMedia('(display-mode: standalone)').matches) return;
+
+      // Everything after the prefix is the id, as the app parses it: ids can
+      // contain "/", sent as %2F.
+      var raw = path.slice(PREFIX.length);
+      var inviteId;
+      try {
+        inviteId = decodeURIComponent(raw);
+      } catch (e) {
+        inviteId = raw;
+      }
+      if (!inviteId) return;
+
+      var PACKAGE = 'developer.rohitsaw.split';
+      // As playStoreLink: the Android app reads the invite from the install
+      // referrer on its first launch. Encoded twice, since Play decodes once.
+      var playUrl = 'https://play.google.com/store/apps/details?id=' + PACKAGE +
+          '&referrer=' + encodeURIComponent('invite=' + encodeURIComponent(inviteId));
+      // The invite link itself, addressed to the Android app's package: it
+      // opens the app if installed, and the fallback (Google Play) if not.
+      var intentUrl = 'intent://split.rsaw409.me' + PREFIX +
+          encodeURIComponent(inviteId) + '#Intent;scheme=https;package=' +
+          PACKAGE + ';S.browser_fallback_url=' + encodeURIComponent(playUrl) +
+          ';end';
+
+      function handOff() {
+        // Browsers that ignore intent:// (or block it without a tap) leave
+        // the page visible: send those to Google Play. If the app or Play
+        // opened, the page is hidden and the timer is cancelled.
+        var fallback = setTimeout(function () {
+          if (document.visibilityState === 'visible') location.href = playUrl;
+        }, 2000);
+        function cancel() { clearTimeout(fallback); }
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') cancel();
+        });
+        window.addEventListener('pagehide', cancel);
+        window.addEventListener('blur', cancel);
+        location.href = intentUrl;
+      }
+
+      // Chrome can tell which of Split's apps are installed, from
+      // manifest.json's related applications (the Android app's also needs
+      // its asset_statements). With only the web app, stay: the install
+      // screen joins the group here, and Chrome's installed web apps share
+      // this tab's storage, so it shows up there. Otherwise hand off, which
+      // reaches the Android app if it is installed but went undetected.
+      if (!navigator.getInstalledRelatedApps) return handOff();
+      navigator.getInstalledRelatedApps().then(function (apps) {
+        function installed(platform) {
+          return apps.some(function (app) { return app.platform === platform; });
+        }
+        if (installed('webapp') && !installed('play')) return;
+        handOff();
+      }, handOff);
+    })();
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
